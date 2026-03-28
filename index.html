@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>koels</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg:#03030a;--bg2:#08080f;--surface:#0f0f1a;--surface2:#141420;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#f0eeff;--muted:rgba(240,238,255,0.68);--dim:rgba(240,238,255,0.4);
+  --accent:#6c5ce7;--accent2:#a29bfe;--lime:#00ff88;--red:#ff4757;
+  --white:#ffffff;
+  --sans:"Inter",system-ui,sans-serif;--mono:"JetBrains Mono",monospace;
+  --ease:cubic-bezier(0.16,1,0.3,1);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;font-size:17px}
+body{
+  font-family:var(--sans);background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:40px 20px;
+}
+
+/* subtle grid background */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(108,92,231,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(108,92,231,0.04) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0;
+}
+
+/* glow blob */
+body::after{
+  content:'';position:fixed;top:-20%;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;
+  background:radial-gradient(ellipse,rgba(108,92,231,0.12) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+.container{
+  position:relative;z-index:1;
+  width:100%;max-width:420px;
+  display:flex;flex-direction:column;align-items:center;gap:32px;
+}
+
+/* avatar */
+.avatar{
+  width:80px;height:80px;border-radius:50%;
+  border:1px solid var(--border2);
+  background:linear-gradient(135deg,var(--surface2),var(--surface));
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:1.4rem;font-weight:700;
+  color:var(--accent2);letter-spacing:-0.02em;
+  position:relative;overflow:hidden;
+}
+.avatar::before{
+  content:'';position:absolute;inset:-1px;border-radius:50%;
+  background:conic-gradient(from 0deg,var(--accent),transparent 30%,transparent 70%,var(--accent2));
+  z-index:-1;animation:spin 6s linear infinite;
+}
+.avatar-inner{
+  width:76px;height:76px;border-radius:50%;
+  background:var(--surface);display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:1.2rem;font-weight:700;color:var(--accent2);
+}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* profile */
+.profile{text-align:center;display:flex;flex-direction:column;gap:8px}
+.name{
+  font-family:var(--mono);font-size:1.1rem;font-weight:700;
+  letter-spacing:0.05em;color:var(--white);
+}
+.handle{
+  font-family:var(--mono);font-size:0.72rem;
+  color:var(--dim);letter-spacing:0.12em;text-transform:uppercase;
+}
+
+/* links */
+.links{width:100%;display:flex;flex-direction:column;gap:10px}
+
+.link-btn{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 18px;border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--muted);
+  font-family:var(--mono);font-size:0.78rem;
+  letter-spacing:0.08em;text-transform:uppercase;
+  text-decoration:none;
+  transition:all 0.2s var(--ease);
+  cursor:pointer;
+  position:relative;overflow:hidden;
+}
+.link-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(108,92,231,0.06),transparent);
+  transform:translateX(-100%);transition:transform 0.4s var(--ease);
+}
+.link-btn:hover{
+  border-color:var(--border2);color:var(--white);
+  background:var(--surface2);transform:translateY(-1px);
+}
+.link-btn:hover::before{transform:translateX(100%)}
+.link-btn:active{transform:translateY(0)}
+
+.link-icon{
+  width:20px;height:20px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.link-icon svg{width:18px;height:18px;fill:currentColor}
+
+.link-label{flex:1}
+.link-arrow{
+  font-size:0.65rem;color:var(--dim);
+  transition:transform 0.2s var(--ease),color 0.2s;
+}
+.link-btn:hover .link-arrow{transform:translateX(2px);color:var(--muted)}
+
+/* footer */
+.footer{
+  font-family:var(--mono);font-size:0.6rem;
+  letter-spacing:0.15em;color:var(--dim);text-transform:uppercase;
+  opacity:0.5;
+}
+
+
+/* entrance animation */
+.container > *{
+  opacity:0;animation:fadeUp 0.5s var(--ease) forwards;
+}
+.container > *:nth-child(1){animation-delay:0.05s}
+.container > *:nth-child(2){animation-delay:0.12s}
+.container > *:nth-child(3){animation-delay:0.2s}
+.container > *:nth-child(4){animation-delay:0.4s}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* stagger link btns */
+.links .link-btn{
+  opacity:0;animation:fadeUp 0.4s var(--ease) forwards;
+}
+.links .link-btn:nth-child(1){animation-delay:0.22s}
+.links .link-btn:nth-child(2){animation-delay:0.28s}
+.links .link-btn:nth-child(3){animation-delay:0.34s}
+.links .link-btn:nth-child(4){animation-delay:0.40s}
+.links .link-btn:nth-child(5){animation-delay:0.46s}
+.links .link-btn:nth-child(6){animation-delay:0.52s}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="avatar">
+    <div class="avatar-inner">K</div>
+  </div>
+
+  <div class="profile">
+    <div class="name">Kyle</div>
+    <div class="handle">koels.site</div>
+  </div>
+
+  <div class="links">
+
+    <a class="link-btn" href="https://koels.site" target="_blank" rel="noopener">
+      <span class="link-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" fill="currentColor"/></svg>
+      </span>
+      <span class="link-label">Website</span>
+      <span class="link-arrow">→</span>
+    </a>
+
+    <a class="link-btn" href="https://youtube.com/@koels" target="_blank" rel="noopener">
+      <span class="link-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </span>
+      <span class="link-label">YouTube</span>
+      <span class="link-arrow">→</span>
+    </a>
+
+    <a class="link-btn" href="https://tiktok.com/@.koels" target="_blank" rel="noopener">
+      <span class="link-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+      </span>
+      <span class="link-label">TikTok</span>
+      <span class="link-arrow">→</span>
+    </a>
+
+    <a class="link-btn" href="https://instagram.com/kooelss" target="_blank" rel="noopener">
+      <span class="link-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+      </span>
+      <span class="link-label">Instagram</span>
+      <span class="link-arrow">→</span>
+    </a>
+
+    <a class="link-btn" href="https://x.com/kooelss" target="_blank" rel="noopener">
+      <span class="link-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
+      </span>
+      <span class="link-label">X / Twitter</span>
+      <span class="link-arrow">→</span>
+    </a>
+
+    <a class="link-btn" href="https://github.com/koelss" target="_blank" rel="noopener">
+      <span class="link-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      </span>
+      <span class="link-label">GitHub</span>
+      <span class="link-arrow">→</span>
+    </a>
+
+  </div>
+
+  <div class="footer" style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+    <span>© 2026 koels.site</span>
+    <span>hosted on <a href="https://github.com/koelss" target="_blank" rel="noopener" style="color:var(--dim);text-decoration:underline;text-underline-offset:3px;">github</a></span>
+  </div>
+
+</div>
+
+</body>
+</html>
