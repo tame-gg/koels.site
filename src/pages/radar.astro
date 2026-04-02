@@ -107,7 +107,7 @@ body { background:#03030a; color:#f0eeff; }
 
 /* LEGEND */
 #legend {
-  position:fixed; bottom:120px; left:16px; z-index:900;
+  position:fixed; bottom:130px; left:16px; z-index:900;
   background:rgba(3,3,10,0.88); border:1px solid rgba(255,255,255,0.07);
   border-radius:10px; padding:10px 12px;
   backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
@@ -143,7 +143,7 @@ body { background:#03030a; color:#f0eeff; }
 #time-display b { color:#f0eeff; }
 
 /* Scrubber */
-.scrubber-wrap { position:relative; padding-bottom:16px; cursor:pointer; user-select:none; }
+.scrubber-wrap { position:relative; padding-bottom:20px; cursor:pointer; user-select:none; }
 #scrubber-track {
   width:100%; height:5px; border-radius:999px;
   background:rgba(255,255,255,0.1); position:relative; overflow:visible;
@@ -163,7 +163,7 @@ body { background:#03030a; color:#f0eeff; }
   transition:left 0.05s;
 }
 .scrubber-ticks {
-  position:absolute; bottom:0; left:0; right:0; height:14px;
+  position:absolute; bottom:0; left:0; right:0; height:16px;
 }
 .stick {
   position:absolute; bottom:0;
@@ -289,31 +289,44 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19
 }).addTo(map);
 
-/* RADAR */
-let radarFrames = [];
-let layers = {};       // index -> L.tileLayer (preloaded)
-let activeLayer = null;
+/* RADAR — official RainViewer pattern */
+let apiData      = {};
+let radarFrames  = [];
+let layerCache   = {};
+let currentLayer = null;
 let currentFrame = 0;
-let playing = false;
-let playTimer = null;
-const OPACITY = 0.65;
+let playing      = false;
+let playTimer    = null;
+const OPACITY    = 0.7;
+const TILE_SIZE  = window.devicePixelRatio >= 2 ? 512 : 256;
+
+function getLayer(frame) {
+  const path = frame.path;
+  if (!layerCache[path]) {
+    layerCache[path] = L.tileLayer(
+      apiData.host + path + '/' + TILE_SIZE + '/{z}/{x}/{y}/2/1_1.png',
+      { opacity: 0, zIndex: 10, maxNativeZoom: 7, maxZoom: 19 }
+    );
+  }
+  return layerCache[path];
+}
 
 async function loadRadar() {
   try {
     const data = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
-    radarFrames = [...(data.radar.past||[]), ...(data.radar.nowcast||[])];
-    if (!radarFrames.length) return;
-
-    // Preload all tile layers, add all to map at opacity 0
-    Object.values(layers).forEach(l => map.removeLayer(l));
-    layers = {};
-    radarFrames.forEach((f, i) => {
-      layers[i] = L.tileLayer(
-        `https://tilecache.rainviewer.com${f.path}/256/{z}/{x}/{y}/2/1_1.png`,
-        { opacity:0, zIndex:10, minZoom:1, maxZoom:12, maxNativeZoom:12 }
-      ).addTo(map);
+    apiData = data;
+    const past    = data.radar?.past    || [];
+    const nowcast = data.radar?.nowcast || [];
+    radarFrames = [...past, ...nowcast];
+    if (!radarFrames.length) {
+      document.getElementById('time-display').innerHTML = '<b>No radar data</b>';
+      return;
+    }
+    // Clean stale cache entries
+    const validPaths = new Set(radarFrames.map(f => f.path));
+    Object.keys(layerCache).forEach(p => {
+      if (!validPaths.has(p)) { map.removeLayer(layerCache[p]); delete layerCache[p]; }
     });
-
     buildScrubber();
     showFrame(radarFrames.length - 1);
   } catch(e) { console.error('Radar error:', e); }
@@ -321,66 +334,66 @@ async function loadRadar() {
 
 function showFrame(idx) {
   idx = Math.max(0, Math.min(idx, radarFrames.length - 1));
-  // Hide old
-  if (activeLayer) activeLayer.setOpacity(0);
+  if (currentLayer) currentLayer.setOpacity(0);
   currentFrame = idx;
-  activeLayer = layers[idx];
-  if (activeLayer) activeLayer.setOpacity(OPACITY);
+  const layer = getLayer(radarFrames[idx]);
+  if (!map.hasLayer(layer)) layer.addTo(map);
+  layer.setOpacity(OPACITY);
+  currentLayer = layer;
   updateUI();
 }
 
 function updateUI() {
   if (!radarFrames[currentFrame]) return;
-  const f = radarFrames[currentFrame];
-  const d = new Date(f.time * 1000);
-  const isLast = currentFrame === radarFrames.length - 1;
-  const timeStr = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  const diff = Math.round((Date.now() - d) / 60000);
-  const ago = isLast ? 'Live · Now' : diff < 60 ? `${diff}m ago` : `${Math.round(diff/60)}h ago`;
-  document.getElementById('time-display').innerHTML = `<b>${timeStr}</b> · ${ago} · ${currentFrame+1}/${radarFrames.length}`;
-
+  const f       = radarFrames[currentFrame];
+  const d       = new Date(f.time * 1000);
+  const isNow   = currentFrame === radarFrames.length - 1;
+  const timeStr = d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  const diff    = Math.round((Date.now() - d) / 60000);
+  const ago     = isNow ? 'NOW' : diff < 60 ? `${diff}m ago` : `${Math.round(diff/60)}h ago`;
+  document.getElementById('time-display').innerHTML =
+    `<b>${timeStr}</b> · ${ago} · ${currentFrame+1}/${radarFrames.length}`;
   const pct = radarFrames.length > 1 ? (currentFrame / (radarFrames.length - 1)) * 100 : 100;
   document.getElementById('scrubber-fill').style.width = pct + '%';
-  document.getElementById('scrubber-thumb').style.left = pct + '%';
+  document.getElementById('scrubber-thumb').style.left  = pct + '%';
 }
 
 /* PLAY / PAUSE */
+function animStep() {
+  if (!playing) return;
+  const next = currentFrame + 1;
+  if (next >= radarFrames.length) {
+    playTimer = setTimeout(() => { if (playing) { showFrame(0); playTimer = setTimeout(animStep, 500); } }, 1500);
+  } else {
+    showFrame(next);
+    playTimer = setTimeout(animStep, 500);
+  }
+}
+
 function togglePlay() {
   playing = !playing;
   document.getElementById('play-icon').style.display  = playing ? 'none' : '';
   document.getElementById('pause-icon').style.display = playing ? '' : 'none';
   if (playing) {
-    function step() {
-      const next = currentFrame + 1;
-      if (next >= radarFrames.length) {
-        showFrame(radarFrames.length - 1);
-        playTimer = setTimeout(() => { if (playing) { showFrame(0); playTimer = setTimeout(step, 500); } }, 1500);
-      } else {
-        showFrame(next);
-        playTimer = setTimeout(step, 500);
-      }
-    }
-    playTimer = setTimeout(step, 500);
+    playTimer = setTimeout(animStep, 500);
   } else {
     clearTimeout(playTimer); playTimer = null;
   }
 }
 
-/* SCRUBBER DRAG */
+/* SCRUBBER */
 function buildScrubber() {
   const ticks = document.getElementById('scrubber-ticks');
   ticks.innerHTML = '';
-  const n = radarFrames.length;
+  const n    = radarFrames.length;
   const step = Math.max(1, Math.floor(n / 5));
   radarFrames.forEach((f, i) => {
     if (i % step === 0 || i === n - 1) {
-      const d = new Date(f.time * 1000);
-      const label = i === n - 1 ? 'NOW' : d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-      const pct = n > 1 ? (i / (n - 1)) * 100 : 100;
+      const d     = new Date(f.time * 1000);
+      const label = i === n - 1 ? 'NOW' : d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+      const pct   = n > 1 ? (i / (n - 1)) * 100 : 100;
       const t = document.createElement('span');
-      t.className = 'stick';
-      t.textContent = label;
-      t.style.left = pct + '%';
+      t.className = 'stick'; t.textContent = label; t.style.left = pct + '%';
       ticks.appendChild(t);
     }
   });
@@ -388,19 +401,23 @@ function buildScrubber() {
 
 function scrubTo(clientX) {
   const rect = document.getElementById('scrubber-track').getBoundingClientRect();
-  const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-  if (playing) { playing = false; clearTimeout(playTimer); playTimer = null; document.getElementById('play-icon').style.display=''; document.getElementById('pause-icon').style.display='none'; }
+  const pct  = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  if (playing) {
+    playing = false; clearTimeout(playTimer); playTimer = null;
+    document.getElementById('play-icon').style.display  = '';
+    document.getElementById('pause-icon').style.display = 'none';
+  }
   showFrame(Math.round(pct * (radarFrames.length - 1)));
 }
 
 let dragging = false;
 const sw = document.getElementById('scrubber-wrap');
-sw.addEventListener('mousedown',  e => { dragging = true;  scrubTo(e.clientX); });
-sw.addEventListener('touchstart', e => { dragging = true;  scrubTo(e.touches[0].clientX); }, {passive:true});
-window.addEventListener('mousemove',  e => { if (dragging) scrubTo(e.clientX); });
-window.addEventListener('touchmove',  e => { if (dragging) scrubTo(e.touches[0].clientX); }, {passive:true});
-window.addEventListener('mouseup',   () => dragging = false);
-window.addEventListener('touchend',  () => dragging = false);
+sw.addEventListener('mousedown',  e => { dragging = true; scrubTo(e.clientX); });
+sw.addEventListener('touchstart', e => { dragging = true; scrubTo(e.touches[0].clientX); }, { passive:true });
+window.addEventListener('mousemove', e => { if (dragging) scrubTo(e.clientX); });
+window.addEventListener('touchmove', e => { if (dragging) scrubTo(e.touches[0].clientX); }, { passive:true });
+window.addEventListener('mouseup',  () => dragging = false);
+window.addEventListener('touchend', () => dragging = false);
 
 /* NWS ALERTS */
 let alertLayers = [];
@@ -419,16 +436,13 @@ async function loadAlerts() {
       const o={Extreme:0,Severe:1,Moderate:2,Minor:3,Unknown:4};
       return (o[a.properties.severity]||4)-(o[b.properties.severity]||4);
     });
-
     alertLayers.forEach(l => map.removeLayer(l));
     alertLayers = [];
-
     const list = document.getElementById('alerts-list');
     const pill = document.getElementById('alert-pill');
     document.getElementById('alert-num').textContent   = feats.length;
     document.getElementById('panel-count').textContent = feats.length;
     pill.className = feats.length ? 'alert-pill' : 'alert-pill none';
-
     if (!feats.length) {
       list.innerHTML = '<div class="no-alerts">No active alerts.<br>All clear across the US.</div>';
     } else {
@@ -447,7 +461,6 @@ async function loadAlerts() {
         list.appendChild(item);
       });
     }
-
     const now = new Date();
     document.getElementById('last-updated').textContent =
       `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
