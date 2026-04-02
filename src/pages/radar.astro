@@ -1,0 +1,503 @@
+---
+// src/pages/radar.astro
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>koels.site — Radar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; font-family:"JetBrains Mono",monospace; }
+
+body {
+  background:#03030a;
+  color:#f0eeff;
+}
+
+/* ── MAP ── */
+#map {
+  position:fixed; inset:0; z-index:1;
+}
+
+/* ── HEADER ── */
+#header {
+  position:fixed; top:0; left:0; right:0; z-index:1000;
+  height:52px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 20px;
+  background:rgba(3,3,10,0.88);
+  border-bottom:1px solid rgba(255,255,255,0.07);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+}
+.header-left {
+  display:flex; align-items:center; gap:16px;
+}
+.back-btn {
+  display:flex; align-items:center; gap:6px;
+  font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase;
+  color:rgba(240,238,255,0.45); text-decoration:none;
+  transition:color 0.2s;
+}
+.back-btn:hover { color:#f0eeff; }
+.back-btn svg { width:14px; height:14px; fill:currentColor; }
+.header-divider { width:1px; height:18px; background:rgba(255,255,255,0.1); }
+.header-title {
+  display:flex; align-items:center; gap:8px;
+  font-size:0.7rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:#f0eeff;
+}
+.live-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:#00ff88; box-shadow:0 0 8px #00ff88;
+  animation:pulse 2s ease infinite;
+}
+@keyframes pulse { 0%,100%{box-shadow:0 0 6px #00ff88} 50%{box-shadow:0 0 18px #00ff88, 0 0 32px rgba(0,255,136,0.3)} }
+
+.header-right {
+  display:flex; align-items:center; gap:12px;
+}
+.alert-count {
+  display:flex; align-items:center; gap:6px;
+  padding:4px 12px; border-radius:999px;
+  font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase;
+  border:1px solid rgba(255,71,87,0.3); background:rgba(255,71,87,0.08);
+  color:#ff4757; transition:all 0.3s;
+}
+.alert-count.none { border-color:rgba(255,255,255,0.08); background:transparent; color:rgba(240,238,255,0.3); }
+.alert-count svg { width:10px; height:10px; fill:currentColor; }
+#last-updated {
+  font-size:0.58rem; color:rgba(240,238,255,0.3); letter-spacing:0.08em;
+}
+
+/* ── SIDE PANEL ── */
+#panel {
+  position:fixed; top:52px; right:0; bottom:0; z-index:900;
+  width:300px;
+  background:rgba(3,3,10,0.92);
+  border-left:1px solid rgba(255,255,255,0.06);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  display:flex; flex-direction:column;
+  transform:translateX(100%);
+  transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+#panel.open { transform:translateX(0); }
+
+#panel-toggle {
+  position:fixed; top:50%; right:0; z-index:950;
+  transform:translateY(-50%);
+  width:24px; height:60px;
+  background:rgba(3,3,10,0.9);
+  border:1px solid rgba(255,255,255,0.08);
+  border-right:none;
+  border-radius:6px 0 0 6px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:background 0.2s;
+}
+#panel-toggle:hover { background:rgba(108,92,231,0.2); }
+#panel-toggle svg { width:12px; height:12px; fill:rgba(240,238,255,0.5); transition:transform 0.35s; }
+#panel.open ~ #panel-toggle { right:300px; }
+#panel.open ~ #panel-toggle svg { transform:rotate(180deg); }
+
+.panel-header {
+  padding:16px 16px 12px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  font-size:0.6rem; letter-spacing:0.16em; text-transform:uppercase;
+  color:rgba(240,238,255,0.4);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.panel-header span { color:#ff4757; font-weight:700; }
+
+#alerts-list {
+  flex:1; overflow-y:auto; padding:8px;
+  scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.08) transparent;
+}
+#alerts-list::-webkit-scrollbar { width:3px; }
+#alerts-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:2px; }
+
+.alert-item {
+  padding:10px 12px; border-radius:8px; margin-bottom:6px;
+  border:1px solid transparent;
+  cursor:pointer; transition:all 0.2s;
+  position:relative; overflow:hidden;
+}
+.alert-item::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+}
+.alert-item:hover { background:rgba(255,255,255,0.04); }
+
+/* Severity colors */
+.sev-extreme  { border-color:rgba(255,0,60,0.25); background:rgba(255,0,60,0.06); }
+.sev-extreme::before  { background:#ff003c; }
+.sev-severe   { border-color:rgba(255,71,87,0.2); background:rgba(255,71,87,0.05); }
+.sev-severe::before   { background:#ff4757; }
+.sev-moderate { border-color:rgba(255,165,0,0.2); background:rgba(255,165,0,0.05); }
+.sev-moderate::before { background:#ffa500; }
+.sev-minor    { border-color:rgba(255,214,0,0.2); background:rgba(255,214,0,0.04); }
+.sev-minor::before    { background:#ffd600; }
+.sev-unknown  { border-color:rgba(255,255,255,0.08); background:rgba(255,255,255,0.02); }
+.sev-unknown::before  { background:rgba(255,255,255,0.2); }
+
+.alert-event {
+  font-size:0.68rem; font-weight:700; color:#f0eeff;
+  letter-spacing:0.02em; margin-bottom:3px; line-height:1.3;
+}
+.alert-area {
+  font-size:0.58rem; color:rgba(240,238,255,0.45);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  letter-spacing:0.04em;
+}
+.alert-time {
+  font-size:0.54rem; color:rgba(240,238,255,0.25);
+  margin-top:4px; letter-spacing:0.04em;
+}
+.no-alerts {
+  padding:32px 16px; text-align:center;
+  font-size:0.62rem; color:rgba(240,238,255,0.25);
+  letter-spacing:0.08em; line-height:1.8;
+}
+
+/* ── LEGEND ── */
+#legend {
+  position:fixed; bottom:24px; left:20px; z-index:900;
+  background:rgba(3,3,10,0.88);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:10px; padding:12px 14px;
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+.legend-title {
+  font-size:0.55rem; letter-spacing:0.14em; text-transform:uppercase;
+  color:rgba(240,238,255,0.35); margin-bottom:8px;
+}
+.legend-items { display:flex; flex-direction:column; gap:4px; }
+.legend-item { display:flex; align-items:center; gap:8px; }
+.legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.legend-label { font-size:0.58rem; color:rgba(240,238,255,0.5); letter-spacing:0.04em; }
+
+/* ── RADAR TIMELINE ── */
+#timeline {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  z-index:900;
+  background:rgba(3,3,10,0.88);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:999px; padding:8px 16px;
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  display:flex; align-items:center; gap:12px;
+}
+#play-btn {
+  width:28px; height:28px; border-radius:50%;
+  background:rgba(108,92,231,0.3); border:1px solid rgba(108,92,231,0.5);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:all 0.2s; flex-shrink:0;
+}
+#play-btn:hover { background:rgba(108,92,231,0.5); }
+#play-btn svg { width:11px; height:11px; fill:#a29bfe; }
+#timeline-label {
+  font-size:0.6rem; color:rgba(240,238,255,0.5);
+  letter-spacing:0.08em; min-width:42px; text-align:center;
+}
+.timeline-frames {
+  display:flex; align-items:center; gap:3px;
+}
+.tframe {
+  width:6px; height:20px; border-radius:3px;
+  background:rgba(255,255,255,0.1); cursor:pointer;
+  transition:all 0.15s;
+}
+.tframe:hover { background:rgba(162,155,254,0.4); }
+.tframe.active { background:#a29bfe; }
+
+/* ── LEAFLET OVERRIDES ── */
+.leaflet-container { background:#03030a !important; }
+.leaflet-tile-pane { filter:brightness(0.85) saturate(0.7) hue-rotate(200deg); }
+.leaflet-control-zoom { display:none; }
+.leaflet-control-attribution {
+  background:rgba(3,3,10,0.7) !important;
+  color:rgba(240,238,255,0.2) !important;
+  font-family:"JetBrains Mono",monospace !important;
+  font-size:9px !important;
+}
+.leaflet-control-attribution a { color:rgba(162,155,254,0.5) !important; }
+
+/* NWS alert polygons tooltip */
+.alert-tooltip {
+  background:rgba(3,3,10,0.95) !important;
+  border:1px solid rgba(255,71,87,0.3) !important;
+  border-radius:6px !important;
+  color:#f0eeff !important;
+  font-family:"JetBrains Mono",monospace !important;
+  font-size:0.62rem !important;
+  padding:8px 12px !important;
+  box-shadow:0 4px 20px rgba(0,0,0,0.5) !important;
+}
+</style>
+</head>
+<body>
+
+<!-- MAP -->
+<div id="map"></div>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="header-left">
+    <a class="back-btn" href="/">
+      <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      koels.site
+    </a>
+    <div class="header-divider"></div>
+    <div class="header-title">
+      <div class="live-dot"></div>
+      Live Radar
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="alert-count none" id="alert-count">
+      <svg viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+      <span id="alert-num">0</span> Active Alerts
+    </div>
+    <div id="last-updated">—</div>
+  </div>
+</div>
+
+<!-- SIDE PANEL -->
+<div id="panel">
+  <div class="panel-header">
+    NWS Alerts — USA <span id="panel-count">0</span>
+  </div>
+  <div id="alerts-list">
+    <div class="no-alerts">No active alerts.<br>All clear across the US.</div>
+  </div>
+</div>
+<div id="panel-toggle" onclick="togglePanel()">
+  <svg viewBox="0 0 24 24"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
+</div>
+
+<!-- LEGEND -->
+<div id="legend">
+  <div class="legend-title">Alert Severity</div>
+  <div class="legend-items">
+    <div class="legend-item"><div class="legend-dot" style="background:#ff003c"></div><div class="legend-label">Extreme</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff4757"></div><div class="legend-label">Severe</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffa500"></div><div class="legend-label">Moderate</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffd600"></div><div class="legend-label">Minor</div></div>
+  </div>
+</div>
+
+<!-- RADAR TIMELINE -->
+<div id="timeline">
+  <div id="play-btn" onclick="togglePlay()">
+    <svg id="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    <svg id="pause-icon" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+  </div>
+  <div class="timeline-frames" id="timeline-frames"></div>
+  <div id="timeline-label">NOW</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ── MAP INIT ── */
+const map = L.map('map', {
+  center: [35, -95],
+  zoom: 4,
+  zoomControl: false,
+  attributionControl: true,
+});
+
+// Dark base map
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CARTO',
+  subdomains: 'abcd',
+  maxZoom: 19,
+}).addTo(map);
+
+/* ── RAINVIEWER RADAR ── */
+let radarFrames = [];
+let currentFrame = 0;
+let radarLayers = [];
+let playing = false;
+let playInterval = null;
+const RADAR_OPACITY = 0.6;
+
+async function loadRadar() {
+  try {
+    const res = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+    const data = await res.json();
+    radarFrames = data.radar.past.concat(data.radar.nowcast || []);
+
+    // Build timeline UI
+    const framesEl = document.getElementById('timeline-frames');
+    framesEl.innerHTML = '';
+    radarFrames.forEach((f, i) => {
+      const el = document.createElement('div');
+      el.className = 'tframe' + (i === radarFrames.length - 1 ? ' active' : '');
+      el.onclick = () => showFrame(i);
+      framesEl.appendChild(el);
+    });
+
+    showFrame(radarFrames.length - 1);
+  } catch(e) { console.error('Radar load failed', e); }
+}
+
+function showFrame(idx) {
+  currentFrame = idx;
+  const frame = radarFrames[idx];
+
+  // Remove old layers
+  radarLayers.forEach(l => map.removeLayer(l));
+  radarLayers = [];
+
+  const layer = L.tileLayer(
+    `https://tilecache.rainviewer.com${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
+    { opacity: RADAR_OPACITY, zIndex: 10 }
+  );
+  layer.addTo(map);
+  radarLayers.push(layer);
+
+  // Update timeline UI
+  document.querySelectorAll('.tframe').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+  });
+
+  // Update label
+  const d = new Date(frame.time * 1000);
+  const now = new Date();
+  const diffMin = Math.round((now - d) / 60000);
+  document.getElementById('timeline-label').textContent =
+    idx === radarFrames.length - 1 ? 'NOW' :
+    diffMin < 60 ? `-${diffMin}m` :
+    `-${Math.round(diffMin/60)}h`;
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById('play-icon').style.display = playing ? 'none' : '';
+  document.getElementById('pause-icon').style.display = playing ? '' : 'none';
+  if (playing) {
+    playInterval = setInterval(() => {
+      const next = (currentFrame + 1) % radarFrames.length;
+      showFrame(next);
+    }, 600);
+  } else {
+    clearInterval(playInterval);
+  }
+}
+
+/* ── NWS ALERTS ── */
+let alertLayers = [];
+const SEV_COLORS = {
+  Extreme:  { fill:'#ff003c', stroke:'#ff003c' },
+  Severe:   { fill:'#ff4757', stroke:'#ff4757' },
+  Moderate: { fill:'#ffa500', stroke:'#ffa500' },
+  Minor:    { fill:'#ffd600', stroke:'#ffd600' },
+  Unknown:  { fill:'#ffffff', stroke:'#ffffff' },
+};
+
+function sevClass(sev) {
+  return 'sev-' + (sev || 'unknown').toLowerCase();
+}
+
+function timeAgo(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const diff = Math.round((Date.now() - d) / 60000);
+  if (diff < 60) return `${diff}m ago`;
+  if (diff < 1440) return `${Math.round(diff/60)}h ago`;
+  return `${Math.round(diff/1440)}d ago`;
+}
+
+async function loadAlerts() {
+  try {
+    const res = await fetch('https://api.weather.gov/alerts/active?status=actual&message_type=alert&limit=500');
+    const data = await res.json();
+    const features = data.features || [];
+
+    // Clear old alert layers
+    alertLayers.forEach(l => map.removeLayer(l));
+    alertLayers = [];
+
+    const list = document.getElementById('alerts-list');
+    const countEl = document.getElementById('alert-count');
+    const numEl = document.getElementById('alert-num');
+    const panelCount = document.getElementById('panel-count');
+
+    if (features.length === 0) {
+      list.innerHTML = '<div class="no-alerts">No active alerts.<br>All clear across the US.</div>';
+      countEl.className = 'alert-count none';
+      numEl.textContent = '0';
+      panelCount.textContent = '0';
+    } else {
+      countEl.className = 'alert-count';
+      numEl.textContent = features.length;
+      panelCount.textContent = features.length;
+
+      list.innerHTML = '';
+      features.forEach(f => {
+        const p = f.properties;
+        const sev = p.severity || 'Unknown';
+        const colors = SEV_COLORS[sev] || SEV_COLORS.Unknown;
+
+        // Draw polygon on map if geometry exists
+        if (f.geometry) {
+          const layer = L.geoJSON(f.geometry, {
+            style: {
+              color: colors.stroke,
+              fillColor: colors.fill,
+              weight: 1.5,
+              opacity: 0.8,
+              fillOpacity: 0.15,
+            }
+          });
+          layer.bindTooltip(`<strong>${p.event}</strong><br>${p.areaDesc}`, {
+            className: 'alert-tooltip', sticky: true
+          });
+          layer.addTo(map);
+          alertLayers.push(layer);
+        }
+
+        // Add to panel list
+        const item = document.createElement('div');
+        item.className = `alert-item ${sevClass(sev)}`;
+        item.innerHTML = `
+          <div class="alert-event">${p.event || 'Alert'}</div>
+          <div class="alert-area">${p.areaDesc || ''}</div>
+          <div class="alert-time">${timeAgo(p.sent)} · ${sev}</div>
+        `;
+        // Click to fly to area
+        if (f.geometry) {
+          item.onclick = () => {
+            const layer = L.geoJSON(f.geometry);
+            map.flyToBounds(layer.getBounds(), { padding: [60, 60], duration: 1.2 });
+          };
+        }
+        list.appendChild(item);
+      });
+    }
+
+    // Update last updated time
+    const now = new Date();
+    document.getElementById('last-updated').textContent =
+      `Updated ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+
+  } catch(e) { console.error('Alerts load failed', e); }
+}
+
+/* ── PANEL TOGGLE ── */
+function togglePanel() {
+  document.getElementById('panel').classList.toggle('open');
+}
+
+/* ── INIT ── */
+loadRadar();
+loadAlerts();
+setInterval(loadAlerts, 60000); // refresh alerts every minute
+setInterval(loadRadar, 300000); // refresh radar every 5 min
+</script>
+</body>
+</html>
