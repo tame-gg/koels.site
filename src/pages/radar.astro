@@ -309,11 +309,11 @@ map.getPane('radarPane').classList.add('radar-pane');
 const FRAME_MS = 650;
 const HOLD_MS  = 1600;
 
-let frames     = [];  // { path, time (unix), layer }
-let currentIdx = 0;
-let playing    = false;
-let playTimer  = null;
-let rvHost     = '';
+let frames      = [];   // { path, time (unix), layer }
+let currentIdx  = 0;
+let playing     = false;
+let playTimer   = null;
+let holdingLast = false;  // true while waiting on the end-of-loop hold
 let activeLayer = null;
 
 function setStatus(msg, show) {
@@ -326,36 +326,47 @@ async function loadRainViewer() {
   try {
     setStatus('Loading radar…', true);
     const data = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
-    rvHost = data.host;
     const newFrames = [...(data.radar?.past||[]), ...(data.radar?.nowcast||[])];
+
+    const wasPlaying = playing;
+    stopPlay();
 
     // Remove old layers
     frames.forEach(f => { try { map.removeLayer(f.layer); } catch(e){} });
+    activeLayer = null;
 
     const sz = window.devicePixelRatio >= 2 ? 512 : 256;
     frames = newFrames.map(f => ({
-      path: f.path,
-      time: f.time,
+      path:  f.path,
+      time:  f.time,
       layer: L.tileLayer(
         data.host + f.path + '/' + sz + '/{z}/{x}/{y}/2/1_1.png',
-        { opacity: 0, pane: 'radarPane', maxNativeZoom: 7, maxZoom: 19 }
+        {
+          opacity:       0,
+          pane:          'radarPane',
+          maxNativeZoom: 6,   // RainViewer native max — Leaflet upscales beyond this
+          maxZoom:       19
+        }
       )
     }));
 
-    // Add all at opacity 0 to preload tiles
+    // Add all at opacity 0 so tiles preload
     frames.forEach(f => f.layer.addTo(map));
-
     buildTicks();
 
-    // Show latest frame once loaded, then start playing
+    // Show latest frame, then auto-play
     let shown = false;
     const last = frames[frames.length - 1];
-    last.layer.once('load', () => {
-      if (!shown) { shown = true; showFrame(frames.length - 1); setStatus('', false); startPlay(); }
-    });
-    setTimeout(() => {
-      if (!shown) { shown = true; showFrame(frames.length - 1); setStatus('', false); startPlay(); }
-    }, 5000);
+    const go = () => {
+      if (shown) return;
+      shown = true;
+      currentIdx = frames.length - 1;
+      showFrame(currentIdx);
+      setStatus('', false);
+      if (wasPlaying !== false) startPlay();
+    };
+    last.layer.once('load', go);
+    setTimeout(go, 5000);
 
   } catch(e) {
     console.error('RainViewer load error:', e);
@@ -374,14 +385,14 @@ function showFrame(idx) {
 
 function updateUI() {
   if (!frames.length) return;
-  const f   = frames[currentIdx];
-  const t   = new Date(f.time * 1000);
-  const h   = t.getHours(), m = t.getMinutes();
-  const hh  = ((h % 12) || 12);
-  const mm  = m.toString().padStart(2, '0');
-  const ap  = h < 12 ? 'AM' : 'PM';
+  const f       = frames[currentIdx];
+  const t       = new Date(f.time * 1000);
+  const h       = t.getHours(), m = t.getMinutes();
+  const hh      = ((h % 12) || 12);
+  const mm      = m.toString().padStart(2, '0');
+  const ap      = h < 12 ? 'AM' : 'PM';
   const diffMin = Math.round((Date.now() - t) / 60000);
-  const ago = diffMin <= 1 ? 'LIVE · NOW' : `${diffMin}m ago`;
+  const ago     = diffMin <= 1 ? 'LIVE · NOW' : `${diffMin}m ago`;
 
   document.getElementById('time-display').innerHTML =
     `<span class="t-time">${hh}:${mm} ${ap}</span>` +
@@ -397,50 +408,59 @@ function updateUI() {
 
 function buildTicks() {
   if (!frames.length) return;
-  const picks = [0, Math.floor(frames.length * 0.25), Math.floor(frames.length * 0.5),
-                 Math.floor(frames.length * 0.75), frames.length - 1];
-  document.getElementById('scrubber-ticks').innerHTML = [...new Set(picks)].map(i => {
-    const diffMin = Math.round((Date.now() - frames[i].time * 1000) / 60000);
-    const label   = diffMin <= 1 ? 'NOW' : `-${diffMin}m`;
-    return `<span class="tick-label${diffMin <= 1 ? ' is-now' : ''}">${label}</span>`;
-  }).join('');
+  const total = frames.length;
+  const picks = [0, Math.floor(total * 0.25), Math.floor(total * 0.5),
+                 Math.floor(total * 0.75), total - 1];
+  document.getElementById('scrubber-ticks').innerHTML =
+    [...new Set(picks)].map(i => {
+      const diffMin = Math.round((Date.now() - frames[i].time * 1000) / 60000);
+      const label   = diffMin <= 1 ? 'NOW' : `-${diffMin}m`;
+      return `<span class="tick-label${diffMin <= 1 ? ' is-now' : ''}">${label}</span>`;
+    }).join('');
 }
 
 // ── PLAY / PAUSE ──────────────────────────────────────────────────────────
-function setPlayIcon(isPlaying) {
-  document.getElementById('play-icon').style.display  = isPlaying ? 'none' : '';
-  document.getElementById('pause-icon').style.display = isPlaying ? '' : 'none';
+function setPlayIcon(on) {
+  document.getElementById('play-icon').style.display  = on ? 'none' : '';
+  document.getElementById('pause-icon').style.display = on ? ''     : 'none';
 }
 
-function scheduleNext() {
+// Single flat ticker — advances one frame then re-arms itself
+function tick() {
   if (!playing) return;
-  if (currentIdx >= frames.length - 1) {
-    // Hold on last frame then loop back
-    playTimer = setTimeout(() => {
-      if (!playing) return;
-      showFrame(0);
-      scheduleNext();
-    }, HOLD_MS);
+
+  if (holdingLast) {
+    // Finished holding the last frame — jump to start and resume normal pace
+    holdingLast = false;
+    showFrame(0);
+    playTimer = setTimeout(tick, FRAME_MS);
+    return;
+  }
+
+  const next = currentIdx + 1;
+  if (next >= frames.length) {
+    // Reached the end — hold before looping
+    holdingLast = true;
+    playTimer = setTimeout(tick, HOLD_MS);
   } else {
-    playTimer = setTimeout(() => {
-      if (!playing) return;
-      showFrame(currentIdx + 1);
-      scheduleNext();
-    }, FRAME_MS);
+    showFrame(next);
+    playTimer = setTimeout(tick, FRAME_MS);
   }
 }
 
 function startPlay() {
-  if (playing) return;
-  if (!frames.length) return;
-  playing = true;
+  if (playing || !frames.length) return;
+  playing     = true;
+  holdingLast = false;
   setPlayIcon(true);
+  // If sitting on the last frame already, restart from the beginning
   if (currentIdx >= frames.length - 1) showFrame(0);
-  scheduleNext();
+  playTimer = setTimeout(tick, FRAME_MS);
 }
 
 function stopPlay() {
-  playing = false;
+  playing     = false;
+  holdingLast = false;
   clearTimeout(playTimer);
   playTimer = null;
   setPlayIcon(false);
@@ -448,7 +468,7 @@ function stopPlay() {
 
 function togglePlay() {
   if (playing) stopPlay();
-  else startPlay();
+  else         startPlay();
 }
 
 loadRainViewer();
