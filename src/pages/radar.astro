@@ -21,8 +21,8 @@ body { background:#03030a; color:#f0eeff; }
   position:fixed; top:0; left:0; right:0; z-index:1000;
   height:54px; display:flex; align-items:center; justify-content:space-between;
   padding:0 20px;
-  background:rgba(3,3,10,0.9); border-bottom:1px solid rgba(255,255,255,0.07);
-  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  background:rgba(3,3,10,0.92); border-bottom:1px solid rgba(255,255,255,0.07);
+  backdrop-filter:blur(20px);
 }
 .header-left { display:flex; align-items:center; gap:14px; }
 .back-btn {
@@ -33,42 +33,39 @@ body { background:#03030a; color:#f0eeff; }
 .back-btn:hover { color:#f0eeff; }
 .back-btn svg { width:13px; height:13px; fill:currentColor; }
 .hdiv { width:1px; height:16px; background:rgba(255,255,255,0.1); }
-
-/* LOGO */
 .radar-logo { display:flex; align-items:center; gap:9px; }
 .radar-logo-icon { width:30px; height:30px; flex-shrink:0; }
 .radar-logo-icon svg { width:100%; height:100%; }
 .radar-logo-main { font-size:0.72rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:#f0eeff; line-height:1; }
 .radar-logo-sub  { font-size:0.52rem; letter-spacing:0.14em; text-transform:uppercase; color:rgba(240,238,255,0.35); line-height:1; margin-top:2px; }
-
 .header-right { display:flex; align-items:center; gap:12px; }
 .alert-pill {
   display:flex; align-items:center; gap:5px; padding:4px 11px; border-radius:999px;
   font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase;
-  border:1px solid rgba(255,71,87,0.3); background:rgba(255,71,87,0.08); color:#ff4757; transition:all 0.3s;
+  border:1px solid rgba(255,71,87,0.3); background:rgba(255,71,87,0.08); color:#ff4757;
 }
 .alert-pill.none { border-color:rgba(255,255,255,0.08); background:transparent; color:rgba(240,238,255,0.3); }
 .alert-pill svg { width:9px; height:9px; fill:currentColor; }
 #last-updated { font-size:0.56rem; color:rgba(240,238,255,0.28); letter-spacing:0.08em; }
 
-/* SIDE PANEL */
+/* ALERTS PANEL */
 #panel {
   position:fixed; top:54px; right:0; bottom:0; z-index:900; width:290px;
-  background:rgba(3,3,10,0.93); border-left:1px solid rgba(255,255,255,0.06);
-  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  background:rgba(3,3,10,0.95); border-left:1px solid rgba(255,255,255,0.06);
+  backdrop-filter:blur(20px);
   display:flex; flex-direction:column;
   transform:translateX(100%); transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);
 }
 #panel.open { transform:translateX(0); }
 #panel-toggle {
   position:fixed; top:50%; right:0; z-index:950; transform:translateY(-50%);
-  width:22px; height:56px;
-  background:rgba(3,3,10,0.85); border:1px solid rgba(255,255,255,0.08); border-right:none;
+  width:22px; height:52px;
+  background:rgba(3,3,10,0.88); border:1px solid rgba(255,255,255,0.08); border-right:none;
   border-radius:6px 0 0 6px; display:flex; align-items:center; justify-content:center;
-  cursor:pointer; transition:all 0.2s; opacity:0.4;
+  cursor:pointer; transition:all 0.2s; opacity:0.5;
 }
-#panel-toggle:hover { background:rgba(108,92,231,0.2); opacity:1; }
-#panel-toggle svg { width:11px; height:11px; fill:rgba(240,238,255,0.7); transition:transform 0.35s; }
+#panel-toggle:hover { background:rgba(108,92,231,0.25); opacity:1; }
+#panel-toggle svg { width:11px; height:11px; fill:rgba(240,238,255,0.6); transition:transform 0.3s; }
 #panel.open ~ #panel-toggle { right:290px; opacity:1; }
 #panel.open ~ #panel-toggle svg { transform:rotate(180deg); }
 .panel-header {
@@ -77,26 +74,19 @@ body { background:#03030a; color:#f0eeff; }
   color:rgba(240,238,255,0.4); display:flex; align-items:center; justify-content:space-between;
 }
 .panel-header b { color:#ff4757; }
-#alerts-list {
-  flex:1; overflow-y:auto; padding:8px;
-  scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.08) transparent;
-}
+#alerts-list { flex:1; overflow-y:auto; padding:8px; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.08) transparent; }
 #alerts-list::-webkit-scrollbar { width:3px; }
 #alerts-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:2px; }
-.alert-item {
-  padding:9px 12px; border-radius:7px; margin-bottom:5px;
-  border:1px solid transparent; cursor:pointer; transition:all 0.18s;
-  position:relative; overflow:hidden;
-}
+.alert-item { padding:9px 12px; border-radius:7px; margin-bottom:5px; border:1px solid transparent; cursor:pointer; transition:all 0.18s; position:relative; overflow:hidden; }
 .alert-item::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
 .alert-item:hover { background:rgba(255,255,255,0.04) !important; }
-.sev-extreme  { border-color:rgba(255,0,60,0.25);   background:rgba(255,0,60,0.06); }
+.sev-extreme  { border-color:rgba(255,0,60,0.25);  background:rgba(255,0,60,0.06); }
 .sev-extreme::before  { background:#ff003c; }
-.sev-severe   { border-color:rgba(255,71,87,0.2);   background:rgba(255,71,87,0.05); }
+.sev-severe   { border-color:rgba(255,71,87,0.2);  background:rgba(255,71,87,0.05); }
 .sev-severe::before   { background:#ff4757; }
-.sev-moderate { border-color:rgba(255,165,0,0.2);   background:rgba(255,165,0,0.05); }
+.sev-moderate { border-color:rgba(255,165,0,0.2);  background:rgba(255,165,0,0.05); }
 .sev-moderate::before { background:#ffa500; }
-.sev-minor    { border-color:rgba(255,214,0,0.2);   background:rgba(255,214,0,0.04); }
+.sev-minor    { border-color:rgba(255,214,0,0.2);  background:rgba(255,214,0,0.04); }
 .sev-minor::before    { background:#ffd600; }
 .sev-unknown  { border-color:rgba(255,255,255,0.08); background:rgba(255,255,255,0.02); }
 .sev-unknown::before  { background:rgba(255,255,255,0.2); }
@@ -107,10 +97,10 @@ body { background:#03030a; color:#f0eeff; }
 
 /* LEGEND */
 #legend {
-  position:fixed; bottom:130px; left:16px; z-index:900;
+  position:fixed; bottom:128px; left:16px; z-index:900;
   background:rgba(3,3,10,0.88); border:1px solid rgba(255,255,255,0.07);
   border-radius:10px; padding:10px 12px;
-  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  backdrop-filter:blur(16px);
 }
 .legend-title { font-size:0.52rem; letter-spacing:0.14em; text-transform:uppercase; color:rgba(240,238,255,0.3); margin-bottom:7px; }
 .legend-items { display:flex; flex-direction:column; gap:4px; }
@@ -120,68 +110,81 @@ body { background:#03030a; color:#f0eeff; }
 
 /* TIMELINE */
 #timeline {
-  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
   z-index:900;
-  background:rgba(3,3,10,0.9); border:1px solid rgba(255,255,255,0.08);
-  border-radius:14px; padding:10px 16px 20px;
-  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
-  width:min(520px, calc(100vw - 40px));
-  display:flex; flex-direction:column; gap:10px;
+  background:rgba(3,3,10,0.92); border:1px solid rgba(255,255,255,0.09);
+  border-radius:16px; padding:12px 18px 14px;
+  backdrop-filter:blur(20px);
+  width:min(540px, calc(100vw - 32px));
 }
-.tl-top { display:flex; align-items:center; gap:10px; }
+.tl-row1 {
+  display:flex; align-items:center; gap:12px; margin-bottom:10px;
+}
 #play-btn {
-  width:28px; height:28px; border-radius:50%; flex-shrink:0;
-  background:rgba(108,92,231,0.25); border:1px solid rgba(108,92,231,0.5);
+  width:30px; height:30px; border-radius:50%; flex-shrink:0;
+  background:rgba(108,92,231,0.2); border:1.5px solid rgba(108,92,231,0.5);
   display:flex; align-items:center; justify-content:center;
   cursor:pointer; transition:all 0.18s;
 }
-#play-btn:hover { background:rgba(108,92,231,0.5); transform:scale(1.08); }
-#play-btn svg { width:11px; height:11px; fill:#a29bfe; }
+#play-btn:hover { background:rgba(108,92,231,0.45); transform:scale(1.06); }
+#play-btn svg { width:12px; height:12px; fill:#a29bfe; }
 #time-display {
-  font-size:0.62rem; color:rgba(240,238,255,0.55); letter-spacing:0.06em; flex:1; text-align:center;
+  flex:1; text-align:center;
+  font-size:0.65rem; color:rgba(240,238,255,0.5); letter-spacing:0.05em;
 }
-#time-display b { color:#f0eeff; }
+#time-display .t-time { color:#f0eeff; font-weight:700; }
+#time-display .t-sep  { color:rgba(240,238,255,0.2); margin:0 5px; }
+#time-display .t-ago  { color:rgba(162,155,254,0.8); }
+#time-display .t-pos  { color:rgba(240,238,255,0.25); font-size:0.55rem; }
 
 /* Scrubber */
-.scrubber-wrap { position:relative; padding-bottom:18px; cursor:pointer; user-select:none; }
+#scrubber-outer { position:relative; }
 #scrubber-track {
   width:100%; height:5px; border-radius:999px;
-  background:rgba(255,255,255,0.1); position:relative; overflow:visible;
+  background:rgba(255,255,255,0.1); position:relative; cursor:pointer;
 }
 #scrubber-fill {
   height:100%; border-radius:999px;
   background:linear-gradient(90deg,#6c5ce7,#a29bfe);
-  width:100%; pointer-events:none;
+  width:0%; pointer-events:none; transition:width 0.05s;
 }
 #scrubber-thumb {
-  position:absolute; top:50%;
+  position:absolute; top:50%; left:0%;
   width:14px; height:14px; border-radius:50%;
   background:#a29bfe; border:2px solid #fff;
-  box-shadow:0 0 8px rgba(162,155,254,0.6);
-  transform:translate(-50%, -50%);
-  pointer-events:none; left:100%;
-  transition:left 0.08s;
+  box-shadow:0 0 8px rgba(162,155,254,0.7);
+  transform:translate(-50%,-50%);
+  pointer-events:none;
 }
-.scrubber-ticks {
-  position:absolute; bottom:0; left:0; right:0; height:16px;
+#scrubber-ticks {
+  display:flex; justify-content:space-between;
+  margin-top:8px; padding:0 1px;
 }
-.stick {
-  position:absolute; bottom:0;
-  font-size:0.48rem; color:rgba(240,238,255,0.35);
-  letter-spacing:0; transform:translateX(-50%);
-  white-space:nowrap;
+.tick-label {
+  font-size:0.5rem; color:rgba(240,238,255,0.3);
+  font-family:"JetBrains Mono",monospace; letter-spacing:0;
+  line-height:1;
 }
-.stick.now-label { color:#a29bfe; font-weight:700; }
+.tick-label.is-now { color:#a29bfe; font-weight:700; }
 
-/* Leaflet */
+/* status */
+#radar-status {
+  position:fixed; top:64px; left:50%; transform:translateX(-50%);
+  z-index:1100; background:rgba(3,3,10,0.9); border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px; padding:6px 14px; font-size:0.58rem; color:rgba(240,238,255,0.6);
+  letter-spacing:0.08em; pointer-events:none; opacity:0; transition:opacity 0.3s;
+}
+#radar-status.show { opacity:1; }
+
+/* Leaflet overrides */
 .leaflet-container { background:#03030a !important; }
-.leaflet-tile-pane { filter:brightness(0.85) saturate(0.55); }
+.leaflet-tile-pane { filter:brightness(0.88) saturate(0.5); }
+.leaflet-pane.radar-pane { filter:none !important; }
 .leaflet-control-zoom a {
   background:rgba(3,3,10,0.9) !important; color:rgba(240,238,255,0.7) !important;
   border-color:rgba(255,255,255,0.1) !important; font-family:"JetBrains Mono",monospace !important;
 }
 .leaflet-control-zoom a:hover { background:rgba(108,92,231,0.3) !important; color:#fff !important; }
-.leaflet-radar-pane { filter:none !important; }
 .leaflet-control-attribution {
   background:rgba(3,3,10,0.7) !important; color:rgba(240,238,255,0.2) !important;
   font-family:"JetBrains Mono",monospace !important; font-size:9px !important;
@@ -198,6 +201,7 @@ body { background:#03030a; color:#f0eeff; }
 <body>
 
 <div id="map"></div>
+<div id="radar-status" id="radar-status">Loading radar…</div>
 
 <div id="header">
   <div class="header-left">
@@ -209,22 +213,15 @@ body { background:#03030a; color:#f0eeff; }
     <div class="radar-logo">
       <div class="radar-logo-icon">
         <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id="rg" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#a29bfe" stop-opacity="0.9"/>
-              <stop offset="100%" stop-color="#6c5ce7" stop-opacity="0"/>
-            </radialGradient>
-          </defs>
+          <defs><radialGradient id="rg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#a29bfe" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#6c5ce7" stop-opacity="0"/>
+          </radialGradient></defs>
           <circle cx="16" cy="16" r="14" fill="none" stroke="rgba(108,92,231,0.2)" stroke-width="1"/>
           <circle cx="16" cy="16" r="10" fill="none" stroke="rgba(108,92,231,0.3)" stroke-width="1"/>
           <circle cx="16" cy="16" r="6"  fill="none" stroke="rgba(108,92,231,0.5)" stroke-width="1"/>
           <circle cx="16" cy="16" r="2"  fill="#a29bfe"/>
           <line x1="16" y1="16" x2="28" y2="6" stroke="url(#rg)" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M 26 7 A 13 13 0 0 1 29 16" fill="none" stroke="#a29bfe" stroke-width="1" opacity="0.35"/>
-          <line x1="16" y1="2"  x2="16" y2="5"  stroke="rgba(162,155,254,0.25)" stroke-width="1"/>
-          <line x1="16" y1="27" x2="16" y2="30" stroke="rgba(162,155,254,0.25)" stroke-width="1"/>
-          <line x1="2"  y1="16" x2="5"  y2="16" stroke="rgba(162,155,254,0.25)" stroke-width="1"/>
-          <line x1="27" y1="16" x2="30" y2="16" stroke="rgba(162,155,254,0.25)" stroke-width="1"/>
           <circle cx="23" cy="9" r="1.8" fill="#00ff88" opacity="0.85">
             <animate attributeName="opacity" values="0.85;0.1;0.85" dur="1.8s" repeatCount="indefinite"/>
             <animate attributeName="r" values="1.8;2.4;1.8" dur="1.8s" repeatCount="indefinite"/>
@@ -247,9 +244,7 @@ body { background:#03030a; color:#f0eeff; }
 </div>
 
 <div id="panel">
-  <div class="panel-header">
-    NWS Active Alerts — US &nbsp;<b id="panel-count">0</b>
-  </div>
+  <div class="panel-header">NWS Active Alerts — US &nbsp;<b id="panel-count">0</b></div>
   <div id="alerts-list"><div class="no-alerts">Loading alerts…</div></div>
 </div>
 <div id="panel-toggle" onclick="togglePanel()">
@@ -267,125 +262,172 @@ body { background:#03030a; color:#f0eeff; }
 </div>
 
 <div id="timeline">
-  <div class="tl-top">
+  <div class="tl-row1">
     <div id="play-btn" onclick="togglePlay()">
       <svg id="play-icon"  viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
       <svg id="pause-icon" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
     </div>
-    <div id="time-display"><b>Loading radar…</b></div>
+    <div id="time-display">
+      <span class="t-time">--:-- --</span>
+      <span class="t-sep">·</span>
+      <span class="t-ago">Loading…</span>
+    </div>
   </div>
-  <div class="scrubber-wrap" id="scrubber-wrap">
+  <div id="scrubber-outer">
     <div id="scrubber-track">
       <div id="scrubber-fill"></div>
       <div id="scrubber-thumb"></div>
     </div>
-    <div class="scrubber-ticks" id="scrubber-ticks"></div>
+    <div id="scrubber-ticks"></div>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-/* MAP */
-const map = L.map('map', { center:[35,-95], zoom:4, zoomControl:true });
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19
+// ── MAP SETUP ──────────────────────────────────────────────────────────────
+const map = L.map('map', {
+  center: [37, -95], zoom: 4,
+  zoomControl: true,
+  preferCanvas: true
+});
+
+// Stadia Alidade Smooth Dark — clean dark basemap, no API key needed
+L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+  attribution: '© Stadia Maps © OpenMapTiles © OpenStreetMap',
+  maxZoom: 18
 }).addTo(map);
-// Custom pane for radar so it's above base tiles but below UI, and not hit by the CSS filter
+
+// Custom pane for radar tiles so they are NOT affected by the base tile CSS filter
 map.createPane('radarPane');
 map.getPane('radarPane').style.zIndex = 300;
-map.getPane('radarPane').classList.add('leaflet-radar-pane');
+map.getPane('radarPane').classList.add('radar-pane');
 
-/* RADAR — official RainViewer pattern */
-let apiData      = {};
-let radarFrames  = [];
-let layerCache   = {};
-let currentLayer = null;
-let currentFrame = 0;
+// ── RADAR via Iowa State IEM NEXRAD ───────────────────────────────────────
+// IEM serves NEXRAD tiles at known timestamp offsets, no auth needed
+// URL pattern: https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-{ts}/{z}/{x}/{y}.png
+// ts values: 900913 = now, 900913-m05m = 5min ago, 900913-m10m = 10min ago … up to m50m
+
+const IEM_TS = [
+  '900913-m50m','900913-m45m','900913-m40m','900913-m35m',
+  '900913-m30m','900913-m25m','900913-m20m','900913-m15m',
+  '900913-m10m','900913-m05m','900913'
+];
+// Minutes-ago values matching each timestamp
+const IEM_MINS = [50,45,40,35,30,25,20,15,10,5,0];
+
+let frames       = [];   // { ts, minsAgo, layer }
+let currentIdx   = 0;
 let playing      = false;
 let playTimer    = null;
-const OPACITY    = 0.7;
-const TILE_SIZE  = window.devicePixelRatio >= 2 ? 512 : 256;
+let loadedAll    = false;
 
-function getLayer(frame) {
-  const path = frame.path;
-  if (!layerCache[path]) {
-    layerCache[path] = L.tileLayer(
-      apiData.host + path + '/' + TILE_SIZE + '/{z}/{x}/{y}/2/1_1.png',
-      { opacity: 0, pane: 'radarPane', maxNativeZoom: 7, maxZoom: 19 }
-    );
-  }
-  return layerCache[path];
+function setStatus(msg, show) {
+  const el = document.getElementById('radar-status');
+  el.textContent = msg;
+  el.classList.toggle('show', !!show);
 }
 
-async function loadRadar() {
-  try {
-    const data = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
-    apiData = data;
-    const past    = data.radar?.past    || [];
-    const nowcast = data.radar?.nowcast || [];
-    radarFrames = [...past, ...nowcast];
-    if (!radarFrames.length) {
-      document.getElementById('time-display').innerHTML = '<b>No radar data</b>';
-      return;
-    }
-    // Clean stale cache entries
-    const validPaths = new Set(radarFrames.map(f => f.path));
-    Object.keys(layerCache).forEach(p => {
-      if (!validPaths.has(p)) { map.removeLayer(layerCache[p]); delete layerCache[p]; }
-    });
-    buildScrubber();
-    document.getElementById('time-display').innerHTML = '<b>Loading tiles…</b>';
-    // Add all layers at opacity 0 to trigger tile fetch in background
-    radarFrames.forEach(f => {
-      const l = getLayer(f);
-      if (!map.hasLayer(l)) l.addTo(map);
-    });
-    // Wait for the most recent frame to load before showing
-    const latestLayer = getLayer(radarFrames[radarFrames.length - 1]);
-    latestLayer.once('load', () => { showFrame(radarFrames.length - 1); });
-    // Fallback: show after 3s even if tiles haven't all loaded
-    let _shown = false;
-latestLayer.once('load', () => { _shown = true; });
-setTimeout(() => { if (!_shown) showFrame(radarFrames.length - 1); }, 3000);
-  } catch(e) { console.error('Radar error:', e); }
+function buildFrames() {
+  // Clear any old layers
+  frames.forEach(f => { if (map.hasLayer(f.layer)) map.removeLayer(f.layer); });
+  frames = IEM_TS.map((ts, i) => ({
+    ts,
+    minsAgo: IEM_MINS[i],
+    layer: L.tileLayer(
+      `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-${ts}/{z}/{x}/{y}.png`,
+      { opacity: 0, pane: 'radarPane', maxZoom: 18, zIndex: 300 }
+    )
+  }));
+  buildTicks();
 }
 
 function showFrame(idx) {
-  idx = Math.max(0, Math.min(idx, radarFrames.length - 1));
-  // Hide previous frame
-  if (currentLayer) currentLayer.setOpacity(0);
-  currentFrame = idx;
-  const layer = getLayer(radarFrames[idx]);
-  if (!map.hasLayer(layer)) layer.addTo(map);
-  layer.setOpacity(OPACITY);
-  currentLayer = layer;
+  const prev = frames[currentIdx];
+  if (prev && map.hasLayer(prev.layer)) prev.layer.setOpacity(0);
+  currentIdx = Math.max(0, Math.min(idx, frames.length - 1));
+  const cur = frames[currentIdx];
+  if (!map.hasLayer(cur.layer)) cur.layer.addTo(map);
+  cur.layer.setOpacity(0.75);
   updateUI();
 }
 
 function updateUI() {
-  if (!radarFrames[currentFrame]) return;
-  const f       = radarFrames[currentFrame];
-  const d       = new Date(f.time * 1000);
-  const isNow   = currentFrame === radarFrames.length - 1;
-  const timeStr = d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-  const diff    = Math.round((Date.now() - d) / 60000);
-  const ago     = isNow ? 'NOW' : diff < 60 ? `${diff}m ago` : `${Math.round(diff/60)}h ago`;
+  const f = frames[currentIdx];
+  const isNow = f.minsAgo === 0;
+  const now = new Date();
+  const t = new Date(now.getTime() - f.minsAgo * 60000);
+  const h = t.getHours(), m = t.getMinutes();
+  const hh = ((h % 12) || 12).toString();
+  const mm = m.toString().padStart(2,'0');
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const agoTxt = isNow ? 'LIVE · NOW' : `${f.minsAgo}m ago`;
+
   document.getElementById('time-display').innerHTML =
-    `<b>${timeStr}</b> · ${ago} · ${currentFrame+1}/${radarFrames.length}`;
-  const pct = radarFrames.length > 1 ? (currentFrame / (radarFrames.length - 1)) * 100 : 100;
-  document.getElementById('scrubber-fill').style.width = pct + '%';
+    `<span class="t-time">${hh}:${mm} ${ampm}</span>` +
+    `<span class="t-sep"> · </span>` +
+    `<span class="t-ago">${agoTxt}</span>` +
+    `<span class="t-sep"> · </span>` +
+    `<span class="t-pos">${currentIdx+1}/${frames.length}</span>`;
+
+  const pct = frames.length > 1 ? (currentIdx / (frames.length - 1)) * 100 : 100;
+  document.getElementById('scrubber-fill').style.width  = pct + '%';
   document.getElementById('scrubber-thumb').style.left  = pct + '%';
 }
 
-/* PLAY / PAUSE */
+function buildTicks() {
+  const el = document.getElementById('scrubber-ticks');
+  // Show 5 evenly spaced labels
+  const picks = [0, 2, 5, 7, frames.length - 1];
+  el.innerHTML = picks.map(i => {
+    const f = frames[i];
+    const isNow = f.minsAgo === 0;
+    const label = isNow ? 'NOW' : `-${f.minsAgo}m`;
+    return `<span class="tick-label${isNow ? ' is-now' : ''}">${label}</span>`;
+  }).join('');
+}
+
+// Preload: add all layers to map at opacity 0 so browser fetches tiles
+function preloadAll() {
+  setStatus('Loading radar tiles…', true);
+  let loaded = 0;
+  frames.forEach(f => {
+    if (!map.hasLayer(f.layer)) f.layer.addTo(map);
+    f.layer.once('load', () => {
+      loaded++;
+      if (loaded === frames.length) {
+        loadedAll = true;
+        setStatus('', false);
+      }
+    });
+  });
+  // Show latest frame immediately, don't wait for all
+  showFrame(frames.length - 1);
+  // Hide status after 4s regardless
+  setTimeout(() => setStatus('', false), 4000);
+}
+
+// Refresh radar frames every 5 min (IEM updates every ~5 min)
+function refreshRadar() {
+  buildFrames();
+  preloadAll();
+}
+
+buildFrames();
+preloadAll();
+setInterval(refreshRadar, 300000);
+
+// ── PLAY / PAUSE ──────────────────────────────────────────────────────────
 function animStep() {
   if (!playing) return;
-  const next = currentFrame + 1;
-  if (next >= radarFrames.length) {
-    playTimer = setTimeout(() => { if (playing) { showFrame(0); playTimer = setTimeout(animStep, 500); } }, 1500);
+  const next = currentIdx + 1;
+  if (next >= frames.length) {
+    // Pause 1.5s on last frame then loop
+    playTimer = setTimeout(() => {
+      if (playing) { showFrame(0); playTimer = setTimeout(animStep, 600); }
+    }, 1500);
   } else {
     showFrame(next);
-    playTimer = setTimeout(animStep, 500);
+    playTimer = setTimeout(animStep, 600);
   }
 }
 
@@ -394,42 +436,15 @@ function togglePlay() {
   document.getElementById('play-icon').style.display  = playing ? 'none' : '';
   document.getElementById('pause-icon').style.display = playing ? '' : 'none';
   if (playing) {
-    playTimer = setTimeout(animStep, 500);
+    // Start from beginning if we're at the end
+    if (currentIdx >= frames.length - 1) showFrame(0);
+    playTimer = setTimeout(animStep, 600);
   } else {
     clearTimeout(playTimer); playTimer = null;
   }
 }
 
-/* SCRUBBER */
-function fmtTime(ts) {
-  const d  = new Date(ts * 1000);
-  const h  = d.getHours(), m = d.getMinutes();
-  const hh = h % 12 || 12;
-  const mm = m.toString().padStart(2, '0');
-  return `${hh}:${mm}${h < 12 ? 'a' : 'p'}`;
-}
-
-function buildScrubber() {
-  const ticks = document.getElementById('scrubber-ticks');
-  ticks.innerHTML = '';
-  const n = radarFrames.length;
-  if (!n) return;
-  // Always exactly 5 ticks: first, 25%, 50%, 75%, last
-  const picks = n <= 5
-    ? [...Array(n).keys()]
-    : [0, Math.round((n-1)*0.25), Math.round((n-1)*0.5), Math.round((n-1)*0.75), n-1];
-  picks.forEach(i => {
-    const isLast = i === n - 1;
-    const label  = isLast ? 'NOW' : fmtTime(radarFrames[i].time);
-    const pct    = n > 1 ? (i / (n - 1)) * 100 : 100;
-    const t      = document.createElement('span');
-    t.className  = 'stick' + (isLast ? ' now-label' : '');
-    t.textContent = label;
-    t.style.left  = pct + '%';
-    ticks.appendChild(t);
-  });
-}
-
+// ── SCRUBBER ──────────────────────────────────────────────────────────────
 function scrubTo(clientX) {
   const rect = document.getElementById('scrubber-track').getBoundingClientRect();
   const pct  = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
@@ -438,19 +453,19 @@ function scrubTo(clientX) {
     document.getElementById('play-icon').style.display  = '';
     document.getElementById('pause-icon').style.display = 'none';
   }
-  showFrame(Math.round(pct * (radarFrames.length - 1)));
+  showFrame(Math.round(pct * (frames.length - 1)));
 }
 
 let dragging = false;
-const sw = document.getElementById('scrubber-wrap');
-sw.addEventListener('mousedown',  e => { dragging = true; scrubTo(e.clientX); });
-sw.addEventListener('touchstart', e => { dragging = true; scrubTo(e.touches[0].clientX); }, { passive:true });
-window.addEventListener('mousemove', e => { if (dragging) scrubTo(e.clientX); });
-window.addEventListener('touchmove', e => { if (dragging) scrubTo(e.touches[0].clientX); }, { passive:true });
-window.addEventListener('mouseup',  () => dragging = false);
-window.addEventListener('touchend', () => dragging = false);
+const track = document.getElementById('scrubber-track');
+track.addEventListener('mousedown',  e => { dragging = true; scrubTo(e.clientX); });
+track.addEventListener('touchstart', e => { dragging = true; scrubTo(e.touches[0].clientX); }, {passive:true});
+window.addEventListener('mousemove',  e => { if (dragging) scrubTo(e.clientX); });
+window.addEventListener('touchmove',  e => { if (dragging) scrubTo(e.touches[0].clientX); }, {passive:true});
+window.addEventListener('mouseup',   () => dragging = false);
+window.addEventListener('touchend',  () => dragging = false);
 
-/* NWS ALERTS */
+// ── NWS ALERTS ────────────────────────────────────────────────────────────
 let alertLayers = [];
 const SEV = { Extreme:'#ff003c', Severe:'#ff4757', Moderate:'#ffa500', Minor:'#ffd600', Unknown:'rgba(255,255,255,0.3)' };
 const sevClass = s => 'sev-' + (s||'unknown').toLowerCase();
@@ -463,17 +478,16 @@ const timeAgo = iso => {
 async function loadAlerts() {
   try {
     const data = await (await fetch('https://api.weather.gov/alerts/active?status=actual&message_type=alert&limit=500')).json();
-    const feats = (data.features||[]).sort((a,b)=>{
-      const o={Extreme:0,Severe:1,Moderate:2,Minor:3,Unknown:4};
-      return (o[a.properties.severity]||4)-(o[b.properties.severity]||4);
+    const feats = (data.features||[]).sort((a,b) => {
+      const o = {Extreme:0,Severe:1,Moderate:2,Minor:3,Unknown:4};
+      return (o[a.properties.severity]||4) - (o[b.properties.severity]||4);
     });
     alertLayers.forEach(l => map.removeLayer(l));
     alertLayers = [];
     const list = document.getElementById('alerts-list');
-    const pill = document.getElementById('alert-pill');
     document.getElementById('alert-num').textContent   = feats.length;
     document.getElementById('panel-count').textContent = feats.length;
-    pill.className = feats.length ? 'alert-pill' : 'alert-pill none';
+    document.getElementById('alert-pill').className = feats.length ? 'alert-pill' : 'alert-pill none';
     if (!feats.length) {
       list.innerHTML = '<div class="no-alerts">No active alerts.<br>All clear across the US.</div>';
     } else {
@@ -500,11 +514,8 @@ async function loadAlerts() {
 
 function togglePanel() { document.getElementById('panel').classList.toggle('open'); }
 
-/* INIT */
-loadRadar();
 loadAlerts();
 setInterval(loadAlerts, 60000);
-setInterval(loadRadar, 300000);
 </script>
 </body>
 </html>
