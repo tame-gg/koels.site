@@ -352,7 +352,10 @@ function preloadAll() {
 }
 
 function showFrame(idx) {
-  // Hide old
+  // Hide all RV layers first to prevent overlap
+  Object.values(rvLayers).forEach(l => { try { l.setOpacity(0); } catch(e){} });
+  rvActive = null;
+  // Hide old IEM frame
   if (frames[currentIdx]) frames[currentIdx].layer.setOpacity(0);
   currentIdx = Math.max(0, Math.min(idx, frames.length - 1));
   frames[currentIdx].layer.setOpacity(0.8);
@@ -419,6 +422,8 @@ async function loadRainViewer() {
 function showRVFrame(idx) {
   if (!rvFrames.length) return;
   idx = Math.max(0, Math.min(idx, rvFrames.length - 1));
+  // Always hide all IEM frames first to prevent overlap
+  frames.forEach(f => f.layer.setOpacity(0));
   if (rvActive) { rvActive.setOpacity(0); }
   const path  = rvFrames[idx].path;
   const layer = rvLayers[path];
@@ -427,6 +432,8 @@ function showRVFrame(idx) {
     layer.setOpacity(0.75);
     rvActive = layer;
   }
+  currentIdx = idx;
+  updateUI();
 }
 
 // Detect if center of map is roughly outside CONUS
@@ -462,18 +469,21 @@ function animStep() {
   const total = globalMode ? rvFrames.length : frames.length;
   const next  = currentIdx + 1;
   if (next >= total) {
+    // Hold on last frame, then loop back to start
     playTimer = setTimeout(() => {
-      if (playing) {
-        currentIdx = -1;
-        animStep();
-      }
+      if (!playing) return;
+      showFrame_or_RV(0);
+      playTimer = setTimeout(animStep, FRAME_MS);
     }, HOLD_MS);
   } else {
-    currentIdx = next;
-    if (globalMode) showRVFrame(currentIdx);
-    else            showFrame(currentIdx);
+    showFrame_or_RV(next);
     playTimer = setTimeout(animStep, FRAME_MS);
   }
+}
+
+function showFrame_or_RV(idx) {
+  if (globalMode) showRVFrame(idx);
+  else            showFrame(idx);
 }
 
 function startPlay() {
@@ -481,8 +491,12 @@ function startPlay() {
   playing = true;
   document.getElementById('play-icon').style.display  = 'none';
   document.getElementById('pause-icon').style.display = '';
-  currentIdx = 0;
-  if (globalMode) showRVFrame(0); else showFrame(0);
+  // Resume from current position — if already at last frame, restart from beginning
+  const total = globalMode ? rvFrames.length : frames.length;
+  if (currentIdx >= total - 1) {
+    currentIdx = 0;
+    showFrame_or_RV(0);
+  }
   playTimer = setTimeout(animStep, FRAME_MS);
 }
 
@@ -510,7 +524,8 @@ function scrubTo(clientX) {
     document.getElementById('play-icon').style.display  = '';
     document.getElementById('pause-icon').style.display = 'none';
   }
-  showFrame(Math.round(pct * (frames.length - 1)));
+  const total = globalMode ? rvFrames.length : frames.length;
+  showFrame_or_RV(Math.round(pct * (total - 1)));
 }
 
 let dragging = false;
