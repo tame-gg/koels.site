@@ -395,7 +395,6 @@ html[data-theme="aero"] .link-btn:hover .link-arrow { transform:translateX(3px);
    CD SPIN (shared keyframe for spotify + float disc)
    ===================================================== */
 @keyframes disc-spin { to { transform:rotate(360deg); } }
-
 @keyframes fadeUp {
   from { opacity:0; transform:translateY(14px); }
   to   { opacity:1; transform:translateY(0); }
@@ -516,99 +515,31 @@ html[data-theme="aero"] .footer {
 #lyrics-scroll { scrollbar-width:none; -ms-overflow-style:none; }
 #lyrics-scroll::-webkit-scrollbar { display:none; }
 
-/* The panel itself */
-#lyrics-panel {
-  border-radius:10px;
-  overflow:hidden;
-}
-:is(html, html[data-theme="dark"]) #lyrics-panel {
-  background:#0a0a16;
-  border:1px solid rgba(255,255,255,0.06);
-}
-html[data-theme="aero"] #lyrics-panel {
-  background:rgba(255,255,255,0.45);
-  border:1.5px solid rgba(255,255,255,0.8);
-  backdrop-filter:blur(12px);
-}
+#lyrics-panel { border-radius:10px; overflow:hidden; margin-top:10px; margin-bottom:2px; }
+:is(html,html[data-theme="dark"]) #lyrics-panel { background:#0a0a16; border:1px solid rgba(255,255,255,0.06); }
+html[data-theme="aero"] #lyrics-panel { background:rgba(255,255,255,0.45); border:1.5px solid rgba(255,255,255,0.8); backdrop-filter:blur(12px); }
 
-/* Each lyric line */
 .lyric-line {
-  font-size:0.88rem;
-  font-weight:700;
-  line-height:1.35;
-  padding:5px 14px;
-  border-radius:6px;
-  cursor:default;
-  text-align:left;
-  transition:
-    color      0.45s cubic-bezier(0.16,1,0.3,1),
-    opacity    0.45s cubic-bezier(0.16,1,0.3,1),
-    transform  0.45s cubic-bezier(0.16,1,0.3,1),
-    font-size  0.35s cubic-bezier(0.16,1,0.3,1);
-  will-change: transform, opacity;
-  transform-origin: left center;
+  font-size:0.88rem; font-weight:700; line-height:1.35;
+  padding:5px 14px; border-radius:6px; cursor:default; text-align:left;
+  transition: color 0.4s cubic-bezier(0.16,1,0.3,1),
+              opacity 0.4s cubic-bezier(0.16,1,0.3,1),
+              transform 0.4s cubic-bezier(0.16,1,0.3,1),
+              font-size 0.3s cubic-bezier(0.16,1,0.3,1);
+  will-change:transform,opacity; transform-origin:left center;
 }
+:is(html,html[data-theme="dark"]) .lyric-line         { color:rgba(240,238,255,0.18); transform:scale(0.93); opacity:0.6; }
+:is(html,html[data-theme="dark"]) .lyric-line.near    { color:rgba(240,238,255,0.42); transform:scale(0.97); opacity:0.85; }
+:is(html,html[data-theme="dark"]) .lyric-line.active  { color:#fff; font-size:1.02rem; transform:scale(1); opacity:1; }
+html[data-theme="aero"] .lyric-line                   { color:rgba(13,74,128,0.22); transform:scale(0.93); opacity:0.6; }
+html[data-theme="aero"] .lyric-line.near              { color:rgba(13,74,128,0.5);  transform:scale(0.97); opacity:0.85; }
+html[data-theme="aero"] .lyric-line.active            { color:#0d4a80; font-size:1.02rem; transform:scale(1); opacity:1; }
 
-/* Dark theme default — dim, slightly small */
-:is(html, html[data-theme="dark"]) .lyric-line {
-  color:rgba(240,238,255,0.18);
-  transform:scale(0.93);
-  opacity:0.6;
-}
-:is(html, html[data-theme="dark"]) .lyric-line.near-prev,
-:is(html, html[data-theme="dark"]) .lyric-line.near-next {
-  color:rgba(240,238,255,0.42);
-  transform:scale(0.97);
-  opacity:0.85;
-}
-:is(html, html[data-theme="dark"]) .lyric-line.active {
-  color:#ffffff;
-  font-size:1.02rem;
-  transform:scale(1);
-  opacity:1;
-}
-
-/* Aero theme */
-html[data-theme="aero"] .lyric-line {
-  color:rgba(13,74,128,0.22);
-  transform:scale(0.93);
-  opacity:0.6;
-}
-html[data-theme="aero"] .lyric-line.near-prev,
-html[data-theme="aero"] .lyric-line.near-next {
-  color:rgba(13,74,128,0.5);
-  transform:scale(0.97);
-  opacity:0.85;
-}
-html[data-theme="aero"] .lyric-line.active {
-  color:#0d4a80;
-  font-size:1.02rem;
-  transform:scale(1);
-  opacity:1;
-}
-
-/* Lyrics button */
-#lyrics-btn {
-  font-family:inherit;
-}
-:is(html, html[data-theme="dark"]) #lyrics-btn {
-  border-color:rgba(255,255,255,0.08);
-  background:rgba(255,255,255,0.03);
-  color:rgba(240,238,255,0.4);
-}
-:is(html, html[data-theme="dark"]) #lyrics-btn:hover {
-  background:rgba(255,255,255,0.07);
-  color:rgba(240,238,255,0.75);
-}
-html[data-theme="aero"] #lyrics-btn {
-  border-color:rgba(100,180,240,0.25);
-  background:rgba(255,255,255,0.15);
-  color:#4a90c0;
-}
-html[data-theme="aero"] #lyrics-btn:hover {
-  background:rgba(255,255,255,0.35);
-  color:#1a5a90;
-}
+#lyrics-btn { font-family:inherit; }
+:is(html,html[data-theme="dark"]) #lyrics-btn       { border-color:rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); color:rgba(240,238,255,0.4); }
+:is(html,html[data-theme="dark"]) #lyrics-btn:hover { background:rgba(255,255,255,0.07); color:rgba(240,238,255,0.75); }
+html[data-theme="aero"] #lyrics-btn                 { border-color:rgba(100,180,240,0.25); background:rgba(255,255,255,0.15); color:#4a90c0; }
+html[data-theme="aero"] #lyrics-btn:hover           { background:rgba(255,255,255,0.35); color:#1a5a90; }
 
 
 .links .link-btn { opacity:0; animation:fadeUp 0.4s var(--ease) forwards; }
@@ -704,9 +635,9 @@ html[data-theme="aero"] #lyrics-btn:hover {
       </div>
 
       <!-- LYRICS PANEL -->
-      <div id="lyrics-panel" style="display:none;margin-top:10px;margin-bottom:2px;">
+      <div id="lyrics-panel" style="display:none;">
         <div id="lyrics-scroll" style="
-          height:220px;overflow-y:auto;
+          height:220px; overflow-y:auto;
           mask-image:linear-gradient(transparent 0%, black 18%, black 82%, transparent 100%);
           -webkit-mask-image:linear-gradient(transparent 0%, black 18%, black 82%, transparent 100%);
         ">
@@ -942,11 +873,14 @@ function toggleMusic() {
   let prog=null;
   function fms(ms){ const s=Math.floor(ms/1000),m=Math.floor(s/60); return m+':'+(s%60).toString().padStart(2,'0'); }
   function startP(ts){
-    if(prog)clearInterval(prog); const{start,end}=ts,tot=end-start; els.spDur.textContent=fms(tot);
-    function tk(){ const e=Math.min(Date.now()-start,tot); els.spBar.style.width=((e/tot)*100)+'%'; els.spEl.textContent=fms(e); }
+    if(currentTrackStart === ts.start && prog) return;
+    currentTrackStart = ts.start;
+    if(prog) clearInterval(prog);
+    const tot=ts.end-ts.start; els.spDur.textContent=fms(tot);
+    function tk(){ const e=Math.min(Date.now()-ts.start,tot); els.spBar.style.width=((e/tot)*100)+'%'; els.spEl.textContent=fms(e); }
     tk(); prog=setInterval(tk,1000);
   }
-  function stopP(){ if(prog){clearInterval(prog);prog=null;} els.spBar.style.width='0%'; els.spEl.textContent='0:00'; els.spDur.textContent='0:00'; }
+  function stopP(){ if(prog){clearInterval(prog);prog=null;} currentTrackStart=0; els.spBar.style.width='0%'; els.spEl.textContent='0:00'; els.spDur.textContent='0:00'; }
   const S={online:{c:'#00ff88',l:'online'},idle:{c:'#ffa500',l:'idle'},dnd:{c:'#ff4757',l:'do not disturb'},offline:{c:'#747f8d',l:'offline'}};
   function setAv(url){ [els.avatarImg,els.cAvatarImg].forEach(i=>{i.src=url;i.style.display='block';}); els.avatarFb.style.display='none'; els.cAvatarFb.style.display='none'; }
   async function go(){
@@ -977,11 +911,11 @@ function toggleMusic() {
         if(artUrl){spArt.src=artUrl;spArt.style.display='block';}
         else{spArt.style.display='none';}
         els.spRow.style.display='block';
-        if(d.spotify.timestamps){ startP(d.spotify.timestamps); spotifyStart = d.spotify.timestamps.start; }
+        if(d.spotify.timestamps)startP(d.spotify.timestamps);
         any=true;
       } else {
         els.spRow.style.display='none'; stopP();
-        currentSong=''; currentArtist=''; lyricsLines=[]; lyricsOpen=false; spotifyStart=0; lastActiveIdx=-1;
+        currentSong=''; currentArtist=''; lyricsLines=[]; lyricsOpen=false; lastActiveIdx=-1;
         document.getElementById('lyrics-panel').style.display='none';
         document.getElementById('lyrics-btn').style.display='none';
         document.getElementById('lyrics-lines').innerHTML='';
@@ -1004,7 +938,8 @@ let lyricsOpen     = false;
 let currentSong    = '';
 let currentArtist  = '';
 let lyricsInterval = null;
-let spotifyStart   = 0;   // ms epoch when track started (from Lanyard timestamps.start)
+let lastActiveIdx  = -1;
+let currentTrackStart = 0; // set by Lanyard, read by syncLyrics
 
 async function fetchLyrics(song, artist, duration) {
   try {
@@ -1013,14 +948,12 @@ async function fetchLyrics(song, artist, duration) {
     if (!res.ok) return;
     const data = await res.json();
     if (!data.syncedLyrics) return;
-    // Parse LRC: [mm:ss.xx] text
     lyricsLines = data.syncedLyrics
       .split('\n')
       .map(line => {
         const m = line.match(/^\[(\d+):(\d+\.\d+)\](.*)/);
         if (!m) return null;
-        const secs = parseInt(m[1]) * 60 + parseFloat(m[2]);
-        return { t: secs, text: m[3].trim() };
+        return { t: parseInt(m[1]) * 60 + parseFloat(m[2]), text: m[3].trim() };
       })
       .filter(l => l && l.text.length > 0);
     if (lyricsLines.length > 0) {
@@ -1045,40 +978,36 @@ function renderLyrics() {
 
 function startLyricsSync() {
   if (lyricsInterval) clearInterval(lyricsInterval);
-  lyricsInterval = setInterval(syncLyrics, 100); // 100ms for smooth feel
+  lyricsInterval = setInterval(syncLyrics, 100);
 }
 
-let lastActiveIdx = -1;
-
 function syncLyrics() {
-  if (!lyricsOpen || lyricsLines.length === 0 || !spotifyStart) return;
+  if (!lyricsOpen || lyricsLines.length === 0 || !currentTrackStart) return;
 
-  // High-accuracy time: use real wall clock against Spotify's start timestamp
-  const currentSec = (Date.now() - spotifyStart) / 1000;
+  // Use the same source of truth as the progress bar: Date.now() - track start
+  const nowSec = (Date.now() - currentTrackStart) / 1000;
 
   let activeIdx = -1;
   for (let i = lyricsLines.length - 1; i >= 0; i--) {
-    if (currentSec >= lyricsLines[i].t) { activeIdx = i; break; }
+    if (nowSec >= lyricsLines[i].t) { activeIdx = i; break; }
   }
 
-  if (activeIdx === lastActiveIdx) return; // nothing changed
+  if (activeIdx === lastActiveIdx) return;
   lastActiveIdx = activeIdx;
 
   lyricsLines.forEach((_, i) => {
     const el = document.getElementById(`lyric-${i}`);
     if (!el) return;
-    el.classList.remove('active', 'near-prev', 'near-next');
-    if (i === activeIdx)     el.classList.add('active');
-    else if (i === activeIdx - 1) el.classList.add('near-prev');
-    else if (i === activeIdx + 1) el.classList.add('near-next');
+    el.classList.remove('active', 'near');
+    if (i === activeIdx)                                el.classList.add('active');
+    else if (i === activeIdx - 1 || i === activeIdx + 1) el.classList.add('near');
   });
 
-  // Keep active line centered in scroll container
   if (activeIdx >= 0) {
     const activeEl = document.getElementById(`lyric-${activeIdx}`);
     const scroll   = document.getElementById('lyrics-scroll');
     if (activeEl && scroll) {
-      const target = activeEl.offsetTop - (scroll.clientHeight / 2) + (activeEl.offsetHeight / 2);
+      const target = activeEl.offsetTop - scroll.clientHeight / 2 + activeEl.offsetHeight / 2;
       scroll.scrollTo({ top: target, behavior: 'smooth' });
     }
   }
