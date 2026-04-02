@@ -310,7 +310,7 @@ async function loadRadar() {
     radarFrames.forEach((f, i) => {
       layers[i] = L.tileLayer(
         `https://tilecache.rainviewer.com${f.path}/256/{z}/{x}/{y}/2/1_1.png`,
-        { opacity:0, zIndex:10 }
+        { opacity:0, zIndex:10, minZoom:1, maxZoom:12, maxNativeZoom:12 }
       ).addTo(map);
     });
 
@@ -350,9 +350,19 @@ function togglePlay() {
   document.getElementById('play-icon').style.display  = playing ? 'none' : '';
   document.getElementById('pause-icon').style.display = playing ? '' : 'none';
   if (playing) {
-    playTimer = setInterval(() => showFrame((currentFrame + 1) % radarFrames.length), 500);
+    function step() {
+      const next = currentFrame + 1;
+      if (next >= radarFrames.length) {
+        showFrame(radarFrames.length - 1);
+        playTimer = setTimeout(() => { if (playing) { showFrame(0); playTimer = setTimeout(step, 500); } }, 1500);
+      } else {
+        showFrame(next);
+        playTimer = setTimeout(step, 500);
+      }
+    }
+    playTimer = setTimeout(step, 500);
   } else {
-    clearInterval(playTimer); playTimer = null;
+    clearTimeout(playTimer); playTimer = null;
   }
 }
 
@@ -379,7 +389,7 @@ function buildScrubber() {
 function scrubTo(clientX) {
   const rect = document.getElementById('scrubber-track').getBoundingClientRect();
   const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-  if (playing) togglePlay(); // pause on scrub
+  if (playing) { playing = false; clearTimeout(playTimer); playTimer = null; document.getElementById('play-icon').style.display=''; document.getElementById('pause-icon').style.display='none'; }
   showFrame(Math.round(pct * (radarFrames.length - 1)));
 }
 
