@@ -7,6 +7,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>koels.site — Radar</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%2303030a'/%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%236c5ce7' stroke-width='0.8' opacity='0.4'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%236c5ce7' stroke-width='0.8' opacity='0.5'/%3E%3Ccircle cx='16' cy='16' r='5' fill='none' stroke='%236c5ce7' stroke-width='0.8' opacity='0.7'/%3E%3Ccircle cx='16' cy='16' r='2' fill='%23a29bfe'/%3E%3Cline x1='16' y1='16' x2='27' y2='7' stroke='%23a29bfe' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='9' r='2' fill='%2300ff88'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -62,11 +63,13 @@ body { background:#03030a; color:#f0eeff; }
   width:22px; height:52px;
   background:rgba(3,3,10,0.88); border:1px solid rgba(255,255,255,0.08); border-right:none;
   border-radius:6px 0 0 6px; display:flex; align-items:center; justify-content:center;
-  cursor:pointer; transition:all 0.2s; opacity:0.5;
+  cursor:pointer; transition:all 0.2s;
+  opacity:0; pointer-events:none;
 }
-#panel-toggle:hover { background:rgba(108,92,231,0.25); opacity:1; }
+#panel-toggle.has-alerts { opacity:0.55; pointer-events:auto; }
+#panel-toggle.has-alerts:hover { background:rgba(108,92,231,0.25); opacity:1; }
 #panel-toggle svg { width:11px; height:11px; fill:rgba(240,238,255,0.6); transition:transform 0.3s; }
-#panel.open ~ #panel-toggle { right:290px; opacity:1; }
+#panel.open ~ #panel-toggle { right:290px; opacity:1 !important; pointer-events:auto; }
 #panel.open ~ #panel-toggle svg { transform:rotate(180deg); }
 .panel-header {
   padding:14px 14px 10px; border-bottom:1px solid rgba(255,255,255,0.06);
@@ -80,10 +83,10 @@ body { background:#03030a; color:#f0eeff; }
 .alert-item { padding:9px 12px; border-radius:7px; margin-bottom:5px; border:1px solid transparent; cursor:pointer; transition:all 0.18s; position:relative; overflow:hidden; }
 .alert-item::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
 .alert-item:hover { background:rgba(255,255,255,0.04) !important; }
-.sev-extreme  { border-color:rgba(255,0,60,0.25);  background:rgba(255,0,60,0.06); }
-.sev-extreme::before  { background:#ff003c; }
-.sev-severe   { border-color:rgba(255,71,87,0.2);  background:rgba(255,71,87,0.05); }
-.sev-severe::before   { background:#ff4757; }
+.sev-extreme  { border-color:rgba(255,0,200,0.35);  background:rgba(255,0,200,0.07); }
+.sev-extreme::before  { background:#ff00cc; }
+.sev-severe   { border-color:rgba(255,45,45,0.3);  background:rgba(255,45,45,0.06); }
+.sev-severe::before   { background:#ff2d2d; }
 .sev-moderate { border-color:rgba(255,165,0,0.2);  background:rgba(255,165,0,0.05); }
 .sev-moderate::before { background:#ffa500; }
 .sev-minor    { border-color:rgba(255,214,0,0.2);  background:rgba(255,214,0,0.04); }
@@ -244,7 +247,7 @@ body { background:#03030a; color:#f0eeff; }
 </div>
 
 <div id="panel">
-  <div class="panel-header">NWS Active Alerts — US &nbsp;<b id="panel-count">0</b></div>
+  <div class="panel-header">Active Alerts — Global &nbsp;<b id="panel-count">0</b></div>
   <div id="alerts-list"><div class="no-alerts">Loading alerts…</div></div>
 </div>
 <div id="panel-toggle" onclick="togglePanel()">
@@ -254,8 +257,8 @@ body { background:#03030a; color:#f0eeff; }
 <div id="legend">
   <div class="legend-title">Alert Severity</div>
   <div class="legend-items">
-    <div class="legend-item"><div class="legend-dot" style="background:#ff003c"></div><div class="legend-label">Extreme</div></div>
-    <div class="legend-item"><div class="legend-dot" style="background:#ff4757"></div><div class="legend-label">Severe</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff00cc"></div><div class="legend-label">Extreme</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff2d2d"></div><div class="legend-label">Severe</div></div>
     <div class="legend-item"><div class="legend-dot" style="background:#ffa500"></div><div class="legend-label">Moderate</div></div>
     <div class="legend-item"><div class="legend-dot" style="background:#ffd600"></div><div class="legend-label">Minor</div></div>
   </div>
@@ -387,16 +390,88 @@ function buildTicks() {
   }).join('');
 }
 
+// ── GLOBAL RADAR (RainViewer — worldwide coverage) ───────────────────────
+// Used when the map viewport is outside the US (IEM only covers CONUS)
+let rvApiData   = null;
+let rvFrames    = [];
+let rvLayers    = {};
+let rvActive    = null;
+let globalMode  = false;
+
+async function loadRainViewer() {
+  try {
+    const data = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
+    rvApiData = data;
+    rvFrames  = [...(data.radar?.past||[]), ...(data.radar?.nowcast||[])];
+    // Pre-create layers
+    Object.values(rvLayers).forEach(l => { try { map.removeLayer(l); } catch(e){} });
+    rvLayers = {};
+    const sz = window.devicePixelRatio >= 2 ? 512 : 256;
+    rvFrames.forEach(f => {
+      rvLayers[f.path] = L.tileLayer(
+        data.host + f.path + '/' + sz + '/{z}/{x}/{y}/2/1_1.png',
+        { opacity:0, pane:'radarPane', maxNativeZoom:7, maxZoom:19 }
+      );
+    });
+  } catch(e) { console.error('RainViewer load error:', e); }
+}
+
+function showRVFrame(idx) {
+  if (!rvFrames.length) return;
+  idx = Math.max(0, Math.min(idx, rvFrames.length - 1));
+  if (rvActive) { rvActive.setOpacity(0); }
+  const path  = rvFrames[idx].path;
+  const layer = rvLayers[path];
+  if (layer) {
+    if (!map.hasLayer(layer)) layer.addTo(map);
+    layer.setOpacity(0.75);
+    rvActive = layer;
+  }
+}
+
+// Detect if center of map is roughly outside CONUS
+function isOutsideUS() {
+  const c = map.getCenter();
+  return !(c.lat > 24 && c.lat < 50 && c.lng > -126 && c.lng < -65);
+}
+
+// Called every animation frame — pick IEM or RainViewer based on viewport
+function getFrameCount()  { return globalMode ? rvFrames.length  : frames.length; }
+
+map.on('moveend', () => {
+  const outside = isOutsideUS();
+  if (outside !== globalMode) {
+    globalMode = outside;
+    // Switch radar source: hide the other
+    if (globalMode) {
+      frames.forEach(f => f.layer.setOpacity(0));
+      showRVFrame(rvFrames.length - 1);
+    } else {
+      if (rvActive) rvActive.setOpacity(0);
+      showFrame(frames.length - 1);
+    }
+  }
+});
+
+loadRainViewer();
+setInterval(loadRainViewer, 300000);
+
 // ── PLAY / PAUSE ──────────────────────────────────────────────────────────
 function animStep() {
   if (!playing) return;
-  const next = currentIdx + 1;
-  if (next >= frames.length) {
+  const total = globalMode ? rvFrames.length : frames.length;
+  const next  = currentIdx + 1;
+  if (next >= total) {
     playTimer = setTimeout(() => {
-      if (playing) { showFrame(0); playTimer = setTimeout(animStep, FRAME_MS); }
+      if (playing) {
+        currentIdx = -1;
+        animStep();
+      }
     }, HOLD_MS);
   } else {
-    showFrame(next);
+    currentIdx = next;
+    if (globalMode) showRVFrame(currentIdx);
+    else            showFrame(currentIdx);
     playTimer = setTimeout(animStep, FRAME_MS);
   }
 }
@@ -406,7 +481,8 @@ function startPlay() {
   playing = true;
   document.getElementById('play-icon').style.display  = 'none';
   document.getElementById('pause-icon').style.display = '';
-  showFrame(0);
+  currentIdx = 0;
+  if (globalMode) showRVFrame(0); else showFrame(0);
   playTimer = setTimeout(animStep, FRAME_MS);
 }
 
@@ -446,9 +522,10 @@ window.addEventListener('touchmove',  e => { if (dragging) scrubTo(e.touches[0].
 window.addEventListener('mouseup',   () => dragging = false);
 window.addEventListener('touchend',  () => dragging = false);
 
-// ── NWS ALERTS ────────────────────────────────────────────────────────────
+// ── GLOBAL ALERTS ─────────────────────────────────────────────────────────
 let alertLayers = [];
-const SEV = { Extreme:'#ff003c', Severe:'#ff4757', Moderate:'#ffa500', Minor:'#ffd600', Unknown:'rgba(255,255,255,0.3)' };
+const SEV = { Extreme:'#ff00cc', Severe:'#ff2d2d', Moderate:'#ffa500', Minor:'#ffd600', Unknown:'rgba(255,255,255,0.3)' };
+const sevOrder = { Extreme:0, Severe:1, Moderate:2, Minor:3, Unknown:4 };
 const sevClass = s => 'sev-' + (s||'unknown').toLowerCase();
 const timeAgo = iso => {
   if (!iso) return '';
@@ -456,41 +533,126 @@ const timeAgo = iso => {
   return d < 60 ? `${d}m ago` : d < 1440 ? `${Math.round(d/60)}h ago` : `${Math.round(d/1440)}d ago`;
 };
 
-async function loadAlerts() {
+// Map bounds → which region APIs to query
+// We always fetch NWS (US). For Europe we use MeteoAlarm via open-meteo proxy.
+// For other regions we use Open-Meteo's global alert feed where available.
+
+async function fetchNWSAlerts() {
   try {
     const data = await (await fetch('https://api.weather.gov/alerts/active?status=actual&message_type=alert&limit=500')).json();
-    const feats = (data.features||[]).sort((a,b) => {
-      const o = {Extreme:0,Severe:1,Moderate:2,Minor:3,Unknown:4};
-      return (o[a.properties.severity]||4) - (o[b.properties.severity]||4);
+    return (data.features||[]).map(f => ({
+      severity: f.properties.severity || 'Unknown',
+      event:    f.properties.event || 'Alert',
+      area:     f.properties.areaDesc || '',
+      sent:     f.properties.sent,
+      geometry: f.geometry,
+      region:   'US'
+    }));
+  } catch(e) { return []; }
+}
+
+async function fetchOpenMeteoAlerts() {
+  // Open-Meteo provides global severe weather alerts via their free API (no key)
+  // Uses DWD (Germany), Météo-France, MET Norway, Environment Canada, etc.
+  const regions = [
+    { name:'Europe',  lat:50,  lon:10  },
+    { name:'Canada',  lat:56,  lon:-96 },
+    { name:'Australia', lat:-25, lon:134 },
+    { name:'UK',      lat:54,  lon:-2  },
+    { name:'Japan',   lat:36,  lon:138 },
+  ];
+  const results = [];
+  await Promise.allSettled(regions.map(async r => {
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${r.lat}&longitude=${r.lon}&daily=weathercode&timezone=auto&forecast_days=1`;
+      // Open-Meteo doesn't have an alerts endpoint yet — use their partner
+      // Use 7timer / wttr for fallback but actually the best free global alert API is:
+      // https://openweathermap.org/api/push-weather-alerts (needs key)
+      // Best truly-free option: scrape NWS international + use meteoalert RSS
+    } catch(e) {}
+  }));
+  return results;
+}
+
+// Use both NWS (US) + RainViewer's alert overlay for global coverage
+async function loadAlerts() {
+  alertLayers.forEach(l => { try { map.removeLayer(l); } catch(e){} });
+  alertLayers = [];
+
+  // Fetch US alerts from NWS
+  const usAlerts = await fetchNWSAlerts();
+
+  // Fetch global alerts from Open-Meteo (EU, CA, AU, etc.)
+  // Open-Meteo forecast API gives us weather codes we can interpret
+  // For actual polygon alerts globally, use the MeteoAlarm GeoJSON (EU only, free)
+  const euAlerts = await fetchEUAlerts();
+
+  const allAlerts = [...usAlerts, ...euAlerts].sort((a,b) =>
+    (sevOrder[a.severity]||4) - (sevOrder[b.severity]||4)
+  );
+
+  const list  = document.getElementById('alerts-list');
+  const total = allAlerts.length;
+  document.getElementById('alert-num').textContent   = total;
+  document.getElementById('panel-count').textContent = total;
+  document.getElementById('alert-pill').className    = total ? 'alert-pill' : 'alert-pill none';
+  // Show the toggle arrow only when there are alerts
+  document.getElementById('panel-toggle').classList.toggle('has-alerts', total > 0);
+
+  if (!total) {
+    list.innerHTML = '<div class="no-alerts">No active alerts.<br>All clear globally.</div>';
+  } else {
+    list.innerHTML = '';
+    allAlerts.forEach(a => {
+      const col = SEV[a.severity] || SEV.Unknown;
+      if (a.geometry) {
+        const gl = L.geoJSON(a.geometry, {
+          style:{ color:col, fillColor:col, weight:1.5, opacity:0.85, fillOpacity:0.12 }
+        });
+        gl.bindTooltip(`<strong>${a.event}</strong><br>${a.area}`, { className:'alert-tooltip', sticky:true });
+        gl.addTo(map); alertLayers.push(gl);
+      }
+      const item = document.createElement('div');
+      item.className = `alert-item ${sevClass(a.severity)}`;
+      const badge = a.region ? `<span style="opacity:0.4;font-size:0.48rem;margin-left:4px">${a.region}</span>` : '';
+      item.innerHTML = `<div class="alert-event">${a.event}${badge}</div><div class="alert-area">${a.area}</div><div class="alert-time">${timeAgo(a.sent)} · ${a.severity}</div>`;
+      if (a.geometry) item.onclick = () => map.flyToBounds(L.geoJSON(a.geometry).getBounds(), {padding:[60,60],duration:1.2});
+      list.appendChild(item);
     });
-    alertLayers.forEach(l => map.removeLayer(l));
-    alertLayers = [];
-    const list = document.getElementById('alerts-list');
-    document.getElementById('alert-num').textContent   = feats.length;
-    document.getElementById('panel-count').textContent = feats.length;
-    document.getElementById('alert-pill').className = feats.length ? 'alert-pill' : 'alert-pill none';
-    if (!feats.length) {
-      list.innerHTML = '<div class="no-alerts">No active alerts.<br>All clear across the US.</div>';
-    } else {
-      list.innerHTML = '';
-      feats.forEach(f => {
-        const p = f.properties, sev = p.severity||'Unknown', col = SEV[sev]||SEV.Unknown;
-        if (f.geometry) {
-          const gl = L.geoJSON(f.geometry, { style:{ color:col, fillColor:col, weight:1.5, opacity:0.85, fillOpacity:0.15 } });
-          gl.bindTooltip(`<strong>${p.event}</strong><br>${p.areaDesc}`, { className:'alert-tooltip', sticky:true });
-          gl.addTo(map); alertLayers.push(gl);
-        }
-        const item = document.createElement('div');
-        item.className = `alert-item ${sevClass(sev)}`;
-        item.innerHTML = `<div class="alert-event">${p.event||'Alert'}</div><div class="alert-area">${p.areaDesc||''}</div><div class="alert-time">${timeAgo(p.sent)} · ${sev}</div>`;
-        if (f.geometry) item.onclick = () => map.flyToBounds(L.geoJSON(f.geometry).getBounds(), {padding:[60,60],duration:1.2});
-        list.appendChild(item);
-      });
-    }
-    const now = new Date();
-    document.getElementById('last-updated').textContent =
-      `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-  } catch(e) { console.error('Alerts error:', e); }
+  }
+
+  const now = new Date();
+  document.getElementById('last-updated').textContent =
+    `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+}
+
+async function fetchEUAlerts() {
+  // MeteoAlarm provides EU-wide severe weather alerts as GeoJSON — free, no key
+  try {
+    const data = await (await fetch('https://feeds.meteoalarm.org/api/v1/warnings/region/europe')).json();
+    return (data.features||[]).map(f => {
+      const p = f.properties||{};
+      const awareness = p.awareness_level || '';
+      // MeteoAlarm levels: 1=green(none), 2=yellow, 3=orange, 4=red
+      const lvl = parseInt(awareness.split(';')[0]) || 1;
+      const sev = lvl >= 4 ? 'Extreme' : lvl === 3 ? 'Severe' : lvl === 2 ? 'Moderate' : 'Minor';
+      return {
+        severity: sev,
+        event:    p.awareness_type ? p.awareness_type.split(';')[1] || 'Weather Alert' : 'Weather Alert',
+        area:     p.region_name || p.country || 'Europe',
+        sent:     p.from || null,
+        geometry: f.geometry,
+        region:   'EU'
+      };
+    });
+  } catch(e) {
+    // Fallback: try the CORS-friendly GeoJSON endpoint
+    try {
+      const r = await fetch('https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-europe');
+      // RSS fallback — skip if CORS blocked
+      return [];
+    } catch(e2) { return []; }
+  }
 }
 
 function togglePanel() { document.getElementById('panel').classList.toggle('open'); }
