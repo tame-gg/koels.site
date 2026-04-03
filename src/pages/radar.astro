@@ -471,9 +471,7 @@ async function loadRadar() {
     const rvPast = rv.radar?.past || [];
     if (!rvPast.length) { setStatus('No radar data', true); return; }
 
-    seqId++;
-    const tok = seqId;
-    stopPlay();
+    stopPlay();  // stop before touching layers
 
     // Tear down old layers
     frames.forEach(f => {
@@ -520,16 +518,18 @@ async function loadRadar() {
     buildTicks();
 
     // Show latest frame then autoplay
+    // Use a simple shown flag — no seqId check here so the fallback always fires
     let shown = false;
     const go = () => {
-      if (shown || tok !== seqId) return;
+      if (shown) return;
       shown = true;
       showFrame(frames.length - 1);
       setStatus('', false);
       startPlay();
     };
+    // Try to trigger on tile load, but always fall back after 3s
     frames[frames.length - 1].rvLayer.once('load', go);
-    setTimeout(go, 4000);
+    setTimeout(go, 3000);
 
   } catch(e) {
     console.error('Radar load error:', e);
