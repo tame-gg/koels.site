@@ -363,6 +363,8 @@ body { background:#03030a; color:#f0eeff; }
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+window.addEventListener('DOMContentLoaded', function() {
+
 // ── MAP SETUP ──────────────────────────────────────────────────────────────
 const map = L.map('map', {
   center: [37, -95], zoom: 4,
@@ -382,101 +384,145 @@ map.getPane('radarPane').style.zIndex = 300;
 map.getPane('radarPane').classList.add('radar-pane');
 
 // ── RADAR SOURCES ────────────────────────────────────────────────────────
-// RainViewer  — global base layer, free, no key, zoom 8 native
-// IEM NEXRAD  — US only, free, no key, zoom 10 native (high-res CONUS)
-// DWD (Germany/Europe) — free, no key, zoom 9 native
-// Each frame = { minsAgo, rvLayer, iemLayer, dwdLayer }
+//
+// 1. RainViewer  — GLOBAL base, animated XYZ tiles, ~180 countries, zoom 8
+// 2. IEM NEXRAD  — US/CONUS overlay, animated XYZ, zoom 10, high detail
+// 3. MSC GeoMet  — Canada WMS overlay, free, no key
+// 4. DWD         — Germany/Europe WMS overlay, free, no key
+//
+// RainViewer drives the master frame count (~12 past frames, 10-min steps).
+// IEM/MSC/DWD are synced to the same timestamps.
+// All layers coexist — each covers its region and returns transparent elsewhere.
 
 const FRAME_MS = 600;
 const HOLD_MS  = 1800;
-const HOLD_TICKS = Math.round(HOLD_MS / FRAME_MS);
 
+// IEM time slots matching approx 10-min intervals to align with RainViewer
 const IEM_SLOTS = [
   { ts:'900913-m50m', minsAgo:50 }, { ts:'900913-m45m', minsAgo:45 },
   { ts:'900913-m40m', minsAgo:40 }, { ts:'900913-m35m', minsAgo:35 },
   { ts:'900913-m30m', minsAgo:30 }, { ts:'900913-m25m', minsAgo:25 },
   { ts:'900913-m20m', minsAgo:20 }, { ts:'900913-m15m', minsAgo:15 },
-  { ts:'900913-m10m', minsAgo:10 }, { ts:'900913-m05m', minsAgo:5  },
-  { ts:'900913',      minsAgo:0  },
+  { ts:'900913-m10m', minsAgo:10 }, { ts:'900913-m05m', minsAgo: 5 },
+  { ts:'900913',      minsAgo: 0 },
 ];
 
-// DWD radar composite — WMS endpoint, free, no key
-// Covers Germany + surrounding Europe at ~1km resolution
-// Time steps: DWD updates every 5 min, we pick closest to IEM slots
-function dwdUrl(minsAgo) {
-  const t = new Date(Date.now() - minsAgo * 60000);
-  // Round to nearest 5 minutes
-  t.setMinutes(Math.round(t.getMinutes() / 5) * 5, 0, 0);
-  const ts = t.toISOString().replace(/[-:]/g,'').slice(0,12) + '00Z';
-  return `https://maps.dwd.de/geoserver/dwd/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap` +
-         `&FORMAT=image/png&TRANSPARENT=true&LAYERS=dwd:RX-Produkt` +
-         `&CRS=EPSG:3857&WIDTH=256&HEIGHT=256&TIME=${ts}` +
-         `&BBOX={bbox-epsg-3857}`;
-}
-
+// frames[i] = { minsAgo, time, rvLayer, iemLayer }
 let frames     = [];
 let currentIdx = 0;
 let playing    = false;
 let playTimer  = null;
-let cancelTok  = 0;   // increment to cancel any in-flight timer chain
+let seqId      = 0;
 let activeRV   = null;
 let activeIEM  = null;
-let activeDWD  = null;
+
+// WMS overlays (static, update TIME param each frame)
+let wmsCanada = null;
+let wmsDWD    = null;
 
 function setStatus(msg, show) {
   const el = document.getElementById('radar-status');
-  el.textContent = msg; el.classList.toggle('show', !!show);
+  el.textContent = msg;
+  el.classList.toggle('show', !!show);
+}
+
+function isoUTC(d) {
+  return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
+function floorMins(d, n) {
+  return new Date(Math.floor(d.getTime() / (n * 60000)) * (n * 60000));
+}
+
+function buildWMSOverlays() {
+  if (wmsCanada) { try { map.removeLayer(wmsCanada); } catch(e){} }
+  if (wmsDWD)    { try { map.removeLayer(wmsDWD);    } catch(e){} }
+
+  // Canada — MSC GeoMet 1km radar, free, no key
+  wmsCanada = L.tileLayer.wms('https://geo.weather.gc.ca/geomet?', {
+    layers: 'RADAR_1KM_RRAI', version: '1.3.0',
+    format: 'image/png', transparent: true,
+    opacity: 0.85, pane: 'radarPane', maxZoom: 19,
+    attribution: 'MSC/ECCC'
+  }).addTo(map);
+
+  // Germany + Europe — DWD 1km radar, free, no key
+  wmsDWD = L.tileLayer.wms('https://maps.dwd.de/geoserver/dwd/wms?', {
+    layers: 'dwd:RX-Produkt', version: '1.3.0',
+    format: 'image/png', transparent: true,
+    opacity: 0.85, pane: 'radarPane', maxZoom: 19,
+    attribution: 'DWD'
+  }).addTo(map);
+}
+
+function updateWMSTime(minsAgo) {
+  const t = floorMins(new Date(Date.now() - minsAgo * 60000), 5);
+  const ts = isoUTC(t);
+  if (wmsCanada) wmsCanada.setParams({ TIME: ts }, false);
+  if (wmsDWD)    wmsDWD.setParams({ TIME: ts }, false);
 }
 
 async function loadRadar() {
   try {
     setStatus('Loading radar\u2026', true);
-    const data   = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
-    const rvPast = data.radar?.past || [];
+
+    // Fetch RainViewer manifest for global coverage
+    const rv   = await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json();
+    const rvPast = rv.radar?.past || [];
     if (!rvPast.length) { setStatus('No radar data', true); return; }
 
-    cancelTok++;
-    const tok = cancelTok;
+    seqId++;
+    const tok = seqId;
     stopPlay();
 
+    // Tear down old layers
     frames.forEach(f => {
       try { map.removeLayer(f.rvLayer);  } catch(e){}
       try { map.removeLayer(f.iemLayer); } catch(e){}
     });
-    activeRV = null; activeIEM = null; activeDWD = null;
+    activeRV = null; activeIEM = null;
 
     const nowSec = Math.floor(Date.now() / 1000);
+    const sz = 256;
+
+    // Use IEM_SLOTS as master timeline; find closest RainViewer frame per slot
     frames = IEM_SLOTS.map((slot, i) => {
       const frameTime = nowSec - slot.minsAgo * 60;
-      const closest   = rvPast.reduce((b, rv) =>
-        Math.abs(rv.time - frameTime) < Math.abs(b.time - frameTime) ? rv : b
+      const closest   = rvPast.reduce((b, r) =>
+        Math.abs(r.time - frameTime) < Math.abs(b.time - frameTime) ? r : b
       );
       return {
         minsAgo:  slot.minsAgo,
         time:     frameTime,
+        // RainViewer — global base (entire world)
         rvLayer:  L.tileLayer(
-          data.host + closest.path + '/256/{z}/{x}/{y}/2/1_1.png',
-          { opacity:0, pane:'radarPane', maxNativeZoom:8, maxZoom:19, crossOrigin:true }
+          rv.host + closest.path + '/' + sz + '/{z}/{x}/{y}/2/1_1.png',
+          { opacity: 0, pane: 'radarPane', maxNativeZoom: 8, maxZoom: 19 }
         ),
+        // IEM NEXRAD — US high-res overlay (transparent outside CONUS)
         iemLayer: L.tileLayer(
           `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-${slot.ts}/{z}/{x}/{y}.png`,
-          { opacity:0, pane:'radarPane', maxNativeZoom:10, maxZoom:10, crossOrigin:true }
+          { opacity: 0, pane: 'radarPane', maxNativeZoom: 10, maxZoom: 19 }
         )
       };
     });
 
-    frames.forEach(f => { f.rvLayer.addTo(map); f.iemLayer.addTo(map); });
-
-    // Handle IEM tile errors (returns error image outside CONUS) — hide on error
+    // Preload all at opacity 0
     frames.forEach(f => {
+      f.rvLayer.addTo(map);
+      f.iemLayer.addTo(map);
+      // Hide IEM error tiles returned outside CONUS
       f.iemLayer.on('tileerror', evt => { evt.tile.style.display = 'none'; });
     });
 
+    // Build/update WMS overlays
+    buildWMSOverlays();
     buildTicks();
 
+    // Show latest frame then autoplay
     let shown = false;
     const go = () => {
-      if (shown || tok !== cancelTok) return;
+      if (shown || tok !== seqId) return;
       shown = true;
       showFrame(frames.length - 1);
       setStatus('', false);
@@ -498,6 +544,7 @@ function showFrame(idx) {
   currentIdx = Math.max(0, Math.min(idx, frames.length - 1));
   activeRV  = frames[currentIdx].rvLayer;  activeRV.setOpacity(0.75);
   activeIEM = frames[currentIdx].iemLayer; activeIEM.setOpacity(0.9);
+  updateWMSTime(frames[currentIdx].minsAgo);
   updateUI();
 }
 
@@ -509,7 +556,7 @@ function updateUI() {
     `<span class="t-time">${fmtTime(f.time)}</span>` +
     `<span class="t-sep"> \u00b7 </span><span class="t-ago">${ago}</span>` +
     `<span class="t-sep"> \u00b7 </span><span class="t-pos">${currentIdx+1}/${frames.length}</span>`;
-  const pct = frames.length > 1 ? (currentIdx / (frames.length-1)) * 100 : 100;
+  const pct = frames.length > 1 ? (currentIdx / (frames.length - 1)) * 100 : 100;
   document.getElementById('scrubber-fill').style.width = pct + '%';
   document.getElementById('scrubber-thumb').style.left  = pct + '%';
 }
@@ -517,39 +564,41 @@ function updateUI() {
 function fmtTime(unixSec) {
   const t = new Date(unixSec * 1000);
   const h = t.getHours(), m = t.getMinutes();
-  return `${((h%12)||12)}:${m.toString().padStart(2,'0')} ${h<12?'AM':'PM'}`;
+  return `${((h % 12) || 12)}:${m.toString().padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 }
 
 function buildTicks() {
   if (!frames.length) return;
-  const total = frames.length;
-  const picks = [0, Math.floor(total*.25), Math.floor(total*.5), Math.floor(total*.75), total-1];
+  const n = frames.length;
+  const picks = [0, Math.floor(n * .25), Math.floor(n * .5), Math.floor(n * .75), n - 1];
   document.getElementById('scrubber-ticks').innerHTML =
     [...new Set(picks)].map(i => {
       const f = frames[i], isNow = f.minsAgo === 0;
-      return `<span class="tick-label${isNow?' is-now':''}">${isNow?'NOW':'-'+f.minsAgo+'m'}</span>`;
+      return `<span class="tick-label${isNow ? ' is-now' : ''}">${isNow ? 'NOW' : '-' + f.minsAgo + 'm'}</span>`;
     }).join('');
 }
 
 // ── PLAY / PAUSE ──────────────────────────────────────────────────────────
-// Uses recursive setTimeout with a cancellation token so stopPlay()
-// instantly kills any pending tick — no stale interval callbacks ever fire.
-let seqId = 0;   // increment on every startPlay/stopPlay to cancel old chains
+// seqId is incremented on every start/stop. Each scheduled timeout captures
+// the seqId at the time it was scheduled — if seqId changed before it fires,
+// it's stale and bails immediately. Guarantees zero ghost callbacks.
 
 function setPlayIcon(on) {
   document.getElementById('play-icon').style.display  = on ? 'none' : '';
-  document.getElementById('pause-icon').style.display = on ? '' : 'none';
+  document.getElementById('pause-icon').style.display = on ? ''     : 'none';
 }
 
-function _scheduleNext(id, idx, delay) {
+function _next(id, idx, delay) {
+  clearTimeout(playTimer);
   playTimer = setTimeout(() => {
-    if (id !== seqId) return;           // cancelled — do nothing
+    if (id !== seqId) return;
     if (idx >= frames.length) {
-      // end of loop — hold then restart
-      _scheduleNext(id, 0, HOLD_MS);
+      // Hold on last frame then loop
+      showFrame(frames.length - 1);
+      _next(id, 0, HOLD_MS);
     } else {
       showFrame(idx);
-      _scheduleNext(id, idx + 1, FRAME_MS);
+      _next(id, idx + 1, FRAME_MS);
     }
   }, delay);
 }
@@ -559,14 +608,14 @@ function startPlay() {
   playing = true;
   seqId++;
   setPlayIcon(true);
-  const startIdx = currentIdx >= frames.length - 1 ? 0 : currentIdx + 1;
-  if (startIdx === 0) showFrame(0);
-  _scheduleNext(seqId, startIdx, FRAME_MS);
+  const next = currentIdx >= frames.length - 1 ? 0 : currentIdx + 1;
+  if (next === 0) showFrame(0);
+  _next(seqId, next, FRAME_MS);
 }
 
 function stopPlay() {
   playing = false;
-  seqId++;                  // cancel any pending _scheduleNext
+  seqId++;
   clearTimeout(playTimer);
   playTimer = null;
   setPlayIcon(false);
@@ -735,6 +784,8 @@ loadAlerts();
 setInterval(loadAlerts, 60000);
 
 // ── BETA DISCLAIMER handled inline on the modal button ───────────────────
+
+});
 </script>
 </body>
 </html>
