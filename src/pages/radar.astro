@@ -263,7 +263,7 @@ body { background:#03030a; color:#f0eeff; }
 .alert-gov-link:hover {
   color:#a29bfe; border-color:rgba(108,92,231,0.45); background:rgba(108,92,231,0.15);
 }
-.alert-gov-link svg { width:9px; height:9px; fill:currentColor; flex-shrink:0; }
+
 
 .no-alerts {
   padding:48px 20px; text-align:center; font-size:0.62rem;
@@ -966,10 +966,8 @@ function makeAlertCard(a) {
   const sevColors = { Extreme:'#ff00cc', Severe:'#ff3737', Moderate:'#ff9500', Minor:'#ffd60a', Unknown:'rgba(255,255,255,0.25)' };
   const sevColor = sevColors[a.severity] || sevColors.Unknown;
 
-  const extIcon = `<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>`;
-
   const govLinkHtml = a.url
-    ? `<a class="alert-gov-link" href="${a.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${extIcon} View alert</a>`
+    ? `<a class="alert-gov-link" href="${a.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">&#8599; View alert</a>`
     : '';
 
   item.innerHTML =
@@ -977,7 +975,7 @@ function makeAlertCard(a) {
     `<div class="alert-body">` +
       `<div class="alert-top-row">` +
         `<div class="alert-sev-badge">` +
-          `<div class="alert-sev-dot" style="background:${sevColor};box-shadow:0 0 5px ${sevColor}77"></div>` +
+          `<span class="alert-sev-dot" style="background:${sevColor};box-shadow:0 0 5px ${sevColor}77"></span>` +
           `<span class="alert-sev-text" style="color:${sevColor}">${a.severity || 'Unknown'}</span>` +
         `</div>` +
         (timeStr ? `<span class="alert-time-chip">${timeStr}</span>` : '') +
