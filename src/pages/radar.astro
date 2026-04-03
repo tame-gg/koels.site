@@ -370,15 +370,15 @@ body { background:#03030a; color:#f0eeff; }
 .leaflet-container { background:#03030a !important; }
 .leaflet-tile-pane { filter:brightness(0.88) saturate(0.5); }
 .leaflet-pane.radar-pane { filter:none !important; }
-/* GPU-accelerated opacity transitions on radar tile layers */
-.leaflet-tile-pane.radar-pane,
-.leaflet-tile-pane.radar-pane img,
-.leaflet-tile-pane.radar-pane .leaflet-tile {
+
+/* Smooth opacity transitions on radar tile layers (Leaflet sets inline opacity on the layer container div) */
+.leaflet-pane.radar-pane > div {
+  transition: opacity 0.2s ease-out;
   will-change: opacity;
-  transition: opacity 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
+
+/* Hide broken/missing tile images silently */
+.leaflet-tile .leaflet-tile-loaded { visibility: visible !important; }
 .leaflet-control-zoom a {
   background:rgba(3,3,10,0.9) !important; color:rgba(240,238,255,0.7) !important;
   border-color:rgba(255,255,255,0.1) !important; font-family:"JetBrains Mono",monospace !important;
@@ -627,6 +627,13 @@ const map = L.map('map', {
   preferCanvas: false
 });
 
+// ── GLOBAL: Suppress ALL "zoom level not supported" tile errors ────────────
+// Override Leaflet's internal tile error handler so broken/missing tiles
+// are silently hidden instead of logging errors or showing broken indicators.
+L.TileLayer.include({
+  _tileOnError: function() {}  // silent — no console, no visual artifacts
+});
+
 // CartoDB Dark Matter — free, no API key
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution: '© OpenStreetMap contributors © CARTO',
@@ -658,9 +665,8 @@ map.getPane('radarPane').classList.add('radar-pane');
 // IEM/MSC/DWD are synced to the same timestamps.
 // All layers coexist — each covers its region and returns transparent elsewhere.
 
-const FRAME_MS = 400;   // time between frame advances (includes fade time)
+const FRAME_MS = 500;   // time between frame advances
 const HOLD_MS  = 1500;  // pause on last frame before looping
-const FADE_MS  = 250;   // crossfade duration between frames (ms)
 
 // IEM time slots matching approx 10-min intervals to align with RainViewer
 const IEM_SLOTS = [
@@ -680,34 +686,8 @@ let playTimer  = null;
 let seqId      = 0;
 let activeRV   = null;
 let activeIEM  = null;
-let fadeAnim   = null;  // tracks running crossfade animation
-const loadedFrames = new Set(); // tracks which frame indices have layers on the map
-const MAX_LOADED   = 8;         // more frames preloaded for smoother looping
-
-/**
- * Smooth crossfade between radar frames using requestAnimationFrame.
- * Fades `fromLayer` → 0 and `toLayer` → targetOpacity over FADE_MS ms.
- */
-function crossfade(fromLayer, toLayer, targetOpacity) {
-  if (fadeAnim) { cancelAnimationFrame(fadeAnim); fadeAnim = null; }
-  const t0 = performance.now();
-  const fromStart = fromLayer ? fromLayer.options.opacity : 0;
-  const toStart   = toLayer   ? toLayer.options.opacity   : 0;
-  const ease = t => 1 - Math.pow(1 - t, 3);  // ease-out cubic
-  function step(now) {
-    const t = Math.min(1, (now - t0) / FADE_MS);
-    const e = ease(t);
-    if (fromLayer) fromLayer.setOpacity(fromStart + (0 - fromStart) * e);
-    if (toLayer)   toLayer.setOpacity(toStart + (targetOpacity - toStart) * e);
-    if (t < 1) { fadeAnim = requestAnimationFrame(step); }
-    else {
-      if (fromLayer) fromLayer.setOpacity(0);
-      if (toLayer)   toLayer.setOpacity(targetOpacity);
-      fadeAnim = null;
-    }
-  }
-  fadeAnim = requestAnimationFrame(step);
-}
+const loadedFrames = new Set();
+const MAX_LOADED   = 22;   // keep ALL frames in memory (modern browsers handle this fine)
 
 // WMS overlays (static, update TIME param each frame)
 let wmsCanada = null;
@@ -915,18 +895,20 @@ async function loadRadar() {
 
 function ensureLayer(layer) {
   if (!map.hasLayer(layer)) {
-    // Prevent "zoom level not supported" errors
+    // Hide broken tiles silently (global _tileOnError override already suppresses console errors)
     layer.on('tileerror', evt => {
       if (evt.tile) {
         evt.tile.style.display = 'none';
-        evt.tile.onerror = null; // prevent further error propagation
+        evt.tile.style.visibility = 'hidden';
       }
     });
-    // Override _tileOnError to suppress console errors
-    layer._tileOnError = function(e, tile, url) {
-      if (tile) tile.style.display = 'none';
-      // Don't fire error events or log to console — silent fail
-    };
+    layer.on('tileload', evt => {
+      if (evt.tile) {
+        evt.tile.style.display = '';
+        evt.tile.style.visibility = 'visible';
+        evt.tile.onerror = null;
+      }
+    });
     layer.addTo(map);
   }
 }
@@ -937,45 +919,31 @@ function showFrame(idx) {
   const f = frames[currentIdx];
   const targetOpacity = getRadarOpacity();
 
-  // Ensure current + adjacent frames are loaded
-  const preloadRange = 2;  // preload 2 frames ahead and behind
-  for (let d = -preloadRange; d <= preloadRange; d++) {
-    const pi = ((currentIdx + d) % frames.length + frames.length) % frames.length;
-    const pf = frames[pi];
-    ensureLayer(pf.rvLayer);
-    ensureLayer(pf.iemLayer);
-    loadedFrames.add(pi);
-  }
+  // Ensure this frame's layers are loaded and on the map
+  ensureLayer(f.rvLayer);
+  ensureLayer(f.iemLayer);
+  loadedFrames.add(currentIdx);
 
-  // Evict frames far from current to free memory
-  if (loadedFrames.size > MAX_LOADED) {
-    const keep = new Set();
-    for (let d = -preloadRange; d <= preloadRange; d++) {
-      const pi = ((currentIdx + d) % frames.length + frames.length) % frames.length;
-      keep.add(pi);
-    }
-    for (const li of loadedFrames) {
-      if (!keep.has(li)) {
-        try { map.removeLayer(frames[li].rvLayer);  } catch(e){}
-        try { map.removeLayer(frames[li].iemLayer); } catch(e){}
-        loadedFrames.delete(li);
-      }
-    }
-  }
+  // Keep adjacent frames loaded for smooth looping
+  const nextIdx = (currentIdx + 1) % frames.length;
+  const prevIdx = (currentIdx - 1 + frames.length) % frames.length;
+  ensureLayer(frames[nextIdx].rvLayer);
+  ensureLayer(frames[nextIdx].iemLayer);
+  ensureLayer(frames[prevIdx].rvLayer);
+  ensureLayer(frames[prevIdx].iemLayer);
+  loadedFrames.add(nextIdx);
+  loadedFrames.add(prevIdx);
 
-  // Crossfade RainViewer from old → new
+  // Direct opacity swap — CSS transition on the pane smooths it automatically
   if (activeRV && activeRV !== f.rvLayer) {
-    crossfade(activeRV, f.rvLayer, targetOpacity);
-  } else if (!activeRV) {
-    f.rvLayer.setOpacity(targetOpacity);
+    activeRV.setOpacity(0);
   }
+  f.rvLayer.setOpacity(targetOpacity);
 
-  // IEM crossfade (same pattern)
   if (activeIEM && activeIEM !== f.iemLayer) {
-    crossfade(activeIEM, f.iemLayer, 0.9);
-  } else if (!activeIEM) {
-    f.iemLayer.setOpacity(0.9);
+    activeIEM.setOpacity(0);
   }
+  f.iemLayer.setOpacity(0.9);
 
   activeRV  = f.rvLayer;
   activeIEM = f.iemLayer;
@@ -1001,28 +969,13 @@ function updateUSHighResLayers() {
   const zoomedIn = z >= 9;
 
   if (inUS && zoomedIn) {
-    if (wmsUSHighRes && !map.hasLayer(wmsUSHighRes)) {
-      wmsUSHighRes.addTo(map);
-    }
-    if (wmsUSMRMS && !map.hasLayer(wmsUSMRMS)) {
-      wmsUSMRMS.addTo(map);
-    }
-    // Adjust base layer opacity during crossfade if one is running
-    if (fadeAnim && activeRV) {
-      // Let the crossfade finish naturally, just note that US hi-res is active
-    } else if (activeRV) {
-      activeRV.setOpacity(0.4);
-    }
+    if (wmsUSHighRes && !map.hasLayer(wmsUSHighRes)) wmsUSHighRes.addTo(map);
+    if (wmsUSMRMS && !map.hasLayer(wmsUSMRMS)) wmsUSMRMS.addTo(map);
+    if (activeRV) activeRV.setOpacity(0.4);
   } else {
-    if (wmsUSHighRes && map.hasLayer(wmsUSHighRes)) {
-      try { map.removeLayer(wmsUSHighRes); } catch(e){}
-    }
-    if (wmsUSMRMS && map.hasLayer(wmsUSMRMS)) {
-      try { map.removeLayer(wmsUSMRMS); } catch(e){}
-    }
-    if (!fadeAnim && activeRV) {
-      activeRV.setOpacity(getRadarOpacity());
-    }
+    if (wmsUSHighRes && map.hasLayer(wmsUSHighRes)) { try { map.removeLayer(wmsUSHighRes); } catch(e){} }
+    if (wmsUSMRMS && map.hasLayer(wmsUSMRMS)) { try { map.removeLayer(wmsUSMRMS); } catch(e){} }
+    if (activeRV) activeRV.setOpacity(getRadarOpacity());
   }
 }
 
