@@ -649,6 +649,7 @@ window.addEventListener('touchend',  () => dragging = false);
 
 // ── GLOBAL ALERTS ─────────────────────────────────────────────────────────
 let alertLayers = [];
+let cachedAlerts = [];
 const SEV = { Extreme:'#ff00cc', Severe:'#ff2d2d', Moderate:'#ffa500', Minor:'#ffd600', Unknown:'rgba(255,255,255,0.3)' };
 const sevOrder = { Extreme:0, Severe:1, Moderate:2, Minor:3, Unknown:4 };
 const sevClass = s => 'sev-' + (s||'unknown').toLowerCase();
@@ -676,43 +677,88 @@ async function fetchNWSAlerts() {
   } catch(e) { return []; }
 }
 
-async function fetchOpenMeteoAlerts() {
-  // Open-Meteo provides global severe weather alerts via their free API (no key)
-  // Uses DWD (Germany), Météo-France, MET Norway, Environment Canada, etc.
-  const regions = [
-    { name:'Europe',  lat:50,  lon:10  },
-    { name:'Canada',  lat:56,  lon:-96 },
-    { name:'Australia', lat:-25, lon:134 },
-    { name:'UK',      lat:54,  lon:-2  },
-    { name:'Japan',   lat:36,  lon:138 },
-  ];
-  const results = [];
-  await Promise.allSettled(regions.map(async r => {
-    try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${r.lat}&longitude=${r.lon}&daily=weathercode&timezone=auto&forecast_days=1`;
-      // Open-Meteo doesn't have an alerts endpoint yet — use their partner
-      // Use 7timer / wttr for fallback but actually the best free global alert API is:
-      // https://openweathermap.org/api/push-weather-alerts (needs key)
-      // Best truly-free option: scrape NWS international + use meteoalert RSS
-    } catch(e) {}
-  }));
-  return results;
+// ── CANADA — MSC GeoMet OGC API (free, no key, CORS-friendly) ─────────────
+async function fetchCanadaAlerts() {
+  try {
+    const url = 'https://api.weather.gc.ca/collections/warnings/items?f=json&limit=500&lang=en';
+    const data = await (await fetch(url)).json();
+    return (data.features || []).map(f => {
+      const p = f.properties || {};
+      let sev = 'Minor';
+      if (/warning/i.test(p.alert_name||''))    sev = 'Severe';
+      if (/watch/i.test(p.alert_name||''))      sev = 'Moderate';
+      if (/advisory/i.test(p.alert_name||''))   sev = 'Minor';
+      if (/tornado|extreme/i.test(p.alert_name||'')) sev = 'Extreme';
+      return {
+        severity: sev,
+        event:    p.alert_name || p.type || 'Weather Alert',
+        area:     p.zone || p.location || 'Canada',
+        sent:     p.effective || null,
+        geometry: f.geometry,
+        region:   'CA'
+      };
+    });
+  } catch(e) { return []; }
 }
 
-// Use both NWS (US) + RainViewer's alert overlay for global coverage
+// ── AUSTRALIA — BOM public app API (no key required) ──────────────────────
+async function fetchAustraliaAlerts() {
+  try {
+    const data = await (await fetch(
+      'https://api.weather.bom.gov.au/v1/warnings',
+      { headers: { 'Accept': 'application/json' } }
+    )).json();
+    return (data.data || []).map(w => {
+      const phase = (w.warning_group_type || '').toLowerCase();
+      let sev = 'Minor';
+      if (phase.includes('extreme'))  sev = 'Extreme';
+      else if (phase.includes('major') || phase.includes('severe')) sev = 'Severe';
+      else if (phase.includes('moderate')) sev = 'Moderate';
+      return {
+        severity: sev,
+        event:    w.title || w.short_title || 'Weather Warning',
+        area:     w.state || 'Australia',
+        sent:     w.issue_time || null,
+        geometry: null,
+        region:   'AU'
+      };
+    }).filter(a => a.event && !/cancel/i.test(a.event));
+  } catch(e) { return []; }
+}
+
+// ── NEW ZEALAND — MetService public CAP Atom feed (no key) ─────────────────
+async function fetchNZAlerts() {
+  try {
+    const r = await fetch('https://alerts.metservice.com/cap/rss');
+    if (!r.ok) return [];
+    const txt = await r.text();
+    const doc = new DOMParser().parseFromString(txt, 'text/xml');
+    return [...doc.querySelectorAll('item')].map(item => {
+      const title = item.querySelector('title')?.textContent || 'Weather Alert';
+      let sev = 'Minor';
+      if (/severe|heavy|gale|extreme/i.test(title))   sev = 'Severe';
+      if (/thunderstorm|tornado|cyclone/i.test(title)) sev = 'Extreme';
+      const area = item.querySelector('description')?.textContent?.split(':')[0] || 'New Zealand';
+      return { severity:sev, event:title, area, sent:null, geometry:null, region:'NZ' };
+    });
+  } catch(e) { return []; }
+}
+
+// US (NWS) + EU (MeteoAlarm) + Canada (MSC GeoMet) + Australia (BOM) + NZ (MetService)
 async function loadAlerts() {
   alertLayers.forEach(l => { try { map.removeLayer(l); } catch(e){} });
   alertLayers = [];
 
-  // Fetch US alerts from NWS
-  const usAlerts = await fetchNWSAlerts();
+  // Fetch all regions in parallel
+  const [usAlerts, euAlerts, caAlerts, auAlerts, nzAlerts] = await Promise.all([
+    fetchNWSAlerts(),
+    fetchEUAlerts(),
+    fetchCanadaAlerts(),
+    fetchAustraliaAlerts(),
+    fetchNZAlerts(),
+  ]);
 
-  // Fetch global alerts from Open-Meteo (EU, CA, AU, etc.)
-  // Open-Meteo forecast API gives us weather codes we can interpret
-  // For actual polygon alerts globally, use the MeteoAlarm GeoJSON (EU only, free)
-  const euAlerts = await fetchEUAlerts();
-
-  const allAlerts = [...usAlerts, ...euAlerts].sort((a,b) =>
+  const allAlerts = [...usAlerts, ...euAlerts, ...caAlerts, ...auAlerts, ...nzAlerts].sort((a,b) =>
     (sevOrder[a.severity]||4) - (sevOrder[b.severity]||4)
   );
 
@@ -729,14 +775,6 @@ async function loadAlerts() {
   } else {
     list.innerHTML = '';
     allAlerts.forEach(a => {
-      const col = SEV[a.severity] || SEV.Unknown;
-      if (a.geometry) {
-        const gl = L.geoJSON(a.geometry, {
-          style:{ color:col, fillColor:col, weight:1.5, opacity:0.85, fillOpacity:0.12 }
-        });
-        gl.bindTooltip(`<strong>${a.event}</strong><br>${a.area}`, { className:'alert-tooltip', sticky:true });
-        gl.addTo(map); alertLayers.push(gl);
-      }
       const item = document.createElement('div');
       item.className = `alert-item ${sevClass(a.severity)}`;
       const badge = a.region ? `<span style="opacity:0.4;font-size:0.48rem;margin-left:4px">${a.region}</span>` : '';
@@ -746,10 +784,55 @@ async function loadAlerts() {
     });
   }
 
+  // Update timestamp
   const now = new Date();
   document.getElementById('last-updated').textContent =
     `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+
+  // Store alerts for zoom-responsive rendering; draw now at current zoom
+  cachedAlerts = allAlerts;
+  renderAlertLayers();
 }
+
+// Severity → minimum zoom level before showing on map
+const SEV_MIN_ZOOM = { Extreme:2, Severe:3, Moderate:5, Minor:6, Unknown:7 };
+
+function renderAlertLayers() {
+  // Tear down existing layers safely
+  alertLayers.forEach(l => { try { map.removeLayer(l); } catch(e){} });
+  alertLayers = [];
+
+  const zoom = map.getZoom();
+  let drawn = 0;
+  const MAX_LAYERS = 300; // hard cap to prevent frame-rate collapse
+
+  cachedAlerts.forEach(a => {
+    if (!a.geometry) return;
+    if (drawn >= MAX_LAYERS) return;
+    // Only render if zoom meets severity threshold
+    const minZ = SEV_MIN_ZOOM[a.severity] ?? 6;
+    if (zoom < minZ) return;
+
+    const col = SEV[a.severity] || SEV.Unknown;
+    // Thinner strokes and less fill at lower zooms for readability
+    const weight = zoom < 5 ? 1 : 1.5;
+    const fillOp = zoom < 5 ? 0.08 : 0.12;
+    const gl = L.geoJSON(a.geometry, {
+      style:{ color:col, fillColor:col, weight, opacity:0.85, fillOpacity:fillOp }
+    });
+    gl.bindTooltip(`<strong>${a.event}</strong><br>${a.area}`, { className:'alert-tooltip', sticky:true });
+    gl.addTo(map);
+    alertLayers.push(gl);
+    drawn++;
+  });
+}
+
+// Re-render alert polygons whenever the user zooms (throttled)
+let _zoomTimer = null;
+map.on('zoomend', () => {
+  clearTimeout(_zoomTimer);
+  _zoomTimer = setTimeout(renderAlertLayers, 150);
+});
 
 async function fetchEUAlerts() {
   // MeteoAlarm provides EU-wide severe weather alerts as GeoJSON — free, no key
