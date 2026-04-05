@@ -397,66 +397,56 @@ async function measurePing(samples = 10) {
 
 /* ── DOWNLOAD ── */
 async function measureDownload() {
-  const startTime = performance.now();
+  const sizes = [1_000_000, 5_000_000, 10_000_000, 25_000_000];
   const speeds = [];
-  let received = 0;
 
-  const resp = await fetch('https://speed.cloudflare.com/__down?bytes=50000000', { cache: 'no-store' });
-  if (!resp.ok) throw new Error('Download failed');
-
-  const reader = resp.body.getReader();
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    received += value.length;
-    const elapsed = (performance.now() - startTime) / 1000;
-    const speed = (received * 8) / (elapsed * 1e6);
+  for (const size of sizes) {
+    const start = performance.now();
+    await fetch(`https://speed.cloudflare.com/__down?bytes=${size}`, {
+      cache: 'no-store',
+      mode: 'no-cors'
+    });
+    const elapsed = (performance.now() - start) / 1000;
+    const speed = (size * 8) / (elapsed * 1e6);
     speeds.push(speed);
 
-    const pct = Math.min((received / 50_000_000) * 100, 100);
+    const totalSoFar = sizes.slice(0, sizes.indexOf(size) + 1).reduce((a,b)=>a+b,0);
+    const pct = Math.min((totalSoFar / 41_000_000) * 100, 100);
     setGauge(pct, speed);
   }
 
-  const totalTime = (performance.now() - startTime) / 1000;
-  const avgSpeed = (received * 8) / (totalTime * 1e6);
+  /* Use last (largest) as most accurate */
+  const avgSpeed = speeds[speeds.length - 1];
   const peakSpeed = Math.max(...speeds);
-  return { avgSpeed, peakSpeed, totalMB: received / 1e6, time: totalTime };
+  return { avgSpeed, peakSpeed, totalMB: 41, time: 0 };
 }
 
 /* ── UPLOAD ── */
 async function measureUpload() {
-  const data = new Uint8Array(10_000_000); /* 10MB of zeros */
-  const blob = new Blob([data]);
-  const startTime = performance.now();
+  const sizes = [1_000_000, 2_000_000, 5_000_000, 10_000_000];
   const speeds = [];
-  let sent = 0;
 
-  /* We can't track upload progress with plain fetch, so chunk it */
-  const chunkSize = 2_000_000;
-  const totalChunks = 5;
-
-  for (let i = 0; i < totalChunks; i++) {
-    const chunk = blob.slice(i * chunkSize, (i + 1) * chunkSize);
-    const chunkStart = performance.now();
+  for (const size of sizes) {
+    const data = new Uint8Array(size);
+    const start = performance.now();
     await fetch('https://speed.cloudflare.com/__up', {
       method: 'POST',
-      body: chunk,
-      cache: 'no-store'
+      body: data,
+      cache: 'no-store',
+      mode: 'no-cors'
     });
-    sent += chunkSize;
-    const elapsed = (performance.now() - startTime) / 1000;
-    const speed = (sent * 8) / (elapsed * 1e6);
+    const elapsed = (performance.now() - start) / 1000;
+    const speed = (size * 8) / (elapsed * 1e6);
     speeds.push(speed);
 
-    const pct = ((i + 1) / totalChunks) * 100;
+    const totalSoFar = sizes.slice(0, sizes.indexOf(size) + 1).reduce((a,b)=>a+b,0);
+    const pct = Math.min((totalSoFar / 18_000_000) * 100, 100);
     setGauge(pct, speed);
   }
 
-  const totalTime = (performance.now() - startTime) / 1000;
-  const avgSpeed = (sent * 8) / (totalTime * 1e6);
+  const avgSpeed = speeds[speeds.length - 1];
   const peakSpeed = Math.max(...speeds);
-  return { avgSpeed, peakSpeed, totalMB: sent / 1e6, time: totalTime };
+  return { avgSpeed, peakSpeed, totalMB: 18, time: 0 };
 }
 
 /* ── MAIN ── */
