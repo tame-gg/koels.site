@@ -1,0 +1,774 @@
+---
+// src/pages/mc.astro
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Koels.site — MC Lookup</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2303030a'/%3E%3Ctext x='16' y='26' text-anchor='middle' font-family='Inter%2C system-ui%2C sans-serif' font-size='26' font-weight='900' fill='url(%23g)'%3EK%3C/text%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23a29bfe'/%3E%3Cstop offset='100%25' stop-color='%236c5ce7'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style is:global>
+:root {
+  --bg:       #03030a;
+  --bg2:      #08080f;
+  --surface:  #0f0f1a;
+  --surface2: #141420;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.12);
+  --text:     #f0eeff;
+  --muted:    rgba(240,238,255,0.68);
+  --dim:      rgba(240,238,255,0.4);
+  --accent:   #6c5ce7;
+  --accent2:  #a29bfe;
+  --lime:     #00ff88;
+  --red:      #ff4757;
+  --white:    #ffffff;
+  --sans: "Inter", system-ui, sans-serif;
+  --mono: "JetBrains Mono", monospace;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box }
+html { scroll-behavior:smooth; font-size:17px }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+a { color:inherit; text-decoration:none }
+
+/* ── NOISE ── */
+body::after {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9990;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* ── HEADER ── */
+header {
+  position:fixed; top:0; left:0; right:0; z-index:500;
+  height:60px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 40px;
+  border-bottom:1px solid var(--border);
+  background:rgba(3,3,10,0.85);
+  backdrop-filter:blur(24px) saturate(1.8);
+  -webkit-backdrop-filter:blur(24px) saturate(1.8);
+}
+.logo {
+  font-family:var(--mono); font-size:0.7rem; font-weight:700;
+  letter-spacing:0.2em; text-transform:uppercase; color:var(--white);
+  display:flex; align-items:center; gap:10px;
+}
+.logo a { color:inherit; }
+.logo-pulse {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--lime); box-shadow:0 0 10px var(--lime);
+  animation:lg-pulse 2s ease infinite;
+}
+@keyframes lg-pulse { 0%,100%{box-shadow:0 0 6px var(--lime)} 50%{box-shadow:0 0 20px var(--lime),0 0 40px rgba(0,255,136,0.25)} }
+
+.nav { display:flex; align-items:center; gap:32px }
+.nav a {
+  font-family:var(--mono); font-size:0.72rem; letter-spacing:0.14em;
+  color:var(--muted); text-transform:uppercase; transition:color 0.2s;
+}
+.nav a:hover { color:var(--white) }
+
+/* ── HERO / SEARCH ── */
+.hero {
+  min-height:100vh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding-top:60px;
+  position:relative; overflow:hidden;
+}
+.hero::before {
+  content:''; position:absolute; inset:0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(ellipse 90% 90% at 50% 40%, black 0%, transparent 100%);
+  -webkit-mask-image:radial-gradient(ellipse 90% 90% at 50% 40%, black 0%, transparent 100%);
+  opacity:0.5; pointer-events:none; z-index:0;
+}
+.hero-glow {
+  position:absolute; top:35%; left:50%;
+  transform:translate(-50%,-50%);
+  width:700px; height:700px;
+  background:radial-gradient(circle, rgba(108,92,231,0.12) 0%, transparent 60%);
+  pointer-events:none; z-index:0;
+}
+
+.search-wrap {
+  position:relative; z-index:2; text-align:center;
+  animation:fade-up 0.9s var(--ease) both;
+}
+.search-eyebrow {
+  display:inline-flex; align-items:center; gap:10px;
+  font-family:var(--mono); font-size:0.72rem; font-weight:500;
+  letter-spacing:0.2em; text-transform:uppercase; color:var(--accent2);
+  margin-bottom:28px;
+}
+.eyebrow-line { width:28px; height:1px; background:var(--accent) }
+
+h1 {
+  font-family:var(--sans);
+  font-size:clamp(2.8rem, 5.5vw, 5.5rem);
+  font-weight:900; line-height:0.9;
+  letter-spacing:-0.04em; color:var(--white); margin-bottom:32px;
+}
+h1 .grad {
+  background:linear-gradient(135deg, var(--accent2) 0%, #c084fc 50%, var(--accent2) 100%);
+  background-size:200% auto;
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  animation:shimmer 4s linear infinite;
+}
+@keyframes shimmer { to { background-position:200% center } }
+
+/* Search box */
+.search-box {
+  display:flex; align-items:center; gap:0;
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:12px; overflow:hidden;
+  box-shadow:0 8px 40px rgba(0,0,0,0.3);
+  transition:border-color 0.3s, box-shadow 0.3s;
+  max-width:540px; margin:0 auto;
+}
+.search-box:focus-within {
+  border-color:var(--accent);
+  box-shadow:0 8px 40px rgba(0,0,0,0.3), 0 0 0 3px rgba(108,92,231,0.15);
+}
+.search-box input {
+  flex:1; padding:16px 20px; border:none; outline:none;
+  background:transparent; color:var(--text);
+  font-family:var(--mono); font-size:0.95rem; letter-spacing:0.06em;
+}
+.search-box input::placeholder { color:var(--dim) }
+.search-box button {
+  padding:16px 28px; border:none; outline:none;
+  background:var(--accent); color:var(--white);
+  font-family:var(--mono); font-size:0.7rem; font-weight:700;
+  letter-spacing:0.14em; text-transform:uppercase;
+  cursor:pointer; transition:background 0.2s;
+}
+.search-box button:hover { background:#5a4bd1 }
+
+/* Toast */
+.toast {
+  position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--surface2); border:1px solid var(--border2);
+  color:var(--lime); font-family:var(--mono); font-size:0.65rem;
+  letter-spacing:0.12em; text-transform:uppercase;
+  padding:12px 24px; border-radius:6px;
+  opacity:0; transition:opacity 0.3s, transform 0.3s;
+  z-index:9999; pointer-events:none;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0) }
+.toast.error { color:var(--red); border-color:rgba(255,71,87,0.3) }
+
+/* Error state */
+.error-state {
+  display:none; text-align:center; margin-top:24px;
+  animation:fade-up 0.6s var(--ease) both;
+}
+.error-state.show { display:block }
+.error-state .err-icon { font-size:2rem; margin-bottom:12px; opacity:0.6 }
+.error-state .err-msg {
+  font-family:var(--mono); font-size:0.78rem; color:var(--red);
+  letter-spacing:0.06em;
+}
+
+/* ── RESULTS ── */
+#results {
+  display:none; position:relative; z-index:2;
+  max-width:860px; width:100%; margin:0 auto;
+  padding:40px 24px 80px;
+}
+#results.show { display:block; animation:fade-up 0.7s var(--ease) both }
+
+/* Profile card */
+.profile-card {
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:14px; overflow:hidden; position:relative;
+  box-shadow:0 12px 48px rgba(0,0,0,0.3);
+}
+.card-stripe { height:3px; background:linear-gradient(90deg, var(--accent), var(--lime)) }
+
+.profile-top {
+  display:grid; grid-template-columns:200px 1fr;
+  gap:0;
+}
+.skin-panel {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:32px 20px; background:var(--bg2);
+  border-right:1px solid var(--border);
+  position:relative;
+}
+.skin-panel::after {
+  content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+  width:60%; height:1px;
+  background:linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.skin-head {
+  width:120px; height:120px; border-radius:12px;
+  image-rendering:pixelated; background:var(--surface);
+  border:1px solid var(--border2);
+  box-shadow:0 4px 24px rgba(0,0,0,0.4);
+}
+.skin-label {
+  margin-top:14px; font-family:var(--mono); font-size:0.58rem;
+  letter-spacing:0.18em; text-transform:uppercase; color:var(--dim);
+}
+
+.info-panel { padding:28px 32px; display:flex; flex-direction:column; gap:18px; }
+.info-row { display:flex; flex-direction:column; gap:5px; }
+.info-label {
+  font-family:var(--mono); font-size:0.58rem; letter-spacing:0.2em;
+  text-transform:uppercase; color:var(--dim);
+}
+.info-value {
+  font-family:var(--mono); font-size:0.85rem; color:var(--text);
+  letter-spacing:0.04em; word-break:break-all;
+  display:flex; align-items:center; gap:8px;
+}
+.copy-btn {
+  flex-shrink:0; padding:4px 8px; border-radius:4px;
+  border:1px solid var(--border2); background:rgba(255,255,255,0.04);
+  color:var(--dim); font-family:var(--mono); font-size:0.55rem;
+  letter-spacing:0.1em; text-transform:uppercase;
+  cursor:pointer; transition:0.2s;
+}
+.copy-btn:hover { color:var(--lime); border-color:rgba(0,255,136,0.3) }
+
+.name-display {
+  font-family:var(--sans); font-size:1.8rem; font-weight:800;
+  letter-spacing:-0.02em; color:var(--white);
+  display:flex; align-items:center; gap:12px;
+}
+.name-display .name-current { color:var(--lime) }
+
+/* Name history */
+.section {
+  border-top:1px solid var(--border);
+}
+.section-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 28px; cursor:pointer; user-select:none;
+  transition:background 0.2s;
+}
+.section-header:hover { background:var(--bg2) }
+.section-title {
+  font-family:var(--mono); font-size:0.65rem; letter-spacing:0.2em;
+  text-transform:uppercase; color:var(--muted); font-weight:700;
+  display:flex; align-items:center; gap:10px;
+}
+.section-title::before {
+  content:''; display:inline-block; width:5px; height:5px;
+  border-radius:50%; background:var(--accent2);
+}
+.section-chevron {
+  width:16px; height:16px; fill:var(--dim);
+  transition:transform 0.3s var(--ease);
+}
+.section-header.open .section-chevron { transform:rotate(180deg) }
+
+.section-body {
+  max-height:0; overflow:hidden;
+  transition:max-height 0.45s var(--ease);
+}
+.section-body.open { max-height:2000px; }
+
+.name-history-list { padding:0 28px 18px; display:flex; flex-direction:column; gap:6px; }
+.name-entry {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 16px; border-radius:8px;
+  background:var(--bg2); border:1px solid var(--border);
+  transition:border-color 0.2s;
+}
+.name-entry:hover { border-color:var(--border2) }
+.name-entry.current { border-color:rgba(0,255,136,0.2); background:rgba(0,255,136,0.04) }
+.ne-name {
+  font-family:var(--mono); font-size:0.82rem; font-weight:600;
+  color:var(--text); letter-spacing:0.04em;
+}
+.ne-name .ne-badge {
+  font-size:0.52rem; padding:2px 6px; border-radius:3px;
+  background:rgba(0,255,136,0.15); color:var(--lime);
+  letter-spacing:0.1em; text-transform:uppercase; margin-left:8px;
+  font-weight:700; vertical-align:middle;
+}
+.ne-date {
+  font-family:var(--mono); font-size:0.62rem; color:var(--dim);
+  letter-spacing:0.08em;
+}
+.ne-toggle {
+  font-family:var(--mono); font-size:0.52rem; color:var(--accent2);
+  letter-spacing:0.1em; text-transform:uppercase;
+  cursor:pointer; padding:4px 8px; border-radius:4px;
+  border:1px solid rgba(108,92,231,0.2); background:rgba(108,92,231,0.08);
+  transition:0.2s; flex-shrink:0; margin-left:12px;
+}
+.ne-toggle:hover { background:rgba(108,92,231,0.2) }
+
+/* Skin history */
+.skin-history-grid {
+  padding:0 28px 18px;
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr));
+  gap:12px;
+}
+.skin-thumb {
+  aspect-ratio:1; border-radius:8px; overflow:hidden;
+  border:1px solid var(--border); background:var(--bg2);
+  transition:border-color 0.2s, transform 0.2s;
+  cursor:pointer; position:relative;
+}
+.skin-thumb:hover { border-color:var(--accent); transform:scale(1.05) }
+.skin-thumb img {
+  width:100%; height:100%; object-fit:cover;
+  image-rendering:pixelated;
+}
+.skin-thumb-label {
+  position:absolute; bottom:0; left:0; right:0;
+  padding:3px 6px; font-family:var(--mono); font-size:0.48rem;
+  letter-spacing:0.06em; color:var(--dim);
+  background:rgba(3,3,10,0.85); text-align:center;
+  backdrop-filter:blur(4px);
+}
+
+/* Skin modal (enlarged view) */
+#skinModal {
+  display:none; position:fixed; inset:0; z-index:9998;
+  background:rgba(3,3,10,0.92); backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  align-items:center; justify-content:center;
+  cursor:pointer;
+}
+#skinModal.show { display:flex; }
+#skinModal img {
+  max-width:min(400px, 85vw); max-height:min(400px, 85vh);
+  image-rendering:pixelated; border-radius:12px;
+  box-shadow:0 16px 60px rgba(0,0,0,0.6);
+  border:1px solid var(--border2);
+}
+
+/* Footer */
+.profile-footer {
+  padding:14px 28px; border-top:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.pf-l, .pf-r {
+  font-family:var(--mono); font-size:0.65rem;
+  letter-spacing:0.12em; color:var(--dim); text-transform:uppercase;
+}
+.pf-r a { color:var(--accent2); transition:color 0.2s }
+.pf-r a:hover { color:var(--white) }
+
+/* ── FOOTER ── */
+footer {
+  display:flex; align-items:center; justify-content:space-between; padding:22px 48px;
+  border-top:1px solid var(--border);
+}
+.foot-l, .foot-r { font-family:var(--mono); font-size:0.68rem; letter-spacing:0.12em; color:var(--dim); text-transform:uppercase }
+.foot-r { display:flex; gap:18px }
+
+/* ── UTILS ── */
+@keyframes fade-up { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+.reveal { opacity:0; transform:translateY(22px); transition:opacity 0.7s var(--ease), transform 0.7s var(--ease) }
+.reveal.visible { opacity:1; transform:translateY(0) }
+
+/* Loading spinner */
+.spinner {
+  width:28px; height:28px; border:2px solid var(--border);
+  border-top-color:var(--accent2); border-radius:50%;
+  animation:spin 0.7s linear infinite; margin:24px auto;
+}
+@keyframes spin { to { transform:rotate(360deg) } }
+
+@media(max-width:860px){
+  header { padding:0 20px }
+  .nav { display:none }
+  h1 { font-size:clamp(2rem, 8vw, 3.5rem) }
+  .search-box { flex-direction:column; border-radius:10px; }
+  .search-box input { padding:14px 16px; width:100%; text-align:center; }
+  .search-box button { padding:14px; width:100%; border-radius:0 0 10px 10px; }
+  .profile-top { grid-template-columns:1fr; }
+  .skin-panel { border-right:none; border-bottom:1px solid var(--border); padding:24px; }
+  .skin-panel::after { display:none }
+  .info-panel { padding:20px; }
+  .section-header { padding:14px 20px }
+  .name-history-list { padding:0 20px 14px }
+  .skin-history-grid { padding:0 20px 14px; grid-template-columns:repeat(auto-fill, minmax(64px, 1fr)); }
+  footer { flex-direction:column; gap:10px; text-align:center; padding:20px }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-pulse"></div>
+    <a href="/">Koels.site</a>
+  </div>
+  <nav class="nav">
+    <a href="/">Home</a>
+    <a href="/links">Links</a>
+  </nav>
+</header>
+
+<!-- HERO / SEARCH -->
+<section class="hero" id="hero">
+  <div class="hero-glow"></div>
+  <div class="search-wrap">
+    <div class="search-eyebrow"><span class="eyebrow-line"></span>Minecraft Player Lookup</div>
+    <h1>Find any <span class="grad">player</span></h1>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Enter username..." maxlength="16" autocomplete="off" spellcheck="false">
+      <button onclick="doLookup()" id="searchBtn">Search</button>
+    </div>
+    <div class="error-state" id="errorState">
+      <div class="err-icon">⚠️</div>
+      <div class="err-msg" id="errMsg">Player not found</div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<div id="results">
+  <div class="profile-card">
+    <div class="card-stripe"></div>
+
+    <div class="profile-top">
+      <div class="skin-panel">
+        <img class="skin-head" id="skinHead" src="" alt="Player skin head">
+        <div class="skin-label">Skin Preview</div>
+      </div>
+      <div class="info-panel">
+        <div class="name-display">
+          <span class="name-current" id="currentName">—</span>
+        </div>
+        <div class="info-row">
+          <div class="info-label">UUID</div>
+          <div class="info-value">
+            <span id="uuidDisplay">—</span>
+            <button class="copy-btn" onclick="copyText(document.getElementById('uuidDisplay').textContent)">Copy</button>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Account Type</div>
+          <div class="info-value" id="accountType">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Name History -->
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">Name History</div>
+        <svg class="section-chevron" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="name-history-list" id="nameHistoryList"></div>
+      </div>
+    </div>
+
+    <!-- Skin History -->
+    <div class="section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <div class="section-title">Skin History</div>
+        <svg class="section-chevron" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+      </div>
+      <div class="section-body">
+        <div class="skin-history-grid" id="skinHistoryGrid"></div>
+      </div>
+    </div>
+
+    <div class="profile-footer">
+      <span class="pf-l">Data via Mojang API</span>
+      <span class="pf-r"><a href="/" onclick="resetSearch()">New Search ↗</a></span>
+    </div>
+  </div>
+</div>
+
+<!-- Skin Modal -->
+<div id="skinModal" onclick="closeSkinModal()">
+  <img id="skinModalImg" src="" alt="Enlarged skin">
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">Copied!</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-l">© 2026 Koels.site</div>
+  <div class="foot-r">
+    <span>MC Lookup</span>
+    <span>·</span>
+    <span>Cached locally</span>
+  </div>
+</footer>
+
+<script>
+/* ── Cache helpers ── */
+const CACHE_TTL = 1000 * 60 * 30; // 30 min
+function cacheGet(key) {
+  try {
+    const raw = localStorage.getItem('mc_cache:' + key);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL) return null;
+    return data;
+  } catch { return null }
+}
+function cacheSet(key, data) {
+  try { localStorage.setItem('mc_cache:' + key, JSON.stringify({ data, ts: Date.now() })) } catch {}
+}
+
+/* ── Toast ── */
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 2200);
+}
+
+/* ── Copy ── */
+function copyText(text) {
+  navigator.clipboard.writeText(text.trim()).then(() => showToast('Copied to clipboard!'));
+}
+
+/* ── Section toggle ── */
+function toggleSection(header) {
+  header.classList.toggle('open');
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+/* ── Skin modal ── */
+function openSkinModal(src) {
+  document.getElementById('skinModalImg').src = src;
+  document.getElementById('skinModal').classList.add('show');
+}
+function closeSkinModal() {
+  document.getElementById('skinModal').classList.remove('show');
+}
+
+/* ── Reset ── */
+function resetSearch() {
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('hero').style.display = '';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('errorState').classList.remove('show');
+}
+
+/* ── Format UUID ── */
+function formatUUID(raw) {
+  return raw.replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
+}
+
+/* ── Format date ── */
+function formatDate(ts) {
+  if (!ts) return 'Original name';
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+}
+
+/* ── Main lookup ── */
+async function doLookup() {
+  const input = document.getElementById('searchInput');
+  const username = input.value.trim();
+  if (!username || username.length < 3) {
+    showError('Username must be at least 3 characters');
+    return;
+  }
+
+  // Hide previous results
+  document.getElementById('results').classList.remove('show');
+  document.getElementById('errorState').classList.remove('show');
+
+  // Show loading state
+  const btn = document.getElementById('searchBtn');
+  btn.textContent = '...';
+  btn.disabled = true;
+
+  try {
+    // Step 1: Get UUID from username
+    const uuid = await fetchUUID(username);
+    if (!uuid) {
+      showError('Player "' + username + '" not found');
+      return;
+    }
+
+    // Step 2: Get name history + skin data in parallel
+    const [names, profile] = await Promise.all([
+      fetchNameHistory(uuid),
+      fetchProfile(uuid)
+    ]);
+
+    renderProfile(username, uuid, names, profile);
+  } catch (err) {
+    console.error(err);
+    showError('Lookup failed. Try again.');
+  } finally {
+    btn.textContent = 'Search';
+    btn.disabled = false;
+  }
+}
+
+async function fetchUUID(username) {
+  const cacheKey = 'uuid:' + username.toLowerCase();
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const res = await fetch('https://api.mojang.com/users/profiles/minecraft/' + encodeURIComponent(username));
+  if (!res.ok) return null;
+  const data = await res.json();
+  cacheSet(cacheKey, data.id);
+  return data.id;
+}
+
+async function fetchNameHistory(uuid) {
+  const cacheKey = 'names:' + uuid;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const res = await fetch('https://api.mojang.com/user/profiles/' + uuid + '/names');
+  if (!res.ok) return [];
+  const data = await res.json();
+  cacheSet(cacheKey, data);
+  return data;
+}
+
+async function fetchProfile(uuid) {
+  const cacheKey = 'profile:' + uuid;
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
+
+  const res = await fetch('https://sessionserver.mojang.com/session/minecraft/profile/' + uuid);
+  if (!res.ok) return null;
+  const data = await res.json();
+  cacheSet(cacheKey, data);
+  return data;
+}
+
+function showError(msg) {
+  document.getElementById('errMsg').textContent = msg;
+  document.getElementById('errorState').classList.add('show');
+}
+
+/* ── Decode skin texture URL from profile ── */
+function decodeSkins(profile) {
+  if (!profile || !profile.properties) return [];
+  const prop = profile.properties.find(p => p.name === 'textures');
+  if (!prop) return [];
+  try {
+    const decoded = JSON.parse(atob(prop.value));
+    const skins = [];
+    if (decoded.textures && decoded.textures.SKIN) {
+      const url = decoded.textures.SKIN.url;
+      const meta = decoded.textures.SKIN.metadata || {};
+      skins.push({ url, model: meta.model || 'default', isCurrent: true });
+    }
+    return skins;
+  } catch { return [] }
+}
+
+/* ── Render ── */
+function renderProfile(username, uuid, names, profile) {
+  // Hide hero, show results
+  document.getElementById('hero').style.display = 'none';
+  document.getElementById('results').classList.add('show');
+
+  // Current name
+  const currentName = names.length > 0 ? names[names.length - 1].name : username;
+  document.getElementById('currentName').textContent = currentName;
+
+  // UUID
+  document.getElementById('uuidDisplay').textContent = formatUUID(uuid);
+
+  // Account type (from skin metadata)
+  const skins = decodeSkins(profile);
+  document.getElementById('accountType').textContent = skins.length > 0
+    ? (skins[0].model === 'slim' ? 'Slim (Alex)' : 'Classic (Steve)')
+    : 'Unknown';
+
+  // Skin head (using crafatar.com)
+  document.getElementById('skinHead').src = 'https://crafatar.com/renders/head/' + uuid + '?overlay&size=120';
+
+  // Name history
+  const nameList = document.getElementById('nameHistoryList');
+  nameList.innerHTML = '';
+  names.slice().reverse().forEach((entry, i) => {
+    const isCurrent = i === 0;
+    const el = document.createElement('div');
+    el.className = 'name-entry' + (isCurrent ? ' current' : '');
+    el.innerHTML = `
+      <div>
+        <span class="ne-name">${entry.name}${isCurrent ? '<span class="ne-badge">Current</span>' : ''}</span>
+      </div>
+      <div style="display:flex;align-items:center;">
+        <span class="ne-date">${formatDate(entry.changedToAt)}</span>
+      </div>
+    `;
+    nameList.appendChild(el);
+  });
+
+  // Skin history — Mojang only returns current skin, so we show the current one
+  // For full skin history you'd need a third-party service like namemc.com tracks it
+  const skinGrid = document.getElementById('skinHistoryGrid');
+  skinGrid.innerHTML = '';
+  if (skins.length > 0) {
+    const skin = skins[0];
+    // Full body render
+    const thumb = document.createElement('div');
+    thumb.className = 'skin-thumb';
+    thumb.onclick = () => openSkinModal('https://crafatar.com/renders/body/' + uuid + '?overlay&scale=10&width=400');
+    thumb.innerHTML = `
+      <img src="https://crafatar.com/renders/body/${uuid}?overlay&scale=10&width=160" alt="Current skin">
+      <div class="skin-thumb-label">Current</div>
+    `;
+    skinGrid.appendChild(thumb);
+
+    // Also show flat skin
+    const flat = document.createElement('div');
+    flat.className = 'skin-thumb';
+    flat.onclick = () => openSkinModal('https://crafatar.com/skins/' + uuid);
+    flat.innerHTML = `
+      <img src="https://crafatar.com/skins/${uuid}" alt="Skin texture">
+      <div class="skin-thumb-label">Texture</div>
+    `;
+    skinGrid.appendChild(flat);
+  } else {
+    skinGrid.innerHTML = '<div style="font-family:var(--mono);font-size:0.7rem;color:var(--dim);padding:24px;grid-column:1/-1;text-align:center;">No skin data available</div>';
+  }
+
+  // Auto-open name history
+  const sections = document.querySelectorAll('.section-header');
+  sections.forEach(s => {
+    if (s.querySelector('.section-title')?.textContent.includes('Name')) {
+      s.classList.add('open');
+      s.nextElementSibling.classList.add('open');
+    }
+  });
+}
+
+/* ── Enter key ── */
+document.getElementById('searchInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doLookup();
+});
+
+/* ── Check URL params for username ── */
+const params = new URLSearchParams(window.location.search);
+const q = params.get('q');
+if (q) {
+  document.getElementById('searchInput').value = q;
+  doLookup();
+}
+</script>
+</body>
+</html>
