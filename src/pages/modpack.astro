@@ -203,64 +203,63 @@ h1 .grad {
 .pill[data-cat="library"].active { background:rgba(240,238,255,0.06); border-color:rgba(240,238,255,0.3); color:var(--muted) }
 .pill[data-cat="qol"].active { background:rgba(255,71,87,0.1); border-color:var(--red); color:var(--red) }
 
-
-
-/* ── LIST ── */
-.grid-wrap { max-width:860px; margin:0 auto; padding:0 40px 80px; position:relative; }
+/* ── GRID ── */
+.grid-wrap { max-width:1100px; margin:0 auto; padding:0 40px 80px }
 .mod-count {
   font-family:var(--mono); font-size:0.65rem; letter-spacing:0.14em;
   text-transform:uppercase; color:var(--dim); margin-bottom:20px;
 }
 .mod-count span { color:var(--accent2) }
 
-.mod-grid { display:flex; flex-direction:column; gap:0; }
+.mod-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));
+  gap:12px;
+}
 
-/* MOD ROW */
+/* MOD CARD */
 .mod-card {
-  display:flex; align-items:baseline; gap:16px;
-  padding:13px 0;
-  border-bottom:1px solid var(--border);
-  animation:row-in 0.3s var(--ease) both;
-  transition:background 0.15s;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:0;
+  overflow:hidden;
+  transition:border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  cursor:default;
+  animation:card-in 0.4s var(--ease) both;
   position:relative;
 }
-.mod-card:first-child { border-top:1px solid var(--border) }
-@keyframes row-in { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
+@keyframes card-in { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.mod-card:hover {
+  border-color:var(--border2);
+  transform:translateY(-2px);
+  box-shadow:0 8px 32px rgba(0,0,0,0.3);
+}
 .mod-card.hidden { display:none }
 
-/* left accent bar */
-.mod-card::before {
-  content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
-  width:2px; height:0; border-radius:2px;
-  transition:height 0.2s var(--ease), opacity 0.2s;
-  opacity:0;
+.card-top-bar {
+  height:2px;
+  background:var(--border);
 }
-.mod-card:hover::before { height:60%; opacity:1 }
-.mod-card[data-cat="performance"]::before { background:var(--lime) }
-.mod-card[data-cat="world"]::before       { background:var(--cyan) }
-.mod-card[data-cat="content"]::before     { background:var(--amber) }
-.mod-card[data-cat="visual"]::before      { background:var(--accent2) }
-.mod-card[data-cat="library"]::before     { background:rgba(255,255,255,0.25) }
-.mod-card[data-cat="qol"]::before         { background:var(--red) }
+.mod-card[data-cat="performance"] .card-top-bar { background:linear-gradient(90deg, var(--lime), rgba(0,255,136,0.3)) }
+.mod-card[data-cat="world"]       .card-top-bar { background:linear-gradient(90deg, var(--cyan), rgba(0,210,211,0.3)) }
+.mod-card[data-cat="content"]     .card-top-bar { background:linear-gradient(90deg, var(--amber), rgba(255,165,2,0.3)) }
+.mod-card[data-cat="visual"]      .card-top-bar { background:linear-gradient(90deg, var(--accent2), rgba(162,155,254,0.3)) }
+.mod-card[data-cat="library"]     .card-top-bar { background:linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05)) }
+.mod-card[data-cat="qol"]         .card-top-bar { background:linear-gradient(90deg, var(--red), rgba(255,71,87,0.3)) }
 
-.row-index {
-  font-family:var(--mono); font-size:0.6rem; color:var(--dim);
-  width:28px; flex-shrink:0; text-align:right; line-height:1;
-  padding-top:2px;
-}
-
-.row-main { flex:1; min-width:0; }
-
-.row-top { display:flex; align-items:center; gap:10px; margin-bottom:3px; flex-wrap:wrap; }
+.card-body { padding:16px }
+.card-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; gap:8px }
 
 .mod-name {
-  font-size:0.88rem; font-weight:700; color:var(--white);
+  font-size:0.88rem; font-weight:700; color:var(--white); line-height:1.25;
+  flex:1;
 }
-
 .cat-badge {
-  font-family:var(--mono); font-size:0.5rem; font-weight:700;
+  font-family:var(--mono); font-size:0.52rem; font-weight:700;
   letter-spacing:0.14em; text-transform:uppercase;
-  padding:2px 6px; border-radius:3px; white-space:nowrap; flex-shrink:0;
+  padding:3px 7px; border-radius:4px; white-space:nowrap; flex-shrink:0;
+  margin-top:1px;
 }
 [data-cat="performance"] .cat-badge { background:rgba(0,255,136,0.12); color:var(--lime); border:1px solid rgba(0,255,136,0.2) }
 [data-cat="world"]       .cat-badge { background:rgba(0,210,211,0.12); color:var(--cyan); border:1px solid rgba(0,210,211,0.2) }
@@ -270,30 +269,31 @@ h1 .grad {
 [data-cat="qol"]         .cat-badge { background:rgba(255,71,87,0.12); color:var(--red); border:1px solid rgba(255,71,87,0.2) }
 
 .mod-author {
-  font-family:var(--mono); font-size:0.6rem; color:var(--dim); letter-spacing:0.06em;
+  font-family:var(--mono); font-size:0.6rem; color:var(--dim);
+  letter-spacing:0.08em; margin-bottom:10px;
 }
 .mod-author span { color:var(--accent2) }
 
 .mod-desc {
-  font-size:0.78rem; color:var(--muted); line-height:1.5; margin-top:4px;
+  font-size:0.78rem; color:var(--muted); line-height:1.55;
+  margin-bottom:12px; min-height:42px;
 }
 
-.row-right {
-  flex-shrink:0; display:flex; align-items:center;
-}
+.card-footer { display:flex; justify-content:flex-end }
 .cf-link {
-  font-family:var(--mono); font-size:0.55rem; font-weight:600;
-  letter-spacing:0.12em; text-transform:uppercase;
-  color:var(--dim); transition:color 0.2s;
-  display:flex; align-items:center; gap:4px;
-  white-space:nowrap;
+  font-family:var(--mono); font-size:0.58rem; font-weight:600;
+  letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--dim); padding:5px 0;
+  transition:color 0.2s;
+  display:flex; align-items:center; gap:5px;
 }
 .cf-link:hover { color:var(--accent2) }
-.cf-link::after { content:'↗'; font-size:0.6rem }
+.cf-link::after { content:'↗'; font-size:0.65rem }
 
 /* ── EMPTY STATE ── */
 .empty-state {
   display:none; text-align:center; padding:64px 24px;
+  grid-column:1/-1;
 }
 .empty-state.show { display:block }
 .empty-icon { font-size:2.2rem; margin-bottom:14px; opacity:0.5 }
@@ -313,9 +313,8 @@ footer {
 @media (max-width:600px) {
   header { padding:0 20px }
   .hero, .controls, .grid-wrap { padding-left:20px; padding-right:20px }
+  .mod-grid { grid-template-columns:1fr }
   .stats-bar { gap:18px }
-  .row-index { display:none }
-  .row-right { display:none }
 }
 </style>
 </head>
@@ -327,6 +326,7 @@ footer {
     <a href="/">koels.site</a>
   </div>
   <nav class="nav">
+    <a href="/mc">MC Lookup</a>
     <a href="/modpack" class="active">Modpack</a>
     <a href="/links">Links</a>
   </nav>
@@ -337,26 +337,22 @@ footer {
   <div class="hero-inner">
     <div class="eyebrow">
       <span class="eyebrow-line"></span>
-      <span>Fabric · 1.21.x</span>
+      <span>NeoForge · 1.21.x</span>
     </div>
     <h1>My <span class="grad">Modpack</span></h1>
-    <p class="hero-sub">A curated collection of mods for exploration, performance, and vibes.<br>All on Fabric. All tested. Zero crashes (mostly).</p>
+    <p class="hero-sub">A curated collection of mods for exploration, performance, and vibes.<br>All on NeoForge. All tested. Zero crashes (mostly).</p>
     <div class="stats-bar">
       <div class="stat">
         <div class="stat-val" id="statTotal">—</div>
         <div class="stat-label">Total Mods</div>
       </div>
       <div class="stat">
-        <div class="stat-val"><span class="unit" style="font-size:1rem;margin:0"></span>6<span class="unit">perf</span></div>
-        <div class="stat-label">Performance</div>
-      </div>
-      <div class="stat">
-        <div class="stat-val">4<span class="unit">shaders</span></div>
+        <div class="stat-val"><span class="unit" style="font-size:1rem;margin:0"></span>8<span class="unit">shaders</span></div>
         <div class="stat-label">Shader Packs</div>
       </div>
       <div class="stat">
         <div class="stat-val"><span style="color:var(--lime)">●</span></div>
-        <div class="stat-label">Fabric</div>
+        <div class="stat-label">NeoForge</div>
       </div>
     </div>
   </div>
@@ -393,172 +389,187 @@ footer {
   <div class="footer-right">
     <a href="https://modrinth.com" target="_blank" rel="noopener">Modrinth</a>
     <a href="https://curseforge.com" target="_blank" rel="noopener">CurseForge</a>
-    <a href="https://fabricmc.net" target="_blank" rel="noopener">Fabric</a>
+    <a href="https://neoforged.net" target="_blank" rel="noopener">NeoForge</a>
   </div>
 </footer>
 
 <script>
 const MODS = [
   // ── PERFORMANCE ──
-  { name:"Sodium", author:"JellySquid", cat:"performance", desc:"The gold standard rendering engine replacement for Fabric. Massively boosts FPS by optimizing chunk rendering and reducing GPU/CPU overhead.", url:"https://www.curseforge.com/minecraft/mc-mods/sodium" },
   { name:"Lithium", author:"JellySquid", cat:"performance", desc:"Server-side and single-player optimizations for game logic — ticking, AI, physics, and chunk management — with no gameplay changes.", url:"https://www.curseforge.com/minecraft/mc-mods/lithium" },
-  { name:"Krypton", author:"tuxed", cat:"performance", desc:"Network stack optimizer that reduces CPU usage and latency for multiplayer by tweaking Netty packet handling.", url:"https://www.curseforge.com/minecraft/mc-mods/krypton" },
-  { name:"FerriteCore", author:"malte0811", cat:"performance", desc:"Dramatically reduces RAM usage by deduplicating blockstate memory. Essential for large modpacks to avoid out-of-memory crashes.", url:"https://www.curseforge.com/minecraft/mc-mods/ferritecore-fabric" },
+  { name:"FerriteCore", author:"malte0811", cat:"performance", desc:"Dramatically reduces RAM usage by deduplicating blockstate memory. Essential for large modpacks to avoid out-of-memory crashes.", url:"https://www.curseforge.com/minecraft/mc-mods/ferritecore" },
   { name:"Dynamic FPS", author:"juliand665", cat:"performance", desc:"Drops render speed to 1fps when the game window is unfocused, saving CPU/GPU power while you alt-tab.", url:"https://www.curseforge.com/minecraft/mc-mods/dynamic-fps" },
   { name:"ModernFix", author:"embeddedt", cat:"performance", desc:"An all-in-one mod that reduces startup time, memory usage, and lag spikes through dozens of micro-optimizations.", url:"https://www.curseforge.com/minecraft/mc-mods/modernfix" },
   { name:"FastBoot", author:"dnlayu", cat:"performance", desc:"Parallelizes resource loading during game startup so you get to the main menu faster.", url:"https://www.curseforge.com/minecraft/mc-mods/fastboot" },
-  { name:"LazyAI", author:"Pixel", cat:"performance", desc:"Throttles entity AI calculations when mobs are far from the player, reducing tick lag in mob-heavy areas.", url:"https://www.curseforge.com/minecraft/mc-mods/lazyai" },
-  { name:"Leaky - Item Lag Fix", author:"someaddon", cat:"performance", desc:"Fixes item entity lag by limiting how many item entities exist simultaneously, preventing ground item pile-up from tanking performance.", url:"https://www.curseforge.com/minecraft/mc-mods/leaky" },
-  { name:"Better Chunk Loading", author:"someaddon", cat:"performance", desc:"Smooths out chunk loading by spreading the work across multiple ticks instead of all at once, reducing stutters.", url:"https://www.curseforge.com/minecraft/mc-mods/better-chunk-loading-forge-fabric" },
+  { name:"AllTheLeaks (Memory Leak Fix)", author:"Uncandango", cat:"performance", desc:"Patches various memory leaks in vanilla and mod code to prevent RAM usage from climbing indefinitely over long sessions.", url:"https://www.curseforge.com/minecraft/mc-mods/alltheleaks" },
+  { name:"ImmediatelyFast", author:"RaphiMC", cat:"performance", desc:"Optimizes immediate-mode rendering in Minecraft, speeding up entity rendering, GUI, and other draw calls.", url:"https://www.curseforge.com/minecraft/mc-mods/immediatelyfast" },
+  { name:"BadOptimizations", author:"thosea", cat:"performance", desc:"A collection of small client-side performance tweaks that add up to noticeably smoother gameplay.", url:"https://www.curseforge.com/minecraft/mc-mods/badoptimizations" },
+  { name:"Concurrent Chunk Management Engine (C2ME)", author:"ishlandmc", cat:"performance", desc:"Parallelizes chunk loading, generation, and saving across multiple CPU threads to drastically reduce world load times.", url:"https://www.curseforge.com/minecraft/mc-mods/c2me" },
   { name:"Server Performance - Smooth Chunk Save", author:"someaddon", cat:"performance", desc:"Saves chunks gradually over time rather than all at once, preventing massive lag spikes during autosave.", url:"https://www.curseforge.com/minecraft/mc-mods/smooth-chunk-save" },
-  { name:"Tick Stabilizer", author:"Bahanos", cat:"performance", desc:"Keeps the TPS (ticks per second) stable by dynamically distributing expensive operations to avoid sudden slowdowns.", url:"https://www.curseforge.com/minecraft/mc-mods/tick-stabilizer" },
-  { name:"Fix GPU Memory Leak", author:"someaddon", cat:"performance", desc:"Patches a vanilla bug where GPU memory isn't freed properly over time, preventing gradual performance degradation.", url:"https://www.curseforge.com/minecraft/mc-mods/fix-gpu-memory-leak" },
+  { name:"Fix GPU Memory Leak", author:"someaddon", cat:"performance", desc:"Patches a vanilla bug where GPU memory is not freed properly over time, preventing gradual performance degradation.", url:"https://www.curseforge.com/minecraft/mc-mods/fix-gpu-memory-leak" },
   { name:"Clumps", author:"Jaredlll08", cat:"performance", desc:"Groups XP orbs together into a single entity to prevent hundreds of individual orb entities from killing performance.", url:"https://www.curseforge.com/minecraft/mc-mods/clumps" },
-  { name:"Chunky", author:"pop4959", cat:"performance", desc:"Pre-generates chunks in the background so players never experience generation lag during exploration.", url:"https://www.curseforge.com/minecraft/mc-mods/chunky-pregenerator" },
+  { name:"Chunky", author:"pop4959", cat:"performance", desc:"Pre-generates chunks in the background so players never experience generation lag during exploration.", url:"https://www.curseforge.com/minecraft/mc-mods/chunky-pregenerator-forge" },
   { name:"Chunky Offline", author:"lullaby6", cat:"performance", desc:"Allows Chunky to continue pre-generating chunks even when no players are online on a server.", url:"https://www.curseforge.com/minecraft/mc-mods/chunky-offline" },
-  { name:"spark", author:"Iucko", cat:"performance", desc:"A powerful profiler for finding exactly what's causing lag — lets you see which mods or operations are eating your TPS.", url:"https://www.curseforge.com/minecraft/mc-mods/spark" },
+  { name:"Chloride (Embeddium++)", author:"SrRapero720", cat:"performance", desc:"Extra performance tweaks and options layered on top of Embeddium for even more FPS gains on NeoForge.", url:"https://www.curseforge.com/minecraft/mc-mods/chloride" },
+  { name:"Sodium/Embeddium Extras", author:"Txni", cat:"performance", desc:"Additional graphical settings and quality-of-life options that extend Embeddium video settings.", url:"https://www.curseforge.com/minecraft/mc-mods/magnesium-extras" },
+  { name:"Sodium/Embeddium Options API", author:"Txni", cat:"performance", desc:"An API that lets mods add their own options to the Embeddium video settings screen.", url:"https://www.curseforge.com/minecraft/mc-mods/sodium-options-api" },
+  { name:"AI Improvements", author:"QueenOfMissiles", cat:"performance", desc:"Optimizes mob AI pathfinding and decision-making to reduce CPU overhead in mob-heavy areas.", url:"https://www.curseforge.com/minecraft/mc-mods/ai-improvements" },
+  { name:"spark", author:"Iucko", cat:"performance", desc:"A powerful profiler for finding exactly what is causing lag — see which mods or operations are eating your TPS.", url:"https://www.curseforge.com/minecraft/mc-mods/spark" },
+  { name:"Fast IP Ping", author:"Fallen_Breath", cat:"performance", desc:"Speeds up the server list ping so the status icon loads near-instantly instead of taking several seconds.", url:"https://www.curseforge.com/minecraft/mc-mods/fast-ip-ping" },
 
   // ── WORLD / EXPLORATION ──
-  { name:"Biomes O' Plenty", author:"Forstride", cat:"world", desc:"Adds over 50 new biomes with unique terrain, plants, and blocks — forests, deserts, swamps, and fantastical landscapes to discover.", url:"https://www.curseforge.com/minecraft/mc-mods/biomes-o-plenty" },
-  { name:"The Bumblezone", author:"telepathicgrunt", cat:"world", desc:"A bee-themed dimension filled with honeycombs, pollen, and giant bee structures. Accessible via beehives and full of unique challenges.", url:"https://www.curseforge.com/minecraft/mc-mods/the-bumblezone-fabric" },
+  { name:"Biomes O Plenty", author:"Forstride", cat:"world", desc:"Adds over 50 new biomes with unique terrain, plants, and blocks — forests, deserts, swamps, and fantastical landscapes to discover.", url:"https://www.curseforge.com/minecraft/mc-mods/biomes-o-plenty" },
+  { name:"Oh The Biomes We've Gone", author:"AOCAWOL", cat:"world", desc:"A companion biome mod focused on natural, grounded biomes that blend seamlessly with vanilla terrain.", url:"https://www.curseforge.com/minecraft/mc-mods/oh-the-biomes-weve-gone" },
+  { name:"The Bumblezone", author:"telepathicgrunt", cat:"world", desc:"A bee-themed dimension filled with honeycombs, pollen, and giant bee structures. Accessible via beehives and full of unique challenges.", url:"https://www.curseforge.com/minecraft/mc-mods/the-bumblezone-forge" },
   { name:"The Aether", author:"TheAetherTeam", cat:"world", desc:"The classic sky dimension mod, fully modernized. An angelic realm above the clouds with new mobs, dungeons, bosses, and gear.", url:"https://www.curseforge.com/minecraft/mc-mods/aether" },
   { name:"Deeper and Darker", author:"KyaniteMods", cat:"world", desc:"Expands the Deep Dark with a brand-new dimension, the Otherside, full of new blocks, mobs, and Sculk-themed gear.", url:"https://www.curseforge.com/minecraft/mc-mods/deeperdarker" },
-  { name:"BetterNether", author:"Quiqueck", cat:"world", desc:"Completely overhauls Nether generation with new biomes, structures, plants, and creatures for a much more varied hellscape.", url:"https://www.curseforge.com/minecraft/mc-mods/betternether" },
-  { name:"BetterEnd", author:"Quiqueck", cat:"world", desc:"Transforms the End dimension with lush new biomes, glowing forests, alien creatures, and unique crafting materials.", url:"https://www.curseforge.com/minecraft/mc-mods/betterend" },
-  { name:"Oh The Biomes We've Gone", author:"AOCAWOL", cat:"world", desc:"A companion biome mod focused on natural, grounded biomes that blend seamlessly with vanilla terrain.", url:"https://www.curseforge.com/minecraft/mc-mods/oh-the-biomes-weve-gone" },
+  { name:"The Twilight Forest", author:"Benimatic", cat:"world", desc:"A magical forested dimension with sprawling dungeons, unique bosses, and a structured progression system unlike any other mod.", url:"https://www.curseforge.com/minecraft/mc-mods/the-twilight-forest" },
+  { name:"The Undergarden", author:"Quek04", cat:"world", desc:"A vast underground dimension below the bedrock, filled with alien flora, strange mobs, and unique ores to discover.", url:"https://www.curseforge.com/minecraft/mc-mods/the-undergarden" },
+  { name:"BetterNether Neoforge", author:"Raijin2312", cat:"world", desc:"Completely overhauls Nether generation with new biomes, structures, plants, and creatures for a much more varied hellscape.", url:"https://www.curseforge.com/minecraft/mc-mods/betternether-neoforge" },
+  { name:"BetterEnd Neoforge", author:"Raijin2312", cat:"world", desc:"Transforms the End dimension with lush new biomes, glowing forests, alien creatures, and unique crafting materials.", url:"https://www.curseforge.com/minecraft/mc-mods/betterend-neoforge" },
   { name:"Oh The Trees You'll Grow", author:"Corgi_Taco", cat:"world", desc:"Populates the world with gorgeous new tree variants in many biomes, making forests feel much more alive and diverse.", url:"https://www.curseforge.com/minecraft/mc-mods/oh-the-trees-youll-grow" },
   { name:"Serene Seasons", author:"TheAdubbz", cat:"world", desc:"Adds a proper four-season cycle to the world — spring, summer, autumn, and winter each change crop growth, temperatures, and visuals.", url:"https://www.curseforge.com/minecraft/mc-mods/serene-seasons" },
-  { name:"YUNG's Better Caves", author:"YUNGNICKYOUNG", cat:"world", desc:"Completely revamps cave generation with massive caverns, underground lakes, and stunning geological formations.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-caves-fabric" },
-  { name:"YUNG's Better Mineshafts", author:"YUNGNICKYOUNG", cat:"world", desc:"Replaces vanilla mineshafts with far more detailed, sprawling underground structures that feel like real abandoned mines.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-mineshafts-fabric" },
-  { name:"YUNG's Better Desert Temples", author:"YUNGNICKYOUNG", cat:"world", desc:"Redesigns desert pyramids into multi-level, trap-filled dungeons with more treasure and much more danger.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-desert-temples-fabric" },
-  { name:"YUNG's Better Jungle Temples", author:"YUNGNICKYOUNG", cat:"world", desc:"Overhauls jungle temples into larger, more complex structures with better puzzles and rewards.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-jungle-temples-fabric" },
-  { name:"YUNG's Better Ocean Monuments", author:"YUNGNICKYOUNG", cat:"world", desc:"Rebuilds ocean monuments into massive, maze-like underwater fortresses that are truly worth raiding.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-ocean-monuments-fabric" },
-  { name:"YUNG's Better Nether Fortresses", author:"YUNGNICKYOUNG", cat:"world", desc:"Dramatically expands Nether fortresses with new rooms, towers, and layouts — each fortress feels unique.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-nether-fortresses-fabric" },
-  { name:"Better Trial Chambers", author:"Herobrine011840", cat:"world", desc:"Expands and varies Trial Chamber layouts with new room types and challenges. [Data Pack]", url:"https://www.curseforge.com/minecraft/data-packs/better-trial-chambers" },
-  { name:"Infinity and Mending", author:"auuruum", cat:"world", desc:"Removes the artificial incompatibility between Infinity and Mending enchantments so you can have both on a bow. [Data Pack]", url:"https://www.curseforge.com/minecraft/data-packs/infinity-mending-datapack-data-pack" },
-  { name:"Nethergates", author:"BuFFed", cat:"world", desc:"Adds ruined Nether portal variants that generate naturally in the world, making portal discovery feel more organic. [Data Pack]", url:"https://www.curseforge.com/minecraft/data-packs/nethergates" },
+  { name:"YUNG's Better Caves", author:"YUNGNICKYOUNG", cat:"world", desc:"Completely revamps cave generation with massive caverns, underground lakes, and stunning geological formations.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-caves" },
+  { name:"YUNG's Better Mineshafts", author:"YUNGNICKYOUNG", cat:"world", desc:"Replaces vanilla mineshafts with far more detailed, sprawling underground structures that feel like real abandoned mines.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-mineshafts-neoforge" },
+  { name:"YUNG's Better Desert Temples", author:"YUNGNICKYOUNG", cat:"world", desc:"Redesigns desert pyramids into multi-level, trap-filled dungeons with more treasure and much more danger.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-desert-temples-neoforge" },
+  { name:"YUNG's Better Jungle Temples", author:"YUNGNICKYOUNG", cat:"world", desc:"Overhauls jungle temples into larger, more complex structures with better puzzles and rewards.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-jungle-temples-neoforge" },
+  { name:"YUNG's Better Ocean Monuments", author:"YUNGNICKYOUNG", cat:"world", desc:"Rebuilds ocean monuments into massive, maze-like underwater fortresses that are truly worth raiding.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-ocean-monuments-neoforge" },
+  { name:"YUNG's Better Nether Fortresses", author:"YUNGNICKYOUNG", cat:"world", desc:"Dramatically expands Nether fortresses with new rooms, towers, and layouts — each fortress feels unique.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-nether-fortresses-neoforge" },
+  { name:"YUNG's Better Strongholds", author:"YUNGNICKYOUNG", cat:"world", desc:"Rebuilds strongholds into vast, winding complexes with many unique rooms — the End portal is worth finding.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-strongholds-neoforge" },
+  { name:"YUNG's Better Dungeons", author:"YUNGNICKYOUNG", cat:"world", desc:"Overhauls dungeon generation with varied layouts, new mob spawners, and more interesting loot placement.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-dungeons-neoforge" },
+  { name:"YUNG's Better End Island", author:"YUNGNICKYOUNG", cat:"world", desc:"Redesigns the main End island with a more dramatic and interesting layout before fighting the dragon.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-better-end-island-neoforge" },
+  { name:"YUNG's Cave Biomes", author:"YUNGNICKYOUNG", cat:"world", desc:"Adds unique biome-like underground zones with distinct aesthetics, flora, and loot distinct from surface biomes.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-cave-biomes" },
+  { name:"Towns and Towers", author:"Biban_Auriu", cat:"world", desc:"Adds new village variants and tower structures to the world that fit different biomes with unique architecture.", url:"https://www.curseforge.com/minecraft/mc-mods/towns-and-towers" },
+  { name:"MES - Moog's End Structures", author:"finndog_123", cat:"world", desc:"Populates the End dimension with a variety of new structures to discover beyond the default islands.", url:"https://www.curseforge.com/minecraft/mc-mods/moogs-end-structures" },
+  { name:"Alex's Caves (Unofficial Port)", author:"Raguto", cat:"world", desc:"Adds a huge variety of unique cave biomes deep underground, each with its own ecosystem, mobs, and resources.", url:"https://www.curseforge.com/minecraft/mc-mods/alexs-caves-unofficial-port" },
   { name:"Waystones", author:"BlayTheNinth", cat:"world", desc:"Adds teleportation waystone blocks that can be placed in villages and the world, making long-distance travel much easier.", url:"https://www.curseforge.com/minecraft/mc-mods/waystones" },
 
   // ── CONTENT ──
-  { name:"Farmer's Delight Refabricated", author:"ChrysanthCow", cat:"content", desc:"A cozy farming and cooking expansion adding dozens of new crops, ingredients, meals, kitchen blocks, and culinary gameplay.", url:"https://www.curseforge.com/minecraft/mc-mods/farmers-delight-refabricated" },
+  { name:"Farmer's Delight", author:"vectorwing", cat:"content", desc:"A cozy farming and cooking expansion adding dozens of new crops, ingredients, meals, kitchen blocks, and culinary gameplay.", url:"https://www.curseforge.com/minecraft/mc-mods/farmers-delight" },
   { name:"Ocean's Delight", author:"scouter567", cat:"content", desc:"A Farmer's Delight add-on focusing on ocean-themed food — seafood dishes, kelp recipes, and coastal cooking.", url:"https://www.curseforge.com/minecraft/mc-mods/oceans-delight" },
   { name:"[Let's Do] Vinery", author:"satisfy", cat:"content", desc:"A winery and vineyard mod — grow grapes, brew wines, and build beautiful wine cellars with new wood and decoration blocks.", url:"https://www.curseforge.com/minecraft/mc-mods/lets-do-vinery" },
+  { name:"[Let's Do] Farm and Charm", author:"satisfy", cat:"content", desc:"Expands farming gameplay with new crops, animals, processing blocks, and charming rustic decor.", url:"https://www.curseforge.com/minecraft/mc-mods/lets-do-farm-charm" },
+  { name:"[Let's Do] Beachparty", author:"satisfy", cat:"content", desc:"Adds tropical beach-themed food, drinks, decorations, and furniture for a summer vacation vibe.", url:"https://www.curseforge.com/minecraft/mc-mods/lets-do-beachparty" },
   { name:"Simply Swords", author:"sweenuss", cat:"content", desc:"Adds a collection of new melee weapons — halberds, katanas, greatswords, and more — each with unique abilities.", url:"https://www.curseforge.com/minecraft/mc-mods/simply-swords" },
   { name:"Artifacts", author:"ochotonida", cat:"content", desc:"Spawns rare magical treasure items in chests and mobs — each artifact has a unique and powerful special ability.", url:"https://www.curseforge.com/minecraft/mc-mods/artifacts" },
-  { name:"Mythic Upgrades", author:"TriQue", cat:"content", desc:"Lets you upgrade weapons and gear with mythic tiers, adding powerful enchantment-like bonuses beyond vanilla limits.", url:"https://www.curseforge.com/minecraft/mc-mods/mythic-upgrades" },
-  { name:"Advanced Netherite", author:"Autovw", cat:"content", desc:"Adds a second tier beyond Netherite using a new alloy — Advanced Netherite — for tools and armor with superior stats.", url:"https://www.curseforge.com/minecraft/mc-mods/advanced-netherite-fabric" },
-  { name:"Icarus", author:"Cammie", cat:"content", desc:"A wing-based flight system where you craft and equip feathered wings that let you glide and soar through the air.", url:"https://www.curseforge.com/minecraft/mc-mods/icarus" },
-  { name:"Trinkets", author:"EmilyPloszaj", cat:"content", desc:"Adds extra accessory equipment slots (face, back, charm, etc.) so you can equip more special items at once.", url:"https://www.curseforge.com/minecraft/mc-mods/trinkets" },
-  { name:"Traveler's Backpack", author:"Tiviacz1337", cat:"content", desc:"A comprehensive backpack system with upgradeable storage, built-in crafting, and fluid tanks you can wear on your back.", url:"https://www.curseforge.com/minecraft/mc-mods/travelers-backpack-fabric" },
-  { name:"Critters and Companions", author:"joosh_7889", cat:"content", desc:"Adds adorable new passive mobs — ferrets, otters, red pandas, and more — that you can tame and make into companions.", url:"https://www.curseforge.com/minecraft/mc-mods/critters-and-companions" },
-  { name:"FTB Quests", author:"FTB", cat:"content", desc:"A full quest book system that lets you create guided progression tasks with rewards — great for structured modpack experiences.", url:"https://www.curseforge.com/minecraft/mc-mods/ftb-quests-fabric" },
+  { name:"Relics", author:"SSKirillSS", cat:"content", desc:"Adds ancient relics with unique abilities hidden throughout the world — powerful items with interesting mechanics.", url:"https://www.curseforge.com/minecraft/mc-mods/relics-mod" },
+  { name:"Mythical Weaponry", author:"ChungyBip", cat:"content", desc:"Adds mythical weapons inspired by legend and folklore, each with powerful and unique attack abilities.", url:"https://www.curseforge.com/minecraft/mc-mods/mythical-weaponry" },
+  { name:"TugkanDeMan's Weaponry Reforged", author:"tugkandeman", cat:"content", desc:"A weapons pack adding swords, axes, and other melee options with custom animations and attack patterns.", url:"https://www.curseforge.com/minecraft/mc-mods/tugkandemans-weaponry-reforged" },
+  { name:"Advanced Netherite", author:"Autovw", cat:"content", desc:"Adds a second tier beyond Netherite using a new alloy for tools and armor with superior stats.", url:"https://www.curseforge.com/minecraft/mc-mods/advanced-netherite" },
+  { name:"Curios API", author:"TheIllusiveC4", cat:"content", desc:"Adds extra accessory equipment slots (back, charm, head, etc.) so you can equip more special items at once.", url:"https://www.curseforge.com/minecraft/mc-mods/curios" },
+  { name:"Sophisticated Backpacks", author:"P3pp3rF1y", cat:"content", desc:"A comprehensive tiered backpack system with upgradeable storage, auto-pickup filters, and many utility upgrades.", url:"https://www.curseforge.com/minecraft/mc-mods/sophisticated-backpacks" },
+  { name:"Traveler's Backpack", author:"Tiviacz1337", cat:"content", desc:"A comprehensive backpack system with upgradeable storage, built-in crafting, and fluid tanks you wear on your back.", url:"https://www.curseforge.com/minecraft/mc-mods/travelers-backpack" },
+  { name:"Carry On", author:"Tschipp", cat:"content", desc:"Lets you pick up and carry tile entities (chests, furnaces, etc.) and mobs with your bare hands.", url:"https://www.curseforge.com/minecraft/mc-mods/carry-on" },
+  { name:"FTB Quests", author:"FTB", cat:"content", desc:"A full quest book system that lets you create guided progression tasks with rewards — great for structured modpack experiences.", url:"https://www.curseforge.com/minecraft/mc-mods/ftb-quests-forge" },
+  { name:"FTB Ultimine", author:"FTB", cat:"content", desc:"Lets you mine entire veins of ore or fell whole trees at once by holding a key while mining.", url:"https://www.curseforge.com/minecraft/mc-mods/ftb-ultimine-forge" },
   { name:"ExtraQuests", author:"Vecoo", cat:"content", desc:"Extends FTB Quests with additional quest types, requirements, and display options.", url:"https://www.curseforge.com/minecraft/mc-mods/extraquests" },
-  { name:"Better Loot", author:"TriQue", cat:"content", desc:"Improves loot tables in dungeons, chests, and mobs to make exploration more rewarding with rarer and more varied drops.", url:"https://www.curseforge.com/minecraft/mc-mods/better-loot" },
+  { name:"Lootr", author:"Noobanidus", cat:"content", desc:"Gives each player their own loot table for every chest — no more first-come-first-served loot in multiplayer.", url:"https://www.curseforge.com/minecraft/mc-mods/lootr" },
+  { name:"Supplementaries", author:"MehVahdJukaar", cat:"content", desc:"A massive decorative and utility mod adding signs, cogs, wind vanes, jars, and tons of interactive blocks.", url:"https://www.curseforge.com/minecraft/mc-mods/supplementaries" },
   { name:"MrCrayfish's Furniture Mod: Refurbished", author:"MrCrayfish", cat:"content", desc:"Adds a massive array of functional and decorative furniture — sofas, TVs, fridges, and more for building cozy interiors.", url:"https://www.curseforge.com/minecraft/mc-mods/refurbished-furniture" },
+  { name:"Handcrafted", author:"terrariumearth", cat:"content", desc:"Adds craftable furniture and home decor — chairs, sofas, tables, and shelves using a unique placement system.", url:"https://www.curseforge.com/minecraft/mc-mods/handcrafted" },
   { name:"Chipped", author:"terrariumearth", cat:"content", desc:"Adds hundreds of block variants using a workbench UI — turn any block into dozens of textured versions for detailed builds.", url:"https://www.curseforge.com/minecraft/mc-mods/chipped" },
-  { name:"Twigs", author:"ninnih_", cat:"content", desc:"A decorative building mod adding pebbles, twigs, bundled sticks, paper lanterns, and other small atmospheric details.", url:"https://www.curseforge.com/minecraft/mc-mods/twigs" },
+  { name:"Domum Ornamentum", author:"OrionOnline", cat:"content", desc:"A block variation system that lets you combine any two materials to create new decorative block variants.", url:"https://www.curseforge.com/minecraft/mc-mods/domum-ornamentum" },
   { name:"Macaw's Doors", author:"sketch_macaw", cat:"content", desc:"Dozens of new door styles in every wood type — glass panes, arched, barn doors, screen doors, and more.", url:"https://www.curseforge.com/minecraft/mc-mods/macaws-doors" },
   { name:"Macaw's Trapdoors", author:"sketch_macaw", cat:"content", desc:"A matching collection of new trapdoor variants to complement Macaw's Doors for consistent stylish builds.", url:"https://www.curseforge.com/minecraft/mc-mods/macaws-trapdoors" },
   { name:"Macaw's Stairs", author:"sketch_macaw", cat:"content", desc:"Adds new stair shapes and styles — curved, spiral, and material-specific variations for architectural detail.", url:"https://www.curseforge.com/minecraft/mc-mods/macaws-stairs" },
+  { name:"Macaw's Roofs", author:"sketch_macaw", cat:"content", desc:"New roof blocks and shapes for proper sloped roof construction — gabled, hipped, and dormer styles.", url:"https://www.curseforge.com/minecraft/mc-mods/macaws-roofs" },
   { name:"Macaw's Furniture", author:"sketch_macaw", cat:"content", desc:"Standalone furniture collection with tables, chairs, shelves, and counters using vanilla-styled wood textures.", url:"https://www.curseforge.com/minecraft/mc-mods/macaws-furniture" },
-  { name:"Macaw's Paintings", author:"sketch_macaw", cat:"content", desc:"Adds dozens of new painting artwork choices to hang on walls, massively expanding interior decoration options.", url:"https://www.curseforge.com/minecraft/mc-mods/macaws-paintings" },
-  { name:"Diagonal Fences", author:"Fuzs", cat:"content", desc:"Makes fences render diagonally when connected at 45° angles, so fence lines and pens look much more natural.", url:"https://www.curseforge.com/minecraft/mc-mods/diagonal-fences" },
+  { name:"Macaw's Lights and Lamps", author:"sketch_macaw", cat:"content", desc:"A variety of new light sources — wall sconces, hanging lamps, floor lights, and lanterns in all wood and metal types.", url:"https://www.curseforge.com/minecraft/mc-mods/macaws-lights-and-lamps" },
+  { name:"Diagonal Fences", author:"Fuzs", cat:"content", desc:"Makes fences render diagonally when connected at 45 degree angles, so fence lines and pens look much more natural.", url:"https://www.curseforge.com/minecraft/mc-mods/diagonal-fences" },
   { name:"Diagonal Walls", author:"Fuzs", cat:"content", desc:"Same concept as Diagonal Fences but for walls — corner wall connections now render at proper angles.", url:"https://www.curseforge.com/minecraft/mc-mods/diagonal-walls" },
   { name:"Connected Glass", author:"SuperMartijn642", cat:"content", desc:"Glass panes and blocks connect smoothly without ugly borders when placed next to each other for clean windows.", url:"https://www.curseforge.com/minecraft/mc-mods/connected-glass" },
-  { name:"FallingTree", author:"rakambda", cat:"content", desc:"Chop the bottom of a tree and the whole thing falls at once — no more floating treetops.", url:"https://www.curseforge.com/minecraft/mc-mods/falling-tree" },
-  { name:"Smarter Farmers", author:"MehVahdJukaar", cat:"content", desc:"Makes villager farmers replant crops after harvesting them, so they actually maintain their farms properly.", url:"https://www.curseforge.com/minecraft/mc-mods/smarter-farmers-farmers-replant" },
-  { name:"Teletransportation Accept (TPA)", author:"ElGeroIngles", cat:"content", desc:"Adds /tpa, /tpaccept, and /tpdeny commands so players on a server can request teleports to each other.", url:"https://www.curseforge.com/minecraft/mc-mods/teletransportation-accept-tpa" },
-  { name:"Xaero's Minimap", author:"xaero96", cat:"content", desc:"A real-time minimap in the HUD corner that shows terrain, waypoints, and player positions.", url:"https://www.curseforge.com/minecraft/mc-mods/xaeros-minimap" },
-  { name:"Xaero's World Map", author:"xaero96", cat:"content", desc:"A full-screen explored world map that records everywhere you've been, fully integrated with Xaero's Minimap.", url:"https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map" },
-  { name:"Anvil Never Too Expensive", author:"tinytransfem", cat:"content", desc:"Removes the 'Too Expensive!' cap on anvil repairs so you can always repair and combine enchantments.", url:"https://www.curseforge.com/minecraft/mc-mods/anvil-never-too-expensive" },
-  { name:"Accessories", author:"Blodhgarm", cat:"content", desc:"A modern accessory system with configurable slots — a flexible alternative/complement to Trinkets.", url:"https://www.curseforge.com/minecraft/mc-mods/accessories" },
+  { name:"Alex's Mobs (Unofficial Port)", author:"Raguto", cat:"content", desc:"Adds over 80 new animals and monsters to the game, each with unique behaviors, drops, and interactions.", url:"https://www.curseforge.com/minecraft/mc-mods/alexs-mobs-1-21-1-port" },
+  { name:"Living Things", author:"Buecher_wurm", cat:"content", desc:"Adds a variety of new passive and neutral mobs to populate the world and make it feel more alive.", url:"https://www.curseforge.com/minecraft/mc-mods/living-things" },
+  { name:"Goblin Traders", author:"MrCrayfish", cat:"content", desc:"Spawns goblin NPCs in caves and the Nether that sell rare and unique items not available from normal villagers.", url:"https://www.curseforge.com/minecraft/mc-mods/goblin-traders" },
+  { name:"What Are They Up To (Watut)", author:"Corosus", cat:"content", desc:"Lets you see exactly what task each villager is currently performing, making village management much more transparent.", url:"https://www.curseforge.com/minecraft/mc-mods/what-are-they-up-to" },
+  { name:"Corpse", author:"henkelmax", cat:"content", desc:"On death, spawns a corpse at your location that preserves your items — find it and right-click to retrieve everything.", url:"https://www.curseforge.com/minecraft/mc-mods/corpse" },
   { name:"NetherPortalFix", author:"BlayTheNinth", cat:"content", desc:"Fixes the longstanding bug where Nether portals in multiplayer link to the wrong destination after first use.", url:"https://www.curseforge.com/minecraft/mc-mods/netherportalfix" },
+  { name:"TrashSlot", author:"BlayTheNinth", cat:"content", desc:"Adds a trash slot to your inventory — drag items into it to permanently delete them without tossing on the floor.", url:"https://www.curseforge.com/minecraft/mc-mods/trashslot" },
+  { name:"AppleSkin", author:"squeek502", cat:"content", desc:"Shows food value and saturation in item tooltips and on the HUD so you can make informed eating choices.", url:"https://www.curseforge.com/minecraft/mc-mods/appleskin" },
+  { name:"Jade", author:"Snownee", cat:"content", desc:"Shows a HUD tooltip when looking at blocks and entities, telling you what they are and relevant info.", url:"https://www.curseforge.com/minecraft/mc-mods/jade" },
+  { name:"Chat Heads", author:"dzwdz", cat:"content", desc:"Shows a small player head avatar next to each message in chat, making multiplayer conversations easier to follow.", url:"https://www.curseforge.com/minecraft/mc-mods/chat-heads" },
+  { name:"TPA", author:"WereF0X", cat:"content", desc:"Adds /tpa, /tpaccept, and /tpdeny commands so players on a server can request teleports to each other.", url:"https://www.curseforge.com/minecraft/mc-mods/tpa" },
+  { name:"Mob Drops Recipes [Overworld]", author:"Lupin", cat:"content", desc:"Adds JEI-visible recipes for mob drops so you know exactly which mobs to farm for specific materials.", url:"https://www.curseforge.com/minecraft/mc-mods/mob-drops-recipes-overworld" },
+  { name:"Mob Drops Recipes [Nether]", author:"Lupin", cat:"content", desc:"Extends Mob Drops Recipes with Nether mob drops — blaze rods, wither skeleton skulls, and more.", url:"https://www.curseforge.com/minecraft/mc-mods/mob-drops-recipes-nether" },
+  { name:"Mob Drops Recipes [End]", author:"Lupin", cat:"content", desc:"Extends Mob Drops Recipes with End mob drops — shulker shells, chorus fruit, and End dragon loot.", url:"https://www.curseforge.com/minecraft/mc-mods/mob-drops-recipes-end" },
+  { name:"Structurize", author:"Raycoms", cat:"content", desc:"A block scanning and placement library that enables pasting structures into the world — required by MineColonies.", url:"https://www.curseforge.com/minecraft/mc-mods/structurize" },
+  { name:"BlockUI", author:"Raycoms", cat:"content", desc:"A UI framework mod required by MineColonies and Structurize for their in-game menus.", url:"https://www.curseforge.com/minecraft/mc-mods/blockui" },
+  { name:"Xaero's Minimap", author:"xaero96", cat:"content", desc:"A real-time minimap in the HUD corner that shows terrain, waypoints, and player positions.", url:"https://www.curseforge.com/minecraft/mc-mods/xaeros-minimap" },
+  { name:"Xaero's World Map", author:"xaero96", cat:"content", desc:"A full-screen explored world map that records everywhere you have been, fully integrated with Xaero's Minimap.", url:"https://www.curseforge.com/minecraft/mc-mods/xaeros-world-map" },
+  { name:"Ping Wheel", author:"LukenSkyne", cat:"content", desc:"A radial ping system for multiplayer — hold a key and select a direction or icon to mark locations for teammates.", url:"https://www.curseforge.com/minecraft/mc-mods/ping-wheel" },
 
   // ── VISUAL ──
-  { name:"Iris Shaders", author:"coderbot", cat:"visual", desc:"Enables OptiFine-compatible shader packs in Fabric/Sodium without OptiFine's bloat. The gateway to beautiful skies.", url:"https://www.curseforge.com/minecraft/mc-mods/irisshaders" },
+  { name:"Iris Shaders", author:"coderbot", cat:"visual", desc:"Enables OptiFine-compatible shader packs in NeoForge without OptiFine bloat. The gateway to beautiful skies.", url:"https://www.curseforge.com/minecraft/mc-mods/irisshaders" },
   { name:"BSL Shaders", author:"capttatsu", cat:"visual", desc:"One of the most popular shader packs — warm, golden-hour lighting with stunning volumetric light rays.", url:"https://www.curseforge.com/minecraft/shaders/bsl-shaders" },
   { name:"Complementary Shaders - Unbound", author:"EminGT", cat:"visual", desc:"The more dramatic variant of Complementary — cinematic lighting, deep shadows, and epic cloud rendering.", url:"https://www.curseforge.com/minecraft/shaders/complementary-unbound" },
-  { name:"Complementary Shaders - Reimagined", author:"EminGT", cat:"visual", desc:"The performance-balanced variant with gorgeous visuals while keeping good FPS on mid-range hardware.", url:"https://www.curseforge.com/minecraft/shaders/complementary-reimagined" },
-  { name:"Solas Shader", author:"Septonious", cat:"visual", desc:"Focuses on atmospheric effects — moody, cool-toned lighting perfect for exploration and cinematic screenshots.", url:"https://www.curseforge.com/minecraft/shaders/solas-shader" },
+  { name:"AstraLex Shaders", author:"LexBoosT", cat:"visual", desc:"A BSL-based shader edit with tweaked colours, contrast, and lighting for a distinctive stylised look.", url:"https://www.curseforge.com/minecraft/shaders/astralex-shader-bsl-edit" },
   { name:"Bliss Shaders", author:"Xonk___", cat:"visual", desc:"A lightweight shader with beautiful cel-shading and painterly aesthetics — unique style that stands apart from realism packs.", url:"https://www.curseforge.com/minecraft/shaders/bliss-shader" },
+  { name:"Photon Shader", author:"sixthsurge", cat:"visual", desc:"A high-quality physically-based shader with accurate atmosphere, clouds, and lighting for stunning realism.", url:"https://www.curseforge.com/minecraft/shaders/photon-shader" },
+  { name:"Pastel Shaders", author:"ElocinDev", cat:"visual", desc:"A dreamy, soft shader with pastel colour tones and gentle bloom — perfect for a cosy, artistic aesthetic.", url:"https://www.curseforge.com/minecraft/shaders/pastel-shaders" },
+  { name:"Lux V1", author:"TechDev", cat:"visual", desc:"A modern, performance-focused shader with rich lighting, reflections, and atmospheric effects.", url:"https://www.curseforge.com/minecraft/shaders/lux-shaders" },
   { name:"Miniature Shader", author:"ukrech", cat:"visual", desc:"A tilt-shift effect shader that makes the world look like a tiny diorama — uniquely charming for screenshots.", url:"https://www.curseforge.com/minecraft/shaders/miniature-shader" },
-  { name:"Mellow", author:"TheCMK", cat:"visual", desc:"A soft, warm shader with gentle bloom and subtle color grading for a relaxed, cozy aesthetic.", url:"https://www.curseforge.com/minecraft/shaders/mellow" },
   { name:"Skin Layers 3D", author:"tr7zw", cat:"visual", desc:"Renders the outer skin layer as actual 3D geometry on player models — hats, jackets, and sleeves look three-dimensional.", url:"https://www.curseforge.com/minecraft/mc-mods/skin-layers-3d" },
-  { name:"Eating Animation", author:"theone_ss", cat:"visual", desc:"Adds smooth hand animations while eating food, making the first-person view much more lively.", url:"https://www.curseforge.com/minecraft/mc-mods/eating-animation-fabric" },
+  { name:"Eating Animation", author:"matyrobbrt", cat:"visual", desc:"Adds smooth hand animations while eating food, making the first-person view much more lively.", url:"https://www.curseforge.com/minecraft/mc-mods/eating-animation-forge" },
   { name:"Fusion (Connected Textures)", author:"SuperMartijn642", cat:"visual", desc:"Enables connected textures on resource packs — blocks like bookshelves and glass seamlessly merge their textures.", url:"https://www.curseforge.com/minecraft/mc-mods/fusion-connected-textures" },
   { name:"Sound Physics Remastered", author:"henkelmax", cat:"visual", desc:"Adds realistic audio physics — reverb in caves, muffled sounds through walls, and echo in large rooms.", url:"https://www.curseforge.com/minecraft/mc-mods/sound-physics-remastered" },
-  { name:"Fast Paintings", author:"MehVahdJukaar", cat:"visual", desc:"Fixes jittery painting rendering and improves the visual quality of painting textures.", url:"https://www.curseforge.com/minecraft/mc-mods/fast-paintings" },
-  { name:"Particle Core", author:"fzzyhmstrs", cat:"visual", desc:"Optimizes particle rendering and adds particle configuration options without removing visual fidelity.", url:"https://www.curseforge.com/minecraft/mc-mods/particle-core" },
+  { name:"Model Gap Fix", author:"MehVahdJukaar", cat:"visual", desc:"Fixes the thin dark lines that appear between block model quads due to floating-point precision issues.", url:"https://www.curseforge.com/minecraft/mc-mods/model-gap-fix" },
   { name:"CraftPresence", author:"CDAGaming_", cat:"visual", desc:"Shows detailed Discord Rich Presence status — your current biome, dimension, health, and server name on your profile.", url:"https://www.curseforge.com/minecraft/mc-mods/craftpresence" },
 
   // ── QOL ──
-  { name:"Just Enough Items (JEI)", author:"mezz", cat:"qol", desc:"The essential recipe viewer — press R on any item to see how to craft it, or U to see what it's used in.", url:"https://www.curseforge.com/minecraft/mc-mods/jei" },
-  { name:"Just Zoom", author:"Keksuccino", cat:"qol", desc:"Adds a configurable zoom keybind (like OptiFine's) for scoping in on distant objects.", url:"https://www.curseforge.com/minecraft/mc-mods/just-zoom" },
+  { name:"Just Enough Items (JEI)", author:"mezz", cat:"qol", desc:"The essential recipe viewer — press R on any item to see how to craft it, or U to see what it is used in.", url:"https://www.curseforge.com/minecraft/mc-mods/jei" },
+  { name:"Just Enough Resources (JER)", author:"way2muchnoise", cat:"qol", desc:"Extends JEI with info on where to find resources — mob drops, dungeon loot, and world gen ore distributions.", url:"https://www.curseforge.com/minecraft/mc-mods/just-enough-resources-jer" },
+  { name:"Searchables", author:"Jaredlll08", cat:"qol", desc:"A library that adds powerful search functionality to JEI and other mod GUIs — filter by mod, tag, and more.", url:"https://www.curseforge.com/minecraft/mc-mods/searchables" },
+  { name:"Just Zoom", author:"Keksuccino", cat:"qol", desc:"Adds a configurable zoom keybind for scoping in on distant objects, just like OptiFine.", url:"https://www.curseforge.com/minecraft/mc-mods/just-zoom" },
   { name:"Mouse Tweaks", author:"YaLTeR", cat:"qol", desc:"Enhances inventory management with drag-to-fill, scroll-to-move, and other smart mouse interactions.", url:"https://www.curseforge.com/minecraft/mc-mods/mouse-tweaks" },
   { name:"Simply Tooltips", author:"sweenuss", cat:"qol", desc:"Improves item tooltips with cleaner formatting, additional info, and better visual hierarchy.", url:"https://www.curseforge.com/minecraft/mc-mods/simply-tooltips" },
-  { name:"Mod Menu", author:"Prospector", cat:"qol", desc:"Adds a mods list screen in-game so you can browse all installed mods and access their config screens.", url:"https://www.curseforge.com/minecraft/mc-mods/modmenu" },
-  { name:"No Chat Reports", author:"Aizistral", cat:"qol", desc:"Strips cryptographic signatures from chat messages, preventing players from being reported to Mojang by other players.", url:"https://www.curseforge.com/minecraft/mc-mods/no-chat-reports" },
-  { name:"Auth Me", author:"Axieum", cat:"qol", desc:"Lets you re-authenticate your Mojang/Microsoft account mid-game without restarting, fixing session expiry errors.", url:"https://www.curseforge.com/minecraft/mc-mods/auth-me" },
-  { name:"Ping Wheel", author:"LukenSkyne", cat:"qol", desc:"A radial ping system for multiplayer — hold a key and select a direction or icon to mark locations for teammates.", url:"https://www.curseforge.com/minecraft/mc-mods/ping-wheel" },
-  { name:"Let Me Despawn", author:"frikinjay", cat:"qol", desc:"Allows named mobs to despawn naturally, fixing the issue where naming a mob accidentally makes it permanent.", url:"https://www.curseforge.com/minecraft/mc-mods/let-me-despawn" },
-  { name:"Better Safe Bed", author:"frankV", cat:"qol", desc:"Prevents you from accidentally setting your spawn or sleeping in a bed that would explode in the Nether or End.", url:"https://www.curseforge.com/minecraft/mc-mods/better-safe-bed" },
-  { name:"Smooth Movement", author:"someaddon", cat:"qol", desc:"Adds smooth interpolation to block movement and piston animations for a much more polished feel.", url:"https://www.curseforge.com/minecraft/mc-mods/smooth-movement" },
-  { name:"Just Enough Professions (JEP)", author:"Mrbysco", cat:"qol", desc:"Adds a JEI page showing which workstation each villager profession uses, so you know what to place.", url:"https://www.curseforge.com/minecraft/mc-mods/just-enough-professions-jep" },
-  { name:"Reese's Sodium Options", author:"FlashyReese", cat:"qol", desc:"Redesigns Sodium's video settings screen into a cleaner, more organized multi-tab layout.", url:"https://www.curseforge.com/minecraft/mc-mods/reeses-sodium-options" },
-  { name:"Sodium Extra", author:"FlashyReese", cat:"qol", desc:"Adds extra graphical settings to Sodium that the base mod doesn't expose — particle settings, animations, overlays.", url:"https://www.curseforge.com/minecraft/mc-mods/sodium-extra" },
-  { name:"Connectivity", author:"someaddon", cat:"qol", desc:"Keeps your connection alive during world loading and improves multiplayer reconnection reliability.", url:"https://www.curseforge.com/minecraft/mc-mods/connectivity" },
-  { name:"Fast IP Ping", author:"Fallen_Breath", cat:"qol", desc:"Speeds up the server list ping so the status icon loads near-instantly instead of taking several seconds.", url:"https://www.curseforge.com/minecraft/mc-mods/fast-ip-ping" },
-  { name:"Disconnect Packet Fix", author:"ascpixi", cat:"qol", desc:"Prevents certain malformed disconnect packets from crashing the client unexpectedly.", url:"https://www.curseforge.com/minecraft/mc-mods/disconnect-packet-fix" },
-  { name:"Crash Assistant", author:"KostromDan", cat:"qol", desc:"When a crash occurs, shows a helpful popup with info about the cause and links to relevant resources instead of just closing.", url:"https://www.curseforge.com/minecraft/mc-mods/crash-assistant" },
+  { name:"No Chat Reports", author:"Aizistral", cat:"qol", desc:"Strips cryptographic signatures from chat messages, preventing players from being reported to Mojang.", url:"https://www.curseforge.com/minecraft/mc-mods/no-chat-reports" },
   { name:"FlickerFix", author:"MutantGumdrop", cat:"qol", desc:"Fixes a vanilla rendering glitch that causes faces to flicker when two blocks overlap at the same depth.", url:"https://www.curseforge.com/minecraft/mc-mods/flickerfix" },
-  { name:"Client Crafting", author:"someaddon", cat:"qol", desc:"Lets players craft items client-side even when slightly out of sync with the server, reducing crafting delays.", url:"https://www.curseforge.com/minecraft/mc-mods/client-crafting" },
+  { name:"Connectivity", author:"someaddon", cat:"qol", desc:"Keeps your connection alive during world loading and improves multiplayer reconnection reliability.", url:"https://www.curseforge.com/minecraft/mc-mods/connectivity" },
+  { name:"Crash Assistant", author:"KostromDan", cat:"qol", desc:"When a crash occurs, shows a helpful popup with info about the cause and links to relevant resources.", url:"https://www.curseforge.com/minecraft/mc-mods/crash-assistant" },
   { name:"Tips", author:"DarkhaxDev", cat:"qol", desc:"Adds configurable loading screen tips so you can show pack-specific hints and info to players.", url:"https://www.curseforge.com/minecraft/mc-mods/tips" },
+  { name:"GroovyModLoader (GML)", author:"matyrobbrt", cat:"qol", desc:"A Groovy scripting engine for NeoForge that lets you write runtime scripts to tweak mod and recipe behaviour.", url:"https://www.curseforge.com/minecraft/mc-mods/gml" },
+  { name:"Reese's Sodium Options", author:"FlashyReese", cat:"qol", desc:"Redesigns the video settings screen into a cleaner, more organized multi-tab layout.", url:"https://www.curseforge.com/minecraft/mc-mods/reeses-sodium-options" },
+  { name:"FTB Ranks", author:"FTB", cat:"qol", desc:"A permissions and rank system for FTB servers — assign ranks to players and control command access.", url:"https://www.curseforge.com/minecraft/mc-mods/ftb-ranks-forge" },
 
   // ── LIBRARY ──
-  { name:"Fabric API", author:"modmuss50", cat:"library", desc:"The core API layer required by virtually every Fabric mod. Provides events, hooks, and utilities for mod developers.", url:"https://www.curseforge.com/minecraft/mc-mods/fabric-api" },
-  { name:"Fabric Language Kotlin", author:"modmuss50", cat:"library", desc:"Enables mods written in the Kotlin programming language to run on Fabric.", url:"https://www.curseforge.com/minecraft/mc-mods/fabric-language-kotlin" },
-  { name:"Architectury API", author:"shedaniel", cat:"library", desc:"A cross-platform API that lets mods work on both Fabric and Forge, used by many content mods.", url:"https://www.curseforge.com/minecraft/mc-mods/architectury-api" },
+  { name:"Kotlin for Forge", author:"thedarkcolour", cat:"library", desc:"Enables mods written in the Kotlin programming language to run on NeoForge.", url:"https://www.curseforge.com/minecraft/mc-mods/kotlin-for-forge" },
+  { name:"Architectury API", author:"shedaniel", cat:"library", desc:"A cross-platform API that lets mods work on both Fabric and NeoForge, used by many content mods.", url:"https://www.curseforge.com/minecraft/mc-mods/architectury-api" },
   { name:"Cloth Config API", author:"shedaniel", cat:"library", desc:"A config screen framework used by dozens of mods to provide in-game settings GUIs.", url:"https://www.curseforge.com/minecraft/mc-mods/cloth-config" },
   { name:"GeckoLib", author:"Gecko", cat:"library", desc:"A powerful 3D animation library that lets mod authors create smooth entity and block animations in Blockbench.", url:"https://www.curseforge.com/minecraft/mc-mods/geckolib" },
   { name:"Moonlight Lib", author:"MehVahdJukaar", cat:"library", desc:"A utility library with common systems (structures, entities, events) shared across MehVahdJukaar's mods.", url:"https://www.curseforge.com/minecraft/mc-mods/selene" },
   { name:"Resourceful Lib", author:"ThatGravyBoat", cat:"library", desc:"A development library with utilities for menus, networking, and client-side features.", url:"https://www.curseforge.com/minecraft/mc-mods/resourceful-lib" },
   { name:"Resourceful Config", author:"ThatGravyBoat", cat:"library", desc:"A config system library used by Resourceful mods to manage configuration files cleanly.", url:"https://www.curseforge.com/minecraft/mc-mods/resourceful-config" },
-  { name:"Cardinal Components API", author:"UpcraftLP", cat:"library", desc:"Allows mods to attach custom data to entities, worlds, and chunks without conflicts.", url:"https://www.curseforge.com/minecraft/mc-mods/cardinal-components-api" },
-  { name:"Balm", author:"BlayTheNinth", cat:"library", desc:"A cross-platform abstraction library used by BlayTheNinth's mods (Waystones, NetherPortalFix).", url:"https://www.curseforge.com/minecraft/mc-mods/balm-fabric" },
-  { name:"Puzzles Lib", author:"Fuzs", cat:"library", desc:"A shared utility library for Fuzs' mods providing common code for events and networking.", url:"https://www.curseforge.com/minecraft/mc-mods/puzzles-lib" },
-  { name:"Forge Config API Port", author:"Fuzs", cat:"library", desc:"Backports the Forge configuration API to Fabric so mods originally written for Forge can use it.", url:"https://www.curseforge.com/minecraft/mc-mods/forge-config-api-port" },
-  { name:"BCLib", author:"Quiqueck", cat:"library", desc:"A shared library for Quiqueck's mods (BetterNether, BetterEnd, WorldWeaver).", url:"https://www.curseforge.com/minecraft/mc-mods/bclib" },
-  { name:"WorldWeaver", author:"Quiqueck", cat:"library", desc:"A world generation framework that Quiqueck's dimension mods rely on for biome and feature placement.", url:"https://www.curseforge.com/minecraft/mc-mods/worldweaver" },
-  { name:"TerraBlender", author:"TheAdubbz", cat:"library", desc:"A library that helps multiple biome mods coexist without overwriting each other's biome regions.", url:"https://www.curseforge.com/minecraft/mc-mods/terrablender-fabric" },
-  { name:"Lithostitched", author:"Apollo", cat:"library", desc:"A library for data-driven world generation modifications, used by structure and terrain mods.", url:"https://www.curseforge.com/minecraft/mc-mods/lithostitched" },
-  { name:"Biolith", author:"Prospector", cat:"library", desc:"Assists with biome placement compatibility between multiple biome mods.", url:"https://www.curseforge.com/minecraft/mc-mods/biolith" },
+  { name:"Balm", author:"BlayTheNinth", cat:"library", desc:"A cross-platform abstraction library used by BlayTheNinth's mods (Waystones, NetherPortalFix).", url:"https://www.curseforge.com/minecraft/mc-mods/balm" },
+  { name:"Puzzles Lib", author:"Fuzs", cat:"library", desc:"A shared utility library for Fuzs mods providing common code for events and networking.", url:"https://www.curseforge.com/minecraft/mc-mods/puzzles-lib" },
+  { name:"Forge Config API Port", author:"Fuzs", cat:"library", desc:"Makes the Forge/NeoForge configuration API available cross-platform for compatible mods.", url:"https://www.curseforge.com/minecraft/mc-mods/forge-config-api-port" },
+  { name:"BCLib Neoforge", author:"Raijin2312", cat:"library", desc:"A shared library for BetterNether and BetterEnd ported to NeoForge by Raijin2312.", url:"https://www.curseforge.com/minecraft/mc-mods/bclib-neoforge" },
+  { name:"WorldWeaver Neoforge", author:"Raijin2312", cat:"library", desc:"A world generation framework that dimension mods rely on for biome and feature placement — NeoForge port.", url:"https://www.curseforge.com/minecraft/mc-mods/worldweaver-neoforge" },
+  { name:"TerraBlender", author:"TheAdubbz", cat:"library", desc:"A library that helps multiple biome mods coexist without overwriting each other's biome regions.", url:"https://www.curseforge.com/minecraft/mc-mods/terrablender-neoforge" },
   { name:"GlitchCore", author:"TheAdubbz", cat:"library", desc:"A core library for TheAdubbz's mods including TerraBlender and Serene Seasons.", url:"https://www.curseforge.com/minecraft/mc-mods/glitchcore" },
   { name:"CorgiLib", author:"Corgi_Taco", cat:"library", desc:"A shared utility library for Corgi_Taco's mods.", url:"https://www.curseforge.com/minecraft/mc-mods/corgilib" },
-  { name:"MidnightLib", author:"Motschen", cat:"library", desc:"A configuration and utility library used by several Fabric mods.", url:"https://www.curseforge.com/minecraft/mc-mods/midnightlib" },
-  { name:"oωo (owo-lib)", author:"gliscowo", cat:"library", desc:"A feature-rich library for UI, networking, and config — used by many creative content mods.", url:"https://www.curseforge.com/minecraft/mc-mods/owo-lib" },
-  { name:"Fzzy Config", author:"fzzyhmstrs", cat:"library", desc:"A config API used by fzzyhmstrs' mods with validation, syncing, and GUI support.", url:"https://www.curseforge.com/minecraft/mc-mods/fzzy-config" },
-  { name:"FTB Library", author:"FTB", cat:"library", desc:"Core library required by all FTB mods including FTB Quests and FTB Teams.", url:"https://www.curseforge.com/minecraft/mc-mods/ftb-library-fabric" },
-  { name:"FTB Teams", author:"FTB", cat:"library", desc:"Adds a team system used by FTB Quests for shared progression and team management.", url:"https://www.curseforge.com/minecraft/mc-mods/ftb-teams-fabric" },
-  { name:"Common Network", author:"Mysticdrew", cat:"library", desc:"A networking library for cross-platform packet handling, used by FTB mods.", url:"https://www.curseforge.com/minecraft/mc-mods/common-network" },
+  { name:"Fzzy Config", author:"fzzyhmstrs", cat:"library", desc:"A config API with validation, syncing, and GUI support used by fzzyhmstrs mods.", url:"https://www.curseforge.com/minecraft/mc-mods/fzzy-config" },
+  { name:"FTB Library", author:"FTB", cat:"library", desc:"Core library required by all FTB mods including FTB Quests and FTB Teams.", url:"https://www.curseforge.com/minecraft/mc-mods/ftb-library-forge" },
+  { name:"FTB Teams", author:"FTB", cat:"library", desc:"Adds a team system used by FTB Quests for shared progression and team management.", url:"https://www.curseforge.com/minecraft/mc-mods/ftb-teams-forge" },
   { name:"SuperMartijn642's Core Lib", author:"SuperMartijn642", cat:"library", desc:"Shared utilities for SuperMartijn642's mods (Connected Glass, Fusion, etc.).", url:"https://www.curseforge.com/minecraft/mc-mods/supermartijn642s-core-lib" },
-  { name:"YUNG's API", author:"YUNGNICKYOUNG", cat:"library", desc:"Required library for all of YUNG's Better structure mods.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-api-fabric" },
+  { name:"YUNG's API", author:"YUNGNICKYOUNG", cat:"library", desc:"Required library for all of YUNG's Better structure mods.", url:"https://www.curseforge.com/minecraft/mc-mods/yungs-api-neoforge" },
+  { name:"Paxi", author:"YUNGNICKYOUNG", cat:"library", desc:"Automatically loads data and resource packs from a specified folder — no manual installation each time.", url:"https://www.curseforge.com/minecraft/mc-mods/paxi-neoforge" },
   { name:"Bookshelf", author:"DarkhaxDev", cat:"library", desc:"A utility library for DarkhaxDev's mods including Tips and Prickle.", url:"https://www.curseforge.com/minecraft/mc-mods/bookshelf" },
   { name:"Prickle", author:"DarkhaxDev", cat:"library", desc:"A Toml configuration library used by DarkhaxDev's mods.", url:"https://www.curseforge.com/minecraft/mc-mods/prickle" },
-  { name:"Mythic Compat", author:"TriQue", cat:"library", desc:"A compatibility library for TriQue's Mythic Upgrades and Better Loot mods.", url:"https://www.curseforge.com/minecraft/mc-mods/mythic-lib" },
-  { name:"Athena", author:"terrariumearth", cat:"library", desc:"A core library shared between terrariumearth mods like Chipped and Athena-dependent content.", url:"https://www.curseforge.com/minecraft/mc-mods/athena" },
-  { name:"Almanac Lib", author:"frikinjay", cat:"library", desc:"A utility library for frikinjay's mods including Let Me Despawn.", url:"https://www.curseforge.com/minecraft/mc-mods/almanac-lib" },
+  { name:"Sophisticated Core", author:"P3pp3rF1y", cat:"library", desc:"The core library required by Sophisticated Backpacks, providing shared storage and upgrade systems.", url:"https://www.curseforge.com/minecraft/mc-mods/sophisticated-core" },
+  { name:"Cristel Lib", author:"Cristelknight", cat:"library", desc:"A shared library for Cristelknight's mods providing common utilities.", url:"https://www.curseforge.com/minecraft/mc-mods/cristel-lib" },
+  { name:"[Let's Do] API", author:"Cristelknight", cat:"library", desc:"The core API library required by all [Let's Do] mods from the satisfy modding team.", url:"https://www.curseforge.com/minecraft/mc-mods/do-api" },
   { name:"ExtraLib", author:"Vecoo", cat:"library", desc:"A library dependency for Vecoo's ExtraQuests mod.", url:"https://www.curseforge.com/minecraft/mc-mods/extralib" },
   { name:"UniLib", author:"CDAGaming_", cat:"library", desc:"A unified library for CDAGaming's mods including CraftPresence.", url:"https://www.curseforge.com/minecraft/mc-mods/unilib" },
-  { name:"TxniLib", author:"Txni", cat:"library", desc:"A library for Txni's mods like Redirected.", url:"https://www.curseforge.com/minecraft/mc-mods/txnilib" },
-  { name:"Text Placeholder API", author:"Patbox", cat:"library", desc:"Provides a text placeholder system for use in item names, signs, and server messages.", url:"https://www.curseforge.com/minecraft/mc-mods/text-placeholder-api" },
-  { name:"Sparkweave Engine", author:"UpcraftLP", cat:"library", desc:"An event and utility library by UpcraftLP used by Cardinal Components and related mods.", url:"https://www.curseforge.com/minecraft/mc-mods/sparkweave" },
-  { name:"Open Loader", author:"DarkhaxDev", cat:"library", desc:"Allows global data and resource packs to load without being attached to a specific world save.", url:"https://www.curseforge.com/minecraft/mc-mods/open-loader" },
-  { name:"Konkrete", author:"Keksuccino", cat:"library", desc:"A core library for Keksuccino's mods — Just Zoom and Melody.", url:"https://www.curseforge.com/minecraft/mc-mods/konkrete-fabric" },
-  { name:"Melody", author:"Keksuccino", cat:"library", desc:"A background music system mod that provides more control over in-game music playback.", url:"https://www.curseforge.com/minecraft/mc-mods/melody" },
+  { name:"MonoLib", author:"jason13official", cat:"library", desc:"A shared library for jason13official's mods.", url:"https://www.curseforge.com/minecraft/mc-mods/monolib" },
+  { name:"WunderLib Neoforge", author:"Raijin2312", cat:"library", desc:"A utility library dependency for Raijin2312's NeoForge ports.", url:"https://www.curseforge.com/minecraft/mc-mods/wunderlib-neoforge" },
+  { name:"ShatterLib / OctoLib", author:"SSKirillSS", cat:"library", desc:"A library and utilities mod for SSKirillSS mods like Relics.", url:"https://www.curseforge.com/minecraft/mc-mods/octo-lib" },
+  { name:"Moog's Structure Lib", author:"finndog_123", cat:"library", desc:"A structure placement and management library used by Moog's End Structures and related mods.", url:"https://www.curseforge.com/minecraft/mc-mods/moogs-structure-lib" },
+  { name:"Citadel (Unofficial Port)", author:"Raguto", cat:"library", desc:"The core library required by Alex's Mobs and Alex's Caves — NeoForge unofficial port.", url:"https://www.curseforge.com/minecraft/mc-mods/citadel-1-21-1-port" },
+  { name:"Framework", author:"MrCrayfish", cat:"library", desc:"MrCrayfish's core framework library required by his Refurbished Furniture and Goblin Traders mods.", url:"https://www.curseforge.com/minecraft/mc-mods/framework" },
+  { name:"Konkrete", author:"Keksuccino", cat:"library", desc:"A core library for Keksuccino's mods — Just Zoom and related mods.", url:"https://www.curseforge.com/minecraft/mc-mods/konkrete" },
   { name:"Cupboard", author:"someaddon", cat:"library", desc:"A utility library used across someaddon's many performance and QoL mods.", url:"https://www.curseforge.com/minecraft/mc-mods/cupboard" },
-  { name:"Redirected", author:"Txni", cat:"library", desc:"A packet redirection library used by Txni's mods.", url:"https://www.curseforge.com/minecraft/mc-mods/redirected" },
-  { name:"Load My F***ing Tags", author:"Blodhgarm", cat:"library", desc:"Fixes Fabric's tag loading order to ensure tags are available earlier in the load cycle for dependent mods.", url:"https://www.curseforge.com/minecraft/mc-mods/lmft" },
-  { name:"Framework", author:"MrCrayfish", cat:"library", desc:"MrCrayfish's core framework library required by his Refurbished Furniture mod.", url:"https://www.curseforge.com/minecraft/mc-mods/framework" },
+  { name:"CoroUtil", author:"Corosus", cat:"library", desc:"A utility library for Corosus mods including What Are They Up To.", url:"https://www.curseforge.com/minecraft/mc-mods/coroutil" },
+  { name:"Load My F***ing Tags", author:"Blodhgarm", cat:"library", desc:"Fixes tag loading order to ensure tags are available earlier in the load cycle for dependent mods.", url:"https://www.curseforge.com/minecraft/mc-mods/lmft" },
 ];
 
 // Init
@@ -579,28 +590,28 @@ const CAT_LABEL = {
 
 function buildCards() {
   MODS.forEach((mod, i) => {
-    const row = document.createElement('div');
-    row.className = 'mod-card';
-    row.dataset.cat = mod.cat;
-    row.dataset.name = mod.name.toLowerCase();
-    row.dataset.author = mod.author.toLowerCase();
-    row.dataset.desc = mod.desc.toLowerCase();
-    row.style.animationDelay = (i * 8) + 'ms';
-    row.innerHTML = `
-      <div class="row-index">${String(i + 1).padStart(2, '0')}</div>
-      <div class="row-main">
-        <div class="row-top">
-          <span class="mod-name">${mod.name}</span>
-          <span class="cat-badge">${CAT_LABEL[mod.cat] || mod.cat}</span>
-          <span class="mod-author">by <span>${mod.author}</span></span>
+    const card = document.createElement('div');
+    card.className = 'mod-card';
+    card.dataset.cat = mod.cat;
+    card.dataset.name = mod.name.toLowerCase();
+    card.dataset.author = mod.author.toLowerCase();
+    card.dataset.desc = mod.desc.toLowerCase();
+    card.style.animationDelay = (i * 15) + 'ms';
+    card.innerHTML = `
+      <div class="card-top-bar"></div>
+      <div class="card-body">
+        <div class="card-head">
+          <div class="mod-name">${mod.name}</div>
+          <div class="cat-badge">${CAT_LABEL[mod.cat] || mod.cat}</div>
         </div>
+        <div class="mod-author">by <span>${mod.author}</span></div>
         <div class="mod-desc">${mod.desc}</div>
-      </div>
-      <div class="row-right">
-        <a class="cf-link" href="${mod.url}" target="_blank" rel="noopener">CurseForge</a>
+        <div class="card-footer">
+          <a class="cf-link" href="${mod.url}" target="_blank" rel="noopener">CurseForge</a>
+        </div>
       </div>
     `;
-    grid.appendChild(row);
+    grid.appendChild(card);
   });
 }
 
@@ -608,18 +619,12 @@ function filterCards() {
   const q = searchInput.value.toLowerCase().trim();
   const cards = grid.querySelectorAll('.mod-card');
   let visible = 0;
-  let rowNum = 0;
   cards.forEach(card => {
     const matchCat = activeFilter === 'all' || card.dataset.cat === activeFilter;
     const matchSearch = !q || card.dataset.name.includes(q) || card.dataset.author.includes(q) || card.dataset.desc.includes(q);
     const show = matchCat && matchSearch;
     card.classList.toggle('hidden', !show);
-    if (show) {
-      rowNum++;
-      const idx = card.querySelector('.row-index');
-      if (idx) idx.textContent = String(rowNum).padStart(2, '0');
-      visible++;
-    }
+    if (show) visible++;
   });
   visCountEl.textContent = visible;
   emptyState.classList.toggle('show', visible === 0);
