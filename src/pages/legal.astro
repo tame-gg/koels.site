@@ -6,7 +6,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Legal — koels.site</title>
+<title>Legal — Koels.site</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2303030a'/%3E%3Ctext x='16' y='26' text-anchor='middle' font-family='Inter%2C system-ui%2C sans-serif' font-size='26' font-weight='900' fill='url(%23g)'%3EK%3C/text%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23a29bfe'/%3E%3Cstop offset='100%25' stop-color='%236c5ce7'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
@@ -220,7 +220,7 @@ footer { display:flex; align-items:center; justify-content:space-between; paddin
         <span class="section-title">Agreement</span>
       </div>
       <p class="doc-text">
-        By using or interacting with this Discord bot, you agree to these terms. This bot is private and only operates within my personal Discord server — it is not publicly available. Even if added elsewhere, it will not function outside of its intended server.
+        By using or interacting with this Discord bot, you agree to these terms. This bot is private and only operates within my personal Discord server — it is not publicly available. Even if added elsewhere, it will not function outside of its intended server by design. Access is limited to authorized members of my server only.
       </p>
     </div>
 
@@ -230,7 +230,7 @@ footer { display:flex; align-items:center; justify-content:space-between; paddin
         <span class="section-title">Eligibility</span>
       </div>
       <p class="doc-text">
-        You must be at least 13 years old to use this bot, in line with Discord's own Terms of Service. Since this bot is private to my server, only members I've approved will ever interact with it.
+        You must be at least 13 years old to use this bot, in line with Discord's own Terms of Service. Since this bot is private to my server, only authorized members will ever interact with it.
       </p>
     </div>
 
@@ -264,13 +264,23 @@ footer { display:flex; align-items:center; justify-content:space-between; paddin
         <span class="section-title">Termination</span>
       </div>
       <p class="doc-text">
-        I can restrict or remove your access at any time if these terms are violated. Since this is a private bot, access is already limited to members of my server.
+        I can restrict or remove your access at any time if these terms are violated. Since this is a private bot, access is already limited to authorized members of my server. Termination decisions are made at my sole discretion and no appeal is guaranteed, though I'm always open to being contacted directly if you believe a decision was made in error.
       </p>
     </div>
 
     <div class="doc-section reveal">
       <div class="section-header">
         <span class="section-num">06</span>
+        <span class="section-title">Governing Law</span>
+      </div>
+      <p class="doc-text">
+        These terms are governed by the laws of the United States. By using this bot, you agree that any disputes will be handled under applicable US law. This is a personal, non-commercial project and these terms exist solely to protect both parties.
+      </p>
+    </div>
+
+    <div class="doc-section reveal">
+      <div class="section-header">
+        <span class="section-num">07</span>
         <span class="section-title">Staff &amp; Admin Terms</span>
       </div>
       <p class="doc-text">
@@ -284,13 +294,13 @@ footer { display:flex; align-items:center; justify-content:space-between; paddin
       </p>
       <div class="callout callout-warn">
         <span class="callout-icon">⚠</span>
-        <span class="callout-text">Selling or giving out player information as a staff member is an immediate demotion offense — no exceptions. Accepting a staff role means you've read and agreed to this.</span>
+        <span class="callout-text">Selling or giving out player information as a staff member is an immediate demotion offense — no exceptions. Accepting a staff role means you've read and agreed to this. All uses of staff commands are logged and may be audited at any time.</span>
       </div>
     </div>
 
     <div class="doc-section reveal">
       <div class="section-header">
-        <span class="section-num">07</span>
+        <span class="section-num">08</span>
         <span class="section-title">Contact</span>
       </div>
       <p class="doc-text">
@@ -354,7 +364,7 @@ footer { display:flex; align-items:center; justify-content:space-between; paddin
           </tr>
           <tr>
             <td>IP Address</td>
-            <td>Abuse prevention &amp; security</td>
+            <td>Rate limiting, alt-account detection &amp; ban enforcement</td>
             <td><span class="badge badge-green">Never</span></td>
           </tr>
         </tbody>
@@ -367,7 +377,7 @@ footer { display:flex; align-items:center; justify-content:space-between; paddin
         <span class="section-title">How It's Stored</span>
       </div>
       <p class="doc-text">
-        All data is stored locally on my personal computer — not in the cloud, not on any third-party server. The files that hold your data are fully encrypted, meaning even I cannot open them and read the contents directly. The raw files are completely unreadable without the encryption key, which never leaves the server.
+        All data is stored locally on my personal computer — not in the cloud, not on any third-party server. All data files are encrypted at rest using AES-256 encryption. The raw files on disk are unreadable without the encryption key. Access to the actual data is only possible through controlled bot commands — it cannot be browsed or read directly from the files themselves.
       </p>
       <p class="doc-text">
         The only way your data can ever be viewed is through a private Discord command (<code style="color:var(--accent2);background:rgba(108,92,231,0.1);padding:1px 6px;border-radius:3px">/view</code>). Responses from this command are ephemeral — meaning only the staff member who ran the command can see the result. It is not visible to anyone else in the server, ever.
@@ -381,10 +391,10 @@ footer { display:flex; align-items:center; justify-content:space-between; paddin
         [19:26:44 INFO]: [connected player] <span style="color:var(--accent2)">larpifiedseagull</span> (<span style="color:var(--lime)">/191.198.121.14:64227</span>) has disconnected
       </p>
       <p class="doc-text">
-        None of the IPs shown above are real. They are deterministic placeholders generated from the actual address — consistent enough to appear in logs without revealing anything real.
+        None of the IPs shown above are real. They are deterministic placeholders generated from the actual address — consistent enough to appear in logs without revealing anything real. IP addresses are retained only as long as necessary for security and ban enforcement purposes, and are removed when your data is deleted upon request.
       </p>
       <p class="doc-text">
-        Certain staff and admin members may be granted access to use <code style="color:var(--accent2);background:rgba(108,92,231,0.1);padding:1px 6px;border-radius:3px">/view</code> as part of their role. All staff with this access are bound by the Staff &amp; Admin Terms and must agree to them before the command works. Every use of <code style="color:var(--accent2);background:rgba(108,92,231,0.1);padding:1px 6px;border-radius:3px">/view</code> is privately logged so I can see who looked up what and when.
+        Certain staff and admin members may be granted access to use <code style="color:var(--accent2);background:rgba(108,92,231,0.1);padding:1px 6px;border-radius:3px">/view</code> as part of their role. All staff with this access are bound by the Staff &amp; Admin Terms and must agree to them before the command works. Every use of <code style="color:var(--accent2);background:rgba(108,92,231,0.1);padding:1px 6px;border-radius:3px">/view</code> is privately logged and may be audited — I can see who looked up what and when.
       </p>
     </div>
 
@@ -417,7 +427,7 @@ footer { display:flex; align-items:center; justify-content:space-between; paddin
         <span class="section-title">Policy Changes</span>
       </div>
       <p class="doc-text">
-        This policy may be updated over time. Any changes will be reflected on this page. Continued use of the bot after changes means you accept the updated policy.
+        This policy may be updated over time. Any changes will be reflected on this page with an updated date. Continued use of the bot after changes means you accept the updated policy. Significant changes will also be announced in the Discord server so you're not caught off guard.
       </p>
     </div>
 
