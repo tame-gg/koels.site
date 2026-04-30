@@ -551,22 +551,22 @@
 
     footer {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      padding: 2rem 2.5rem;
-      max-width: 1080px;
-      margin: 0 auto;
+      gap: 1rem;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
     }
 
     .footer-logo {
       display: flex;
       align-items: center;
-      gap: 0.55rem;
+      gap: 0.5rem;
       font-weight: 700;
       font-size: 0.85rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--dim);
+      color: var(--muted);
       text-decoration: none;
     }
 
@@ -578,7 +578,7 @@
 
     .footer-links {
       display: flex;
-      gap: 1.5rem;
+      gap: 1.75rem;
     }
 
     .footer-links a {
@@ -606,9 +606,7 @@
       .hero { padding: 6rem 1.25rem 5rem; }
       .stats-strip { flex-wrap: wrap; }
       .stat { min-width: 50%; border-right: none; border-bottom: 1px solid var(--border); }
-      footer { flex-direction: column; gap: 1.25rem; text-align: center; padding: 2rem 1.25rem; }
-      .footer-logo { justify-content: center; }
-      .footer-links { justify-content: center; }
+      .footer-links { gap: 1.25rem; }
     }
   </style>
 </head>
@@ -869,7 +867,7 @@
         <a href="#privacy-policy">Privacy Policy</a>
         <a href="https://www.mozilla.org/en-US/firefox/" target="_blank" rel="noopener">Built on Firefox</a>
       </div>
-      <span class="footer-copy">Not affiliated with Mozilla Corporation.</span>
+      <span class="footer-copy">Not affiliated with or endorsed by Mozilla Corporation.</span>
     </footer>
   </div>
 
