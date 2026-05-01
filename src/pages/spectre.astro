@@ -9,12 +9,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Spectre — Browse Without a Trace</title>
-  <meta name="description" content="Spectre is a Firefox fork with tracking protection, fingerprint resistance, and zero telemetry — compiled in, not just configured." />
+  <meta name="description" content="Spectre is a privacy-first browser built on Chromium with tracking protection, fingerprint resistance, zero telemetry, and a curated extension store." />
 
   <meta property="og:type"        content="website" />
   <meta property="og:url"         content="https://koels.site/spectre" />
   <meta property="og:title"       content="Spectre — Browse Without a Trace" />
-  <meta property="og:description" content="A Firefox fork with strict tracking protection, fingerprint resistance, and zero telemetry — on by default, compiled in." />
+  <meta property="og:description" content="A Chromium-based browser with strict tracking protection, fingerprint resistance, zero telemetry, and a curated extension store — all on by default." />
   <meta property="og:image"       content="https://koels.site/og.png" />
   <meta property="og:image:width"  content="1200" />
   <meta property="og:image:height" content="630" />
@@ -23,7 +23,7 @@
 
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="Spectre — Browse Without a Trace" />
-  <meta name="twitter:description" content="A Firefox fork with strict tracking protection, fingerprint resistance, and zero telemetry — on by default." />
+  <meta name="twitter:description" content="A Chromium-based browser with tracking protection, fingerprint resistance, and zero telemetry — on by default." />
   <meta name="twitter:image"       content="https://koels.site/og.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -62,7 +62,6 @@
       position: relative;
     }
 
-    /* subtle dot grid across whole page */
     body::before {
       content: '';
       position: fixed;
@@ -73,7 +72,6 @@
       z-index: 0;
     }
 
-    /* everything above the grid */
     nav, main, footer, .stats-strip, .policy-section { position: relative; z-index: 1; }
 
     /* ─── NAV ─── */
@@ -219,9 +217,7 @@
       -webkit-text-stroke: 1.5px rgba(238,238,255,0.18);
     }
 
-    .hero h1 .line-solid {
-      display: block;
-    }
+    .hero h1 .line-solid { display: block; }
 
     .hero h1 .accent {
       background: linear-gradient(100deg, var(--cyan), var(--cyan2) 60%, #aaf0ff);
@@ -358,7 +354,7 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
-    /* ─── FEATURES ─── */
+    /* ─── SECTIONS ─── */
     .section {
       padding: 6rem 1.5rem;
       max-width: 1080px;
@@ -384,7 +380,7 @@
       margin-bottom: 2.75rem;
     }
 
-    /* bento grid */
+    /* ─── BENTO ─── */
     .bento {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
@@ -461,30 +457,68 @@
       letter-spacing: 0.04em;
     }
 
-    /* ─── FORK NOTICE ─── */
-    .fork-wrap {
-      max-width: 1080px;
-      margin: -2rem auto 4rem;
-      padding: 0 1.5rem;
+    /* ─── EXTENSION STORE SECTION ─── */
+    .store-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.9rem;
+      margin-bottom: 2rem;
     }
 
-    .fork-inner {
+    .ext-card {
       display: flex;
-      gap: 1rem;
-      align-items: flex-start;
-      padding: 1.25rem 1.5rem;
+      align-items: center;
+      gap: 0.9rem;
+      padding: 1rem 1.1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      background: rgba(123,95,255,0.05);
-      border: 1px solid rgba(123,95,255,0.18);
+      transition: border-color 0.2s, background 0.2s;
     }
 
-    .fork-inner p {
+    .ext-card:hover {
+      border-color: rgba(0,204,255,0.2);
+      background: var(--surface2);
+    }
+
+    .ext-icon {
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+
+    .ext-info { min-width: 0; }
+
+    .ext-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ext-desc {
+      font-size: 0.75rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .store-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 1.1rem 1.25rem;
+      background: rgba(0,204,255,0.05);
+      border: 1px solid rgba(0,204,255,0.15);
+      border-radius: 10px;
       font-size: 0.85rem;
       color: var(--muted);
-      line-height: 1.65;
+      line-height: 1.6;
     }
 
-    .fork-inner strong { color: var(--text); }
+    .store-note strong { color: var(--text); }
 
     /* ─── PRIVACY POLICY ─── */
     .policy-section {
@@ -545,9 +579,7 @@
     .policy-block a:hover { text-decoration: underline; }
 
     /* ─── FOOTER ─── */
-    .footer-outer {
-      border-top: 1px solid var(--border);
-    }
+    .footer-outer { border-top: 1px solid var(--border); }
 
     footer {
       display: flex;
@@ -570,16 +602,9 @@
       text-decoration: none;
     }
 
-    .footer-logo .logo-dot {
-      width: 6px;
-      height: 6px;
-      box-shadow: 0 0 5px var(--cyan);
-    }
+    .footer-logo .logo-dot { width: 6px; height: 6px; box-shadow: 0 0 5px var(--cyan); }
 
-    .footer-links {
-      display: flex;
-      gap: 1.75rem;
-    }
+    .footer-links { display: flex; gap: 1.75rem; }
 
     .footer-links a {
       font-size: 0.8rem;
@@ -590,10 +615,7 @@
 
     .footer-links a:hover { color: var(--text); }
 
-    .footer-copy {
-      font-size: 0.75rem;
-      color: var(--dim);
-    }
+    .footer-copy { font-size: 0.75rem; color: var(--dim); }
 
     /* ─── RESPONSIVE ─── */
     @media (max-width: 860px) {
@@ -621,6 +643,7 @@
     <div class="nav-right">
       <ul class="nav-links">
         <li><a href="#features">Features</a></li>
+        <li><a href="#extensions">Extensions</a></li>
         <li><a href="#download">Download</a></li>
         <li><a href="#privacy-policy">Privacy</a></li>
       </ul>
@@ -647,11 +670,12 @@
       </h1>
 
       <p class="hero-sub">
-        Spectre is a Firefox fork with tracking protection, fingerprint
-        resistance, and zero telemetry — compiled in, not just configured.
+        Spectre is a Chromium-based browser with tracking protection,
+        fingerprint resistance, and zero telemetry — plus a curated
+        extension store that actually works.
       </p>
 
-      <div class="download-wrap" id="download-wrap">
+      <div class="download-wrap">
         <button id="btn-primary" class="btn-primary soon" onclick="return false;">
           <span id="btn-icon">⬇</span>
           <span id="btn-label">Download Spectre</span>
@@ -676,8 +700,8 @@
         <span class="stat-label">open source</span>
       </div>
       <div class="stat">
-        <span class="stat-value">AMO</span>
-        <span class="stat-label">Firefox extensions work</span>
+        <span class="stat-value">CRX</span>
+        <span class="stat-label">extension support built in</span>
       </div>
       <div class="stat">
         <span class="stat-value">OFF</span>
@@ -692,13 +716,12 @@
 
       <div class="bento">
 
-        <!-- row 1: two halves -->
         <div class="card c3">
           <span class="card-icon">🛡</span>
           <div class="card-title">Strict Tracking Protection</div>
           <p class="card-body">
             Blocks trackers, cryptominers, social tracking scripts, and fingerprinters
-            the moment you launch — no setup, no toggle required.
+            from the moment you launch — no setup, no toggle required.
           </p>
           <span class="card-chip">on by default</span>
         </div>
@@ -707,19 +730,18 @@
           <span class="card-icon">📡</span>
           <div class="card-title">Zero Telemetry</div>
           <p class="card-body">
-            All Mozilla telemetry, crash reporting, and health reports are removed at
-            compile time. There's no opt-out because there's nothing to opt out of.
+            All data collection, crash reporting, and analytics are stripped out.
+            There is no opt-out because there is nothing to opt out of.
           </p>
           <span class="card-chip">compiled out</span>
         </div>
 
-        <!-- row 2: 2 + 2 + 2 -->
         <div class="card c2">
           <span class="card-icon">🎭</span>
           <div class="card-title">Fingerprint Resistance</div>
           <p class="card-body">
-            <code>resistFingerprinting</code> and first-party isolation prevent sites
-            from profiling your browser environment.
+            Canvas, WebGL, font, and audio fingerprinting are all spoofed or blocked
+            so sites can't build a profile of your browser.
           </p>
         </div>
 
@@ -727,8 +749,8 @@
           <span class="card-icon">🔒</span>
           <div class="card-title">HTTPS-Only</div>
           <p class="card-body">
-            Every connection is forced to HTTPS. Spectre warns you before falling
-            back to an unencrypted connection.
+            Every connection is forced to HTTPS. Spectre warns you before
+            falling back to an unencrypted connection.
           </p>
         </div>
 
@@ -736,27 +758,17 @@
           <span class="card-icon">🌐</span>
           <div class="card-title">DNS over HTTPS</div>
           <p class="card-body">
-            DNS resolves through an encrypted resolver by default, so your ISP can't
-            log every site you visit.
-          </p>
-        </div>
-
-        <!-- row 3: 2 + 2 + 2 -->
-        <div class="card c2">
-          <span class="card-icon">🧩</span>
-          <div class="card-title">Firefox Extensions</div>
-          <p class="card-body">
-            Full AMO compatibility. uBlock Origin, Bitwarden, everything you already
-            use — works out of the box.
+            DNS resolves through an encrypted resolver by default, so your ISP
+            can't log every site you visit.
           </p>
         </div>
 
         <div class="card c2">
           <span class="card-icon">🚫</span>
-          <div class="card-title">No Pocket, No Ads</div>
+          <div class="card-title">No Google Services</div>
           <p class="card-body">
-            Pocket, sponsored top sites, and all built-in advertising surfaces are
-            stripped from the build entirely.
+            Safe Browsing, Google sync, crash reporting, and all built-in Google
+            endpoints are removed from the build entirely.
           </p>
         </div>
 
@@ -764,27 +776,97 @@
           <span class="card-icon">🔗</span>
           <div class="card-title">WebRTC IP Leak Fix</div>
           <p class="card-body">
-            WebRTC is restricted to proxy-only mode so your real IP can't be leaked
-            by video or voice call sites.
+            WebRTC is restricted to proxy-only mode so your real IP can't be
+            leaked by video or voice call sites.
+          </p>
+        </div>
+
+        <div class="card c2">
+          <span class="card-icon">🍪</span>
+          <div class="card-title">Auto Cookie Clearing</div>
+          <p class="card-body">
+            Third-party cookies are blocked and all cookies are cleared on close
+            by default, keeping sessions from persisting across sites.
           </p>
         </div>
 
       </div>
     </section>
 
-    <!-- ─── FORK NOTICE ─── -->
-    <div class="fork-wrap">
-      <div class="fork-inner">
-        <span style="font-size:1.3rem;flex-shrink:0">🦊</span>
+    <!-- ─── EXTENSION STORE ─── -->
+    <section class="section" id="extensions" style="padding-top:0">
+      <span class="section-tag">Extension Store</span>
+      <h2>Your extensions,<br />no strings attached.</h2>
+
+      <div class="store-grid">
+        <div class="ext-card">
+          <span class="ext-icon">🛡</span>
+          <div class="ext-info">
+            <div class="ext-name">uBlock Origin</div>
+            <div class="ext-desc">Ad & tracker blocker</div>
+          </div>
+        </div>
+        <div class="ext-card">
+          <span class="ext-icon">🔑</span>
+          <div class="ext-info">
+            <div class="ext-name">Bitwarden</div>
+            <div class="ext-desc">Password manager</div>
+          </div>
+        </div>
+        <div class="ext-card">
+          <span class="ext-icon">🌑</span>
+          <div class="ext-info">
+            <div class="ext-name">Dark Reader</div>
+            <div class="ext-desc">Dark mode everywhere</div>
+          </div>
+        </div>
+        <div class="ext-card">
+          <span class="ext-icon">🐵</span>
+          <div class="ext-info">
+            <div class="ext-name">Tampermonkey</div>
+            <div class="ext-desc">Userscript manager</div>
+          </div>
+        </div>
+        <div class="ext-card">
+          <span class="ext-icon">🦡</span>
+          <div class="ext-info">
+            <div class="ext-name">Privacy Badger</div>
+            <div class="ext-desc">Tracker learning blocker</div>
+          </div>
+        </div>
+        <div class="ext-card">
+          <span class="ext-icon">🔐</span>
+          <div class="ext-info">
+            <div class="ext-name">1Password</div>
+            <div class="ext-desc">Password manager</div>
+          </div>
+        </div>
+        <div class="ext-card">
+          <span class="ext-icon">📦</span>
+          <div class="ext-info">
+            <div class="ext-name">Violentmonkey</div>
+            <div class="ext-desc">Open-source userscripts</div>
+          </div>
+        </div>
+        <div class="ext-card">
+          <span class="ext-icon">↩</span>
+          <div class="ext-info">
+            <div class="ext-name">ClearURLs</div>
+            <div class="ext-desc">Strip tracking params</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="store-note">
+        <span style="font-size:1.1rem;flex-shrink:0">ℹ️</span>
         <p>
-          <strong>Spectre is a fork of Mozilla Firefox.</strong> It inherits full
-          compatibility with Firefox extensions (AMO), Mozilla's Gecko rendering
-          engine, and the existing Firefox security model — then layers privacy
-          defaults on top that Mozilla ships as opt-in. Spectre is not affiliated
-          with or endorsed by Mozilla Corporation.
+          <strong>Spectre only distributes open-source extensions.</strong> Every extension
+          in the store is vetted, hosted directly, and installable with one click — no
+          account required, no telemetry, no redirect through Google's servers.
+          More extensions are added as Spectre grows.
         </p>
       </div>
-    </div>
+    </section>
 
     <!-- ─── PRIVACY POLICY ─── -->
     <section class="policy-section" id="privacy-policy">
@@ -797,9 +879,8 @@
           <h3>What Spectre collects</h3>
           <p>
             <strong style="color:var(--green)">Nothing.</strong> Spectre Browser does not collect,
-            transmit, or store any data about you or your browsing. Telemetry, crash reporting,
-            and health reports are disabled at the build level — there is no opt-out because there
-            is nothing to opt out of.
+            transmit, or store any data about you or your browsing. All telemetry, crash reporting,
+            and analytics are removed — there is no opt-out because there is nothing to opt out of.
           </p>
         </div>
 
@@ -813,10 +894,19 @@
         </div>
 
         <div class="policy-block">
+          <h3>Extension store</h3>
+          <p>
+            Extensions are downloaded directly from Spectre's own servers. No request
+            is made to Google's extension infrastructure. Each extension in the store
+            is open source — you can audit exactly what you're installing.
+          </p>
+        </div>
+
+        <div class="policy-block">
           <h3>GitHub</h3>
           <p>
             Spectre's source code is hosted on GitHub. Downloading a release means
-            connecting to GitHub's servers and CDN, which are subject to
+            connecting to GitHub's servers, which are subject to
             <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
                target="_blank" rel="noopener">GitHub's privacy policy</a>.
             Spectre has no control over data GitHub collects during that request.
@@ -824,22 +914,11 @@
         </div>
 
         <div class="policy-block">
-          <h3>Firefox upstream</h3>
-          <p>
-            Spectre is a fork of Mozilla Firefox. While we disable all of Mozilla's data
-            collection at build time, the underlying Gecko engine may still make network
-            requests for legitimate browser functionality (e.g. Safe Browsing list updates,
-            certificate revocation checks). These are not telemetry and are standard browser
-            security infrastructure.
-          </p>
-        </div>
-
-        <div class="policy-block">
           <h3>Updates</h3>
           <p>
             Spectre's auto-updater is disabled. You will never receive an automatic
-            background update. New versions are announced on GitHub Releases, and you choose
-            when and whether to upgrade.
+            background update. New versions are announced on GitHub Releases, and
+            you choose when and whether to upgrade.
           </p>
         </div>
 
@@ -864,10 +943,10 @@
       </a>
       <div class="footer-links">
         <a href="https://github.com/koelss/Spectre" target="_blank" rel="noopener">GitHub</a>
+        <a href="#extensions">Extensions</a>
         <a href="#privacy-policy">Privacy Policy</a>
-        <a href="https://www.mozilla.org/en-US/firefox/" target="_blank" rel="noopener">Built on Firefox</a>
       </div>
-      <span class="footer-copy">Not affiliated with or endorsed by Mozilla Corporation.</span>
+      <span class="footer-copy">Free and open source. Built on Chromium.</span>
     </footer>
   </div>
 
@@ -876,11 +955,11 @@
       const ua = navigator.userAgent.toLowerCase();
       const pl = (navigator.platform ?? '').toLowerCase();
       let os = 'Unknown', icon = '⬇';
-      if (/win/.test(pl) || /windows/.test(ua))        { os = 'Windows x64'; icon = '🪟'; }
-      else if (/mac/.test(pl) || /mac os/.test(ua))    { os = 'macOS ARM';   icon = ''; }
-      else if (/linux/.test(pl) || /linux/.test(ua))   { os = 'Linux x64';   icon = '🐧'; }
-      document.getElementById('btn-label').textContent  = `Download for ${os}`;
-      document.getElementById('btn-icon').textContent   = icon;
+      if (/win/.test(pl) || /windows/.test(ua))      { os = 'Windows x64'; icon = '🪟'; }
+      else if (/mac/.test(pl) || /mac os/.test(ua))  { os = 'macOS ARM';   icon = ''; }
+      else if (/linux/.test(pl) || /linux/.test(ua)) { os = 'Linux x64';   icon = '🐧'; }
+      document.getElementById('btn-label').textContent = `Download for ${os}`;
+      document.getElementById('btn-icon').textContent  = icon;
       document.getElementById('platform-hint').textContent = `detected: ${os} — builds in progress`;
     })();
   </script>
