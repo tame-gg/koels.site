@@ -1016,6 +1016,16 @@
           } else {
             document.getElementById('platform-hint').textContent = `${meta[platform].label} detected`
           }
+
+          // Auto-start download
+          if (urls[platform]) {
+            const a = document.createElement('a')
+            a.href = urls[platform]
+            a.download = ''
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+          }
         })
         .catch(() => {
           document.getElementById('platform-hint').textContent = `${meta[platform].label} detected`
