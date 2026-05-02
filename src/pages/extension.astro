@@ -780,43 +780,57 @@
     // ── One-click install (only active when running inside Spectre) ──
     const inSpectre = typeof window.spectreStore !== 'undefined' && window.spectreStore.isSpectre
 
-    document.querySelectorAll('.ext-card').forEach(card => {
-      const btn = card.querySelector('.btn-install')
-      const repo = card.dataset.repo
-      const asset = card.dataset.asset
-      const fallback = btn.dataset.fallback
-
-      if (inSpectre && repo && asset) {
-        btn.textContent = '⚡ Add to Spectre'
-        btn.addEventListener('click', async () => {
-          if (btn.classList.contains('installed') || btn.classList.contains('loading')) return
-          btn.classList.add('loading')
-          btn.innerHTML = '<span class="spinner">↻</span> Installing…'
-          try {
-            const result = await window.spectreStore.installExtension(repo, asset)
-            if (result.success) {
-              btn.classList.remove('loading')
-              btn.classList.add('installed')
-              btn.textContent = '✓ Installed'
-            } else {
-              throw new Error(result.error)
-            }
-          } catch (err) {
-            btn.classList.remove('loading')
-            btn.classList.add('error')
-            btn.textContent = '✕ Failed — click to retry'
-            btn.addEventListener('click', () => {
-              btn.classList.remove('error')
-              btn.textContent = '⚡ Add to Spectre'
-            }, { once: true })
-            console.error('Install failed:', err.message)
-          }
-        })
-      } else {
-        // Not in Spectre — open GitHub releases page
-        btn.addEventListener('click', () => window.open(fallback, '_blank'))
+    async function initCards() {
+      let installed = {}
+      if (inSpectre && window.spectreSettings?.installedExtRepos) {
+        try { installed = await window.spectreSettings.installedExtRepos() } catch {}
       }
-    })
+
+      document.querySelectorAll('.ext-card').forEach(card => {
+        const btn = card.querySelector('.btn-install')
+        const repo = card.dataset.repo
+        const asset = card.dataset.asset
+        const fallback = btn.dataset.fallback
+
+        if (inSpectre && repo && asset) {
+          if (installed[repo]) {
+            btn.classList.add('installed')
+            btn.textContent = '✓ Installed'
+          } else {
+            btn.textContent = '⚡ Add to Spectre'
+          }
+
+          btn.addEventListener('click', async () => {
+            if (btn.classList.contains('installed') || btn.classList.contains('loading')) return
+            btn.classList.add('loading')
+            btn.innerHTML = '<span class="spinner">↻</span> Installing…'
+            try {
+              const result = await window.spectreStore.installExtension(repo, asset)
+              if (result.success) {
+                btn.classList.remove('loading')
+                btn.classList.add('installed')
+                btn.textContent = '✓ Installed'
+              } else {
+                throw new Error(result.error)
+              }
+            } catch (err) {
+              btn.classList.remove('loading')
+              btn.classList.add('error')
+              btn.textContent = '✕ Failed — click to retry'
+              btn.addEventListener('click', () => {
+                btn.classList.remove('error')
+                btn.textContent = '⚡ Add to Spectre'
+              }, { once: true })
+              console.error('Install failed:', err.message)
+            }
+          })
+        } else {
+          btn.addEventListener('click', () => window.open(fallback, '_blank'))
+        }
+      })
+    }
+
+    initCards()
   </script>
 
 </body>
