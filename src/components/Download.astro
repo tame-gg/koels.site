@@ -54,41 +54,9 @@
           <div class="text-xs font-mono" style="color:rgba(240,240,245,0.3)">Windows 10 / 11 · x64 · Free</div>
         </div>
 
-        <!-- Progress bar -->
-        <div class="w-full max-w-xs">
-          <div class="flex justify-between text-[0.6rem] font-mono mb-2" style="color:rgba(240,240,245,0.3)">
-            <span>Development progress</span>
-            <span style="color:#ff6070">~60%</span>
-          </div>
-          <div class="h-1.5 w-full rounded-full overflow-hidden" style="background:rgba(255,255,255,0.07)">
-            <div class="h-full rounded-full w-[60%]" style="background:linear-gradient(90deg,#ff4655,#ff8a8a)"></div>
-          </div>
-        </div>
-
-        <!-- What's done -->
-        <div class="grid grid-cols-2 gap-x-8 gap-y-2 text-left mt-1">
-          {[
-            { label: 'Core architecture',  done: true  },
-            { label: 'Rank & RR tracking', done: true  },
-            { label: 'Match history',      done: true  },
-            { label: 'Player stats',       done: false },
-            { label: 'Live match view',    done: false },
-            { label: 'Public release',     done: false },
-          ].map(item => (
-            <div class="flex items-center gap-2">
-              {item.done ? (
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#34c759" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              ) : (
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" stroke-linecap="round">
-                  <circle cx="12" cy="12" r="9"/>
-                </svg>
-              )}
-              <span class="text-[0.65rem] font-mono" style={item.done ? "color:rgba(240,240,245,0.5)" : "color:rgba(240,240,245,0.25)"}>{item.label}</span>
-            </div>
-          ))}
-        </div>
+        <p class="text-sm max-w-xs text-center" style="color:rgba(240,240,245,0.35)">
+          Actively in development. No ETA yet — follow on GitHub to get notified when it's ready.
+        </p>
       </div>
     </div>
 
