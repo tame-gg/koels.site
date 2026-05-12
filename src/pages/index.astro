@@ -320,19 +320,28 @@ section { position:relative; z-index:1 }
 .dc-stat-label { font-family:var(--mono); font-size:0.65rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--dim) }
 .dc-stat-val { font-size:1.4rem; font-weight:900; letter-spacing:-0.03em; color:#e8f8ff }
 .dc-stat-val.green { color:#57f287; text-shadow:0 0 24px rgba(87,242,135,0.2) }
-.dc-members-preview { display:flex; align-items:center; margin-bottom:24px }
+.dc-members-preview {
+  display:flex; align-items:center; gap:10px; margin-bottom:24px;
+}
+.dc-av-stack { display:flex; align-items:center }
 .dc-av-sm {
-  width:28px; height:28px; border-radius:50%; border:2px solid rgba(2,10,24,0.95);
-  background:rgba(88,101,242,0.25); overflow:hidden; flex-shrink:0;
+  width:30px; height:30px; border-radius:50%;
+  border:2px solid rgba(2,8,16,1);
+  background:rgba(88,101,242,0.3); overflow:hidden; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
-  font-size:0.65rem; color:rgba(200,240,255,0.5); margin-left:-6px;
+  font-size:0.65rem; color:rgba(200,240,255,0.6);
+  margin-left:-8px; position:relative;
 }
 .dc-av-sm:first-child { margin-left:0 }
-.dc-av-sm img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block }
+.dc-av-sm img {
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; border-radius:50%;
+}
 .dc-av-more {
-  background:rgba(88,101,242,0.18); color:rgba(200,240,255,0.6);
-  font-family:var(--mono); font-size:0.6rem; border-radius:999px;
-  margin-left:8px; padding:0 8px; width:auto; height:22px;
+  flex-shrink:0;
+  font-family:var(--mono); font-size:0.62rem; font-weight:600;
+  color:rgba(200,240,255,0.55);
+  letter-spacing:0.04em;
 }
 .dc-join {
   display:flex; align-items:center; justify-content:center; gap:8px;
@@ -675,7 +684,9 @@ async function updateDiscord() {
     if (d.instant_invite) document.getElementById('dcJoin').href = d.instant_invite;
     const avContainer = document.getElementById('dcAvatars');
     avContainer.innerHTML = '';
-    const members = (d.members || []).slice(0, 8);
+    const members = (d.members || []).slice(0, 7);
+    const stack = document.createElement('div');
+    stack.className = 'dc-av-stack';
     members.forEach(m => {
       const el = document.createElement('div');
       el.className = 'dc-av-sm';
@@ -686,12 +697,13 @@ async function updateDiscord() {
       } else {
         el.textContent = (m.username||'?')[0].toUpperCase();
       }
-      avContainer.appendChild(el);
+      stack.appendChild(el);
     });
+    avContainer.appendChild(stack);
     const extra = (d.presence_count || 0) - members.length;
     if (extra > 0) {
-      const more = document.createElement('div');
-      more.className = 'dc-av-sm dc-av-more';
+      const more = document.createElement('span');
+      more.className = 'dc-av-more';
       more.textContent = '+' + extra;
       avContainer.appendChild(more);
     }
