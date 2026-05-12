@@ -300,7 +300,7 @@ html, body {
           <input id="card-name" type="text" placeholder="Your name" autocomplete="cc-name"/>
         </div>
 
-        <button class="pay-btn" id="pay-btn" onclick="handlePay()">
+        <button class="pay-btn" id="pay-btn">
           <div class="spinner" id="spinner"></div>
           <span id="pay-label">Pay $0.99</span>
         </button>
@@ -322,7 +322,7 @@ html, body {
       <div class="success-title">Payment successful!</div>
       <div class="success-sub">$0.99 charged. Here's your answer:</div>
       <div class="success-answer" id="success-answer"></div>
-      <button class="success-close" onclick="showAnswer()">Nice, thanks →</button>
+      <button class="success-close" id="success-close">Nice, thanks →</button>
     </div>
 
   </div>
@@ -408,6 +408,9 @@ html, body {
       updateDisplay();
     });
   });
+
+  document.getElementById('pay-btn').addEventListener('click', handlePay);
+  document.getElementById('success-close').addEventListener('click', showAnswer);
 
   // ── Paywall ──
   function showPaywall() {
