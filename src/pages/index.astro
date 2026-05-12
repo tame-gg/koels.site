@@ -249,8 +249,10 @@ section { position:relative; z-index:1 }
 /* ── COMMUNITY ── */
 .mc-section { padding:0 80px 100px }
 .widget-row {
-  display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start;
+  display:flex; gap:16px; align-items:flex-start;
 }
+.widget-row .mc-widget { flex:1 }
+.widget-row .dc-widget { flex-shrink:0; width:350px }
 .mc-widget, .dc-widget {
   background:rgba(2,10,24,0.55);
   border:1px solid var(--border);
@@ -381,7 +383,8 @@ footer {
   .scroll-hint { left:24px }
   .projects { padding:72px 24px }
   .mc-section { padding:0 24px 72px }
-  .widget-row { grid-template-columns:1fr }
+  .widget-row { flex-direction:column }
+  .widget-row .dc-widget { width:100% }
   .bottom-grid { grid-template-columns:1fr }
   .bottom-col { padding:52px 24px; border-right:none; border-bottom:1px solid var(--border) }
   .bottom-col:last-child { border-bottom:none }
