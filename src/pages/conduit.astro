@@ -502,7 +502,7 @@
     </p>
 
     <div class="hero-actions">
-      <a class="btn-primary" href="https://github.com/koelss/conduit/releases/latest/download/conduit-1.0.0.jar" download="conduit-1.0.0.jar">
+      <a class="btn-primary" id="download-btn" href="https://github.com/koelss/conduit/releases/latest" target="_blank" rel="noopener">
         ↓ &nbsp;Get Conduit
       </a>
       <a class="btn-ghost" href="https://github.com/koelss/conduit" target="_blank" rel="noopener">
@@ -807,15 +807,27 @@ function copyConfig() {
   navigator.clipboard.writeText(raw).then(() => showToast('Config copied!'));
 }
 
-// Fetch latest release tag from GitHub API and update badge
+// Fetch latest release from GitHub API — updates badge text and wires the download button
 (async () => {
   try {
     const rel = await fetch('https://api.github.com/repos/koelss/conduit/releases/latest');
     if (!rel.ok) return;
     const data = await rel.json();
+
+    // Update badge
     const tag = data.tag_name || 'v1.0.0';
-    const el = document.getElementById('badge-text');
-    if (el) el.textContent = tag + ' — based on Velocity dev/3.0.0';
+    const badge = document.getElementById('badge-text');
+    if (badge) badge.textContent = tag + ' — based on Velocity dev/3.0.0';
+
+    // Wire download button to the first .jar asset in the release
+    const jar = (data.assets || []).find(a => a.name.endsWith('.jar'));
+    const btn = document.getElementById('download-btn');
+    if (btn && jar) {
+      btn.href = jar.browser_download_url;
+      btn.removeAttribute('target');
+      btn.removeAttribute('rel');
+      btn.setAttribute('download', jar.name);
+    }
   } catch (_) {}
 })();
 </script>
