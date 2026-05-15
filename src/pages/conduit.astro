@@ -682,17 +682,19 @@
             <span class="t-gap"></span>
             <span class="t-line t-section">[modded]</span>
             <span class="t-line-del"><span class="t-key">max-known-packs</span>     = <span class="t-val">64</span></span>
-            <span class="t-line-add"><span class="t-key">max-known-packs</span>     = <span class="t-val">1024</span><span class="t-ann">← configurable</span></span>
-            <span class="t-line"><span class="t-key">handshake-cache</span>     = <span class="t-val">true</span></span>
-            <span class="t-line"><span class="t-key">handshake-cache-ttl</span> = <span class="t-val">300</span></span>
-            <span class="t-line"><span class="t-key">neoforge-compat</span>     = <span class="t-val">true</span></span>
+            <span class="t-line-add"><span class="t-key">max-known-packs</span>         = <span class="t-val">1024</span><span class="t-ann">← configurable</span></span>
+            <span class="t-line"><span class="t-key">handshake-cache</span>         = <span class="t-val">true</span></span>
+            <span class="t-line"><span class="t-key">handshake-cache-ttl</span>     = <span class="t-val">300</span></span>
+            <span class="t-line"><span class="t-key">handshake-timeout-ms</span>    = <span class="t-val">30000</span></span>
+            <span class="t-line"><span class="t-key">neoforge-compat</span>         = <span class="t-val">true</span></span>
+            <span class="t-line"><span class="t-key">legacy-forge-compat</span>     = <span class="t-val">true</span></span>
             <span class="t-gap"></span>
             <span class="t-line t-section">[network]</span>
-            <span class="t-line"><span class="t-key">smart-compression</span>   = <span class="t-val">true</span></span>
-            <span class="t-line"><span class="t-key">connection-throttle</span> = <span class="t-val">true</span></span>
+            <span class="t-line"><span class="t-key">smart-compression</span>          = <span class="t-val">true</span></span>
+            <span class="t-line"><span class="t-key">connection-throttle</span>        = <span class="t-val">true</span></span>
             <span class="t-gap"></span>
             <span class="t-line t-section">[diagnostics]</span>
-            <span class="t-line"><span class="t-key">enabled</span>             = <span class="t-val">false</span></span>
+            <span class="t-line"><span class="t-key">enabled</span>                    = <span class="t-val">false</span></span>
           </div>
         </div>
 
@@ -927,21 +929,42 @@ cd conduit
       <pre class="config-code" id="config-text"><span class="cfg-comment"># conduit.toml — generated on first run next to velocity.toml</span>
 
 <span class="cfg-section">[modded]</span>
-<span class="cfg-key">max-known-packs</span>         = <span class="cfg-val">1024</span>     <span class="cfg-comment"># vanilla Velocity default is 64</span>
-<span class="cfg-key">handshake-cache</span>         = <span class="cfg-val">true</span>
-<span class="cfg-key">handshake-cache-ttl</span>     = <span class="cfg-val">300</span>      <span class="cfg-comment"># seconds</span>
-<span class="cfg-key">neoforge-compat</span>         = <span class="cfg-val">true</span>
-<span class="cfg-key">legacy-forge-compat</span>     = <span class="cfg-val">true</span>
+<span class="cfg-key">max-known-packs</span>          = <span class="cfg-val">1024</span>     <span class="cfg-comment"># raise for large modpacks; vanilla cap is 64</span>
+<span class="cfg-key">handshake-cache</span>          = <span class="cfg-val">true</span>
+<span class="cfg-key">handshake-cache-ttl</span>      = <span class="cfg-val">300</span>      <span class="cfg-comment"># seconds</span>
+<span class="cfg-key">handshake-timeout-ms</span>     = <span class="cfg-val">30000</span>
+<span class="cfg-key">neoforge-compat</span>          = <span class="cfg-val">true</span>
+<span class="cfg-key">legacy-forge-compat</span>      = <span class="cfg-val">true</span>
+<span class="cfg-key">announce-modded-in-ping</span>  = <span class="cfg-val">false</span>
+<span class="cfg-key">log-mod-handshakes</span>       = <span class="cfg-val">false</span>
 
 <span class="cfg-section">[network]</span>
-<span class="cfg-key">write-buffer-high-watermark</span>    = <span class="cfg-val">2097152</span>  <span class="cfg-comment"># 2 MiB</span>
-<span class="cfg-key">smart-compression</span>              = <span class="cfg-val">true</span>
-<span class="cfg-key">connection-throttle</span>            = <span class="cfg-val">true</span>
+<span class="cfg-key">write-buffer-high-watermark</span>        = <span class="cfg-val">2097152</span>   <span class="cfg-comment"># 2 MiB</span>
+<span class="cfg-key">write-buffer-low-watermark</span>         = <span class="cfg-val">1048576</span>   <span class="cfg-comment"># 1 MiB</span>
+<span class="cfg-key">smart-compression</span>                  = <span class="cfg-val">true</span>
+<span class="cfg-key">smart-compression-min-delta</span>        = <span class="cfg-val">64</span>        <span class="cfg-comment"># minimum bytes saved to justify compressing</span>
+<span class="cfg-key">packet-queue-optimization</span>          = <span class="cfg-val">true</span>
+<span class="cfg-key">packet-queue-max-depth</span>             = <span class="cfg-val">256</span>
+<span class="cfg-key">connection-throttle</span>                = <span class="cfg-val">true</span>
 <span class="cfg-key">connection-throttle-max-per-second</span> = <span class="cfg-val">30</span>
 
 <span class="cfg-section">[diagnostics]</span>
-<span class="cfg-key">enabled</span>                  = <span class="cfg-val">false</span>
-<span class="cfg-key">slow-connection-threshold-ms</span> = <span class="cfg-val">3000</span></pre>
+<span class="cfg-key">enabled</span>                      = <span class="cfg-val">false</span>
+<span class="cfg-key">trace-mod-handshakes</span>         = <span class="cfg-val">false</span>    <span class="cfg-comment"># very verbose — debug only</span>
+<span class="cfg-key">slow-connection-threshold-ms</span> = <span class="cfg-val">3000</span>
+
+<span class="cfg-section">[server]</span>
+<span class="cfg-key">health-check-enabled</span>            = <span class="cfg-val">true</span>
+<span class="cfg-key">health-check-interval-ms</span>        = <span class="cfg-val">10000</span>
+<span class="cfg-key">fallback-servers</span>                = <span class="cfg-val">[]</span>        <span class="cfg-comment"># ordered list of preferred fallback server names</span>
+<span class="cfg-key">motd-cache-enabled</span>              = <span class="cfg-val">true</span>
+<span class="cfg-key">motd-cache-ttl-ms</span>               = <span class="cfg-val">2000</span>
+<span class="cfg-key">graceful-shutdown-enabled</span>       = <span class="cfg-val">true</span>
+<span class="cfg-key">graceful-shutdown-timeout-ms</span>    = <span class="cfg-val">5000</span>
+<span class="cfg-key">graceful-shutdown-message</span>       = <span class="cfg-val">"Proxy is restarting. Please reconnect in a moment."</span>
+<span class="cfg-key">bot-filter-enabled</span>              = <span class="cfg-val">true</span>
+<span class="cfg-key">bot-filter-timeout-ms</span>           = <span class="cfg-val">3000</span>
+<span class="cfg-key">bot-filter-threshold</span>            = <span class="cfg-val">10</span></pre>
     </div>
   </section>
 
