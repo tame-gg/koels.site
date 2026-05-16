@@ -4,11 +4,21 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Kyle — koels.site</title>
+<meta name="description" content="Kyle's personal site — apps, tools, servers, and whatever else sounds interesting." />
+<meta property="og:title" content="Kyle — koels.site" />
+<meta property="og:description" content="Apps, tools, servers — whatever sounds interesting at the time. This is where it all lives." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://koels.site" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Kyle — koels.site" />
+<meta name="twitter:description" content="Apps, tools, servers — whatever sounds interesting at the time." />
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23020810'/%3E%3Ctext x='16' y='26' text-anchor='middle' font-family='Inter%2C system-ui%2C sans-serif' font-size='26' font-weight='900' fill='url(%23g)'%3EK%3C/text%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2340c8ff'/%3E%3Cstop offset='100%25' stop-color='%2300ffcc'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<noscript><style>.reveal{opacity:1;transform:none}</style></noscript>
 <style>
 @view-transition { navigation: auto; }
 
@@ -502,7 +512,7 @@ footer {
     <a href="/links">Links</a>
     <a href="/status">Status</a>
   </nav>
-  <button class="hamburger" id="hamburger" aria-label="Menu" onclick="toggleMenu()">
+  <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false" aria-controls="mobile-menu">
     <span></span><span></span><span></span>
   </button>
 </header>
@@ -667,17 +677,17 @@ footer {
       <span class="section-title">Get in touch</span>
     </div>
     <div class="contact-rows">
-      <div class="crow" onclick="copyText('kylematthewglenn@gmail.com', 'Email copied!')">
+      <div class="crow" role="button" tabindex="0" onclick="copyText('kylematthewglenn@gmail.com', 'Email copied!')">
         <span class="c-type">Email</span>
         <span class="c-val">kyle@koels.site</span>
         <span class="c-arr">↗</span>
       </div>
-      <div class="crow" onclick="copyText('koels', 'Discord copied!')">
+      <div class="crow" role="button" tabindex="0" onclick="copyText('koels', 'Discord copied!')">
         <span class="c-type">Discord</span>
         <span class="c-val">@koels</span>
         <span class="c-arr">↗</span>
       </div>
-      <div class="crow" onclick="window.open('/links')">
+      <div class="crow" role="button" tabindex="0" onclick="window.open('/links')">
         <span class="c-type">All links</span>
         <span class="c-val">koels.site/links</span>
         <span class="c-arr">↗</span>
@@ -697,28 +707,42 @@ footer {
 </footer>
 
 <script is:inline>
-// cursor spotlight
+// cursor spotlight with rAF throttle
 (function() {
   const glow = document.getElementById('cursorGlow');
   if (!glow) return;
-  let glowVisible = false;
+  let glowVisible = false, rafId = null;
   document.addEventListener('mousemove', e => {
-    glow.style.left = e.clientX + 'px';
-    glow.style.top  = e.clientY + 'px';
-    if (!glowVisible) { glow.style.opacity = '1'; glowVisible = true; }
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      glow.style.left = e.clientX + 'px';
+      glow.style.top  = e.clientY + 'px';
+      if (!glowVisible) { glow.style.opacity = '1'; glowVisible = true; }
+      rafId = null;
+    });
   });
   document.addEventListener('mouseleave', () => { glow.style.opacity = '0'; glowVisible = false; });
 })();
 
+// hamburger via addEventListener (no inline onclick)
+document.getElementById('hamburger').addEventListener('click', toggleMenu);
 function toggleMenu() {
   const btn = document.getElementById('hamburger');
   const menu = document.getElementById('mobile-menu');
-  btn.classList.toggle('open');
-  menu.classList.toggle('open');
+  const open = btn.classList.toggle('open');
+  menu.classList.toggle('open', open);
+  btn.setAttribute('aria-expanded', open);
 }
 
+// keyboard activation for .crow interactive rows
+document.querySelectorAll('.crow').forEach(el => {
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+  });
+});
+
 const obs = new IntersectionObserver(
-  es => es.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible') }),
+  es => es.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } }),
   { threshold: 0.08 }
 );
 document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
@@ -740,7 +764,7 @@ function copyText(text, msg) {
 
 async function updateMC() {
   try {
-    const d = await (await fetch('https://mcapi.us/server/status?ip=koels.online')).json();
+    const d = await (await fetch('https://api.mcsrvstat.us/3/koels.online')).json();
     const s = document.getElementById('mcStatus');
     if (!d || !d.online) {
       s.textContent = 'Offline'; s.className = 'mc-status-text offline';
@@ -750,7 +774,7 @@ async function updateMC() {
       document.getElementById('mcPct').textContent = '0%';
       return;
     }
-    const now = d.players.now, max = d.players.max;
+    const now = d.players.online, max = d.players.max;
     const pct = max > 0 ? Math.round(now / max * 100) : 0;
     s.textContent = 'Online'; s.className = 'mc-status-text online';
     document.getElementById('mcNow').textContent = now;
@@ -763,7 +787,7 @@ async function updateMC() {
   }
 }
 updateMC();
-setInterval(updateMC, 180000);
+setInterval(() => { if (!document.hidden) updateMC(); }, 180000);
 
 async function updateDiscord() {
   try {
