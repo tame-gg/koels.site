@@ -24,9 +24,10 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:'Inter',syste
 body { background:#020810; color:#c8f0ff; }
 #map { position:fixed; inset:0; z-index:1; }
 
-/* CSS custom properties — header height + iOS safe-area insets */
+/* CSS custom properties — header height, panel width, safe-area insets */
 :root {
-  --hdr: 54px;
+  --hdr:     54px;
+  --panel-w: 360px;   /* matches #panel width; updated per breakpoint */
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
   --sal: env(safe-area-inset-left, 0px);
@@ -394,13 +395,39 @@ body { background:#020810; color:#c8f0ff; }
 .leaflet-tile-pane { filter:brightness(0.88) saturate(0.5); }
 .leaflet-pane.radar-pane { filter:none !important; }
 
+/* Crisp nearest-neighbor scaling beyond native tile zoom (avoids blur) */
+.leaflet-pane.radar-pane img.leaflet-tile {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+/* Smooth opacity crossfades between radar frames — CSS transition so no JS timing needed */
+.leaflet-pane.radar-pane > .leaflet-layer {
+  transition: opacity 200ms linear !important;
+}
+
+/* ── PANEL-OPEN STATE — shift floating controls left to clear the open panel ─ */
+/* Only applies on non-mobile (desktop/tablet where panel slides from the right) */
+@media (min-width: 641px) {
+  body.panel-open #locate-btn {
+    right: calc(var(--panel-w) + 12px + var(--sar));
+  }
+  body.panel-open #search-container {
+    /* Shrink width so the search bar doesn't intrude into the open panel */
+    width: min(400px, calc(100vw - var(--panel-w) - 120px));
+  }
+}
+
 /* LOCATE ME BUTTON */
 #locate-btn {
   position:fixed; top:calc(var(--hdr) + 10px + var(--sat)); right:calc(12px + var(--sar)); z-index:1000;
   width:36px; height:36px; border-radius:8px; cursor:pointer;
   background:rgba(3,3,10,0.92); border:1px solid rgba(0,120,200,0.3);
   display:flex; align-items:center; justify-content:center;
-  transition:all 0.2s; -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+  transition: right 0.35s cubic-bezier(0.16,1,0.3,1),
+              background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
   box-shadow:0 4px 16px rgba(0,0,0,0.4);
   touch-action:manipulation; -webkit-tap-highlight-color:transparent;
 }
@@ -522,6 +549,7 @@ body { background:#020810; color:#c8f0ff; }
 
 /* ── TABLET (641px – 1024px) ─────────────────────────────────────────────── */
 @media (min-width: 641px) and (max-width: 1024px) {
+  :root { --panel-w: 320px; }
   #panel { width:320px; }
   #panel.open ~ #panel-toggle { right:320px; }
   #search-container { width:min(340px, calc(100vw - 100px)); }
@@ -532,7 +560,7 @@ body { background:#020810; color:#c8f0ff; }
 
 /* ── ULTRAWIDE (≥1600px) ─────────────────────────────────────────────────── */
 @media (min-width: 1600px) {
-  :root { --hdr: 58px; }
+  :root { --hdr: 58px; --panel-w: 400px; }
   #panel { width:400px; }
   #panel.open ~ #panel-toggle { right:400px; }
   #legend { padding:12px 28px; gap:20px; }
@@ -673,7 +701,7 @@ body { background:#020810; color:#c8f0ff; }
 
 /* ── LANDSCAPE PHONE (short viewport in landscape) ───────────────────────── */
 @media (max-height: 500px) and (orientation: landscape) {
-  :root { --hdr: 48px; }
+  :root { --hdr: 48px; --panel-w: min(300px, 48vw); }
   /* Side-sliding panel (like desktop) instead of bottom sheet */
   #panel {
     top: calc(var(--hdr) + var(--sat));
@@ -930,25 +958,31 @@ map.getPane('radarPane').classList.add('radar-pane');
 
 const FADE_DURATION = 250;  // ms for smooth opacity crossfade between frames
 
-// ── TILE ERROR SUPPRESSION (Bulletproof) ──────────────────────────────
+// ── TILE ERROR SUPPRESSION + SMOOTH LOADING ──────────────────────────
 function suppressTileErrors(layer) {
-  // Override internal tile error handler — no console spam, no "zoom not supported"
   if (layer.createTile) {
     const origCreate = layer.createTile.bind(layer);
     layer.createTile = function(coords, done) {
       const tile = origCreate(coords, done);
-      tile.onerror = null; // swallow all errors silently
+      tile.onerror = null;
+      // Each tile fades in individually as it loads (120ms) — prevents pop-in flicker
       tile.style.opacity = '0';
-      tile.onload = () => { tile.style.opacity = ''; };
+      tile.style.transition = 'opacity 120ms ease-out';
+      tile.onload = () => {
+        // Clear inline opacity; container's CSS transition then controls full-frame fade
+        tile.style.opacity = '';
+      };
       return tile;
     };
   }
   layer.on('tileerror', function(evt) {
-    if (evt.tile) { evt.tile.style.display = 'none'; }
+    if (evt.tile) { evt.tile.style.opacity = '0'; evt.tile.style.display = 'none'; }
   });
   layer.on('add', function() {
     const el = layer.getContainer && layer.getContainer();
-    if (el) el.style.transition = `opacity ${FADE_DURATION}ms ease-out`;
+    // CSS already handles the transition via .leaflet-pane.radar-pane > .leaflet-layer
+    // but set inline as well so WMS regional layers (outside the radar pane selector) also fade
+    if (el && !el.style.transition) el.style.transition = `opacity ${FADE_DURATION}ms linear`;
   });
   return layer;
 }
@@ -1157,14 +1191,18 @@ async function loadRadar() {
         time:     frameTime,
         rvPath:   rvPath,
         // RainViewer — global base, color map 1 = classic radar
+        // keepBuffer:2 pre-renders tiles outside the viewport for smooth panning
+        // updateWhenZooming:false prevents tile-request storm during pinch-zoom
         rvLayer:  suppressTileErrors(L.tileLayer(
           rvPath + '/{z}/{x}/{y}/1/1_1.png',
-          { opacity: 0, pane: 'radarPane', maxNativeZoom: 8, maxZoom: 19 }
+          { opacity: 0, pane: 'radarPane', maxNativeZoom: 8, maxZoom: 19,
+            keepBuffer: 2, updateWhenZooming: false, updateWhenIdle: false }
         )),
         // IEM NEXRAD — US only, returns transparent outside CONUS
         iemLayer: suppressTileErrors(L.tileLayer(
           `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-${slot.ts}/{z}/{x}/{y}.png`,
-          { opacity: 0, pane: 'radarPane', maxNativeZoom: 10, maxZoom: 19 }
+          { opacity: 0, pane: 'radarPane', maxNativeZoom: 10, maxZoom: 19,
+            keepBuffer: 2, updateWhenZooming: false, updateWhenIdle: false }
         ))
       };
     });
@@ -1175,25 +1213,26 @@ async function loadRadar() {
     buildRegionalOverlays(map.getCenter());
     buildTicks();
 
-    // Preload ALL frames
+    // Add all frames to the map (all hidden — opacity:0)
     frames.forEach(f => {
       f.rvLayer.addTo(map);
       f.iemLayer.addTo(map);
     });
 
-    // Show latest frame then autoplay
-    let shown = false;
-    const go = () => {
-      if (shown) return;
-      shown = true;
-      showFrame(frames.length - 1);
+    // Show the most recent frame immediately so something appears right away.
+    // Tiles may still be loading — they fade in individually as they arrive.
+    showFrame(frames.length - 1);
+
+    // Start animation once the current-frame tiles have loaded (or after 3 s)
+    let started = false;
+    const onReady = () => {
+      if (started) return;
+      started = true;
       setStatus('', false);
       startPlay();
     };
-
-    const lastFrame = frames[frames.length - 1];
-    lastFrame.rvLayer.once('load', go);
-    setTimeout(go, 5000);
+    frames[frames.length - 1].rvLayer.once('load', onReady);
+    setTimeout(onReady, 3000);
 
   } catch(e) {
     console.error('Radar load error:', e);
@@ -2042,9 +2081,11 @@ function togglePanel() {
   const toggle  = document.getElementById('panel-toggle');
   const pill    = document.getElementById('alert-pill');
   const isOpen  = panel.classList.toggle('open');
+  // body.panel-open drives CSS-based shifting of locate/search controls on desktop
+  document.body.classList.toggle('panel-open', isOpen);
   toggle.setAttribute('aria-expanded', isOpen);
   pill.setAttribute('aria-expanded',   isOpen);
-  // On mobile the panel overlaps the weather widget — hide it while panel is open
+  // On mobile the panel is a bottom-sheet — hide weather widget so it doesn't peek above
   if (window.matchMedia('(max-width: 640px)').matches) {
     document.getElementById('weather-widget').classList.toggle('panel-hidden', isOpen);
   }
