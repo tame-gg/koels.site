@@ -24,11 +24,21 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:'Inter',syste
 body { background:#020810; color:#c8f0ff; }
 #map { position:fixed; inset:0; z-index:1; }
 
+/* CSS custom properties — header height + iOS safe-area insets */
+:root {
+  --hdr: 54px;
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
 /* HEADER */
 #header {
   position:fixed; top:0; left:0; right:0; z-index:1000;
-  height:54px; display:flex; align-items:center; justify-content:space-between;
-  padding:0 20px;
+  height:calc(var(--hdr) + var(--sat));
+  display:flex; align-items:center; justify-content:space-between;
+  padding:var(--sat) 20px 0;
   background:rgba(3,3,10,0.92); border-bottom:1px solid rgba(255,255,255,0.07);
   -webkit-backdrop-filter:blur(20px);
   backdrop-filter:blur(20px);
@@ -101,7 +111,7 @@ body { background:#020810; color:#c8f0ff; }
 
 /* ALERTS PANEL */
 #panel {
-  position:fixed; top:54px; right:0; bottom:0; z-index:900; width:360px;
+  position:fixed; top:calc(var(--hdr) + var(--sat)); right:0; bottom:0; z-index:900; width:360px;
   background:rgba(5,4,18,0.99); border-left:1px solid rgba(0,120,200,0.12);
   backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
   display:flex; flex-direction:column;
@@ -372,7 +382,7 @@ body { background:#020810; color:#c8f0ff; }
 
 /* status */
 #radar-status {
-  position:fixed; top:64px; left:50%; transform:translateX(-50%);
+  position:fixed; top:calc(var(--hdr) + 10px + var(--sat)); left:50%; transform:translateX(-50%);
   z-index:1100; background:rgba(3,3,10,0.9); border:1px solid rgba(255,255,255,0.1);
   border-radius:8px; padding:6px 14px; font-size:0.58rem; color:rgba(200,240,255,0.6);
   letter-spacing:0.08em; pointer-events:none; opacity:0; transition:opacity 0.3s;
@@ -386,7 +396,7 @@ body { background:#020810; color:#c8f0ff; }
 
 /* LOCATE ME BUTTON */
 #locate-btn {
-  position:fixed; top:64px; right:12px; z-index:1000;
+  position:fixed; top:calc(var(--hdr) + 10px + var(--sat)); right:calc(12px + var(--sar)); z-index:1000;
   width:36px; height:36px; border-radius:8px; cursor:pointer;
   background:rgba(3,3,10,0.92); border:1px solid rgba(0,120,200,0.3);
   display:flex; align-items:center; justify-content:center;
@@ -406,7 +416,7 @@ body { background:#020810; color:#c8f0ff; }
 
 /* SEARCH BAR */
 #search-container {
-  position:fixed; top:64px; left:50%; transform:translateX(-50%);
+  position:fixed; top:calc(var(--hdr) + 10px + var(--sat)); left:50%; transform:translateX(-50%);
   z-index:1000; width:min(400px, calc(100vw - 116px));
 }
 #search-input {
@@ -444,7 +454,7 @@ body { background:#020810; color:#c8f0ff; }
 
 /* WEATHER WIDGET */
 #weather-widget {
-  position:fixed; top:64px; left:12px; z-index:1000;
+  position:fixed; top:calc(var(--hdr) + 10px + var(--sat)); left:calc(12px + var(--sal)); z-index:1000;
   background:rgba(3,3,10,0.92); border:1px solid rgba(0,120,200,0.25);
   border-radius:12px; padding:12px 14px; min-width:180px; max-width:220px;
   -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
@@ -516,26 +526,29 @@ body { background:#020810; color:#c8f0ff; }
   #panel.open ~ #panel-toggle { right:320px; }
   #search-container { width:min(340px, calc(100vw - 100px)); }
   #timeline { width:min(460px, calc(100vw - 60px)); }
+  /* Move weather widget below the search/locate row to avoid overlap */
+  #weather-widget { top:calc(var(--hdr) + 56px + var(--sat)); }
 }
 
 /* ── ULTRAWIDE (≥1600px) ─────────────────────────────────────────────────── */
 @media (min-width: 1600px) {
+  :root { --hdr: 58px; }
   #panel { width:400px; }
   #panel.open ~ #panel-toggle { right:400px; }
   #legend { padding:12px 28px; gap:20px; }
   .legend-label { font-size:0.72rem; }
   .legend-dot { width:12px; height:12px; }
   #timeline { width:min(640px, calc(100vw - 32px)); }
-  #header { height:58px; padding:0 28px; }
+  #header { padding-left:28px; padding-right:28px; }
   .radar-logo-main { font-size:0.78rem; }
-  #panel { top:58px; }
 }
 
 /* ── MOBILE ─────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
+  :root { --hdr: 48px; }
 
   /* Header — tighter, keep beta badge */
-  #header { height:48px; padding:0 12px; }
+  #header { padding-left:12px; padding-right:12px; }
   .hdiv { display:none; }
   .radar-logo-sub { display:none; }
   #last-updated { display:none; }
@@ -548,12 +561,12 @@ body { background:#020810; color:#c8f0ff; }
     -webkit-tap-highlight-color:transparent;
   }
 
-  /* Locate button */
-  #locate-btn { top:56px; right:8px; width:32px; height:32px; }
+  /* Locate button — top is now derived from --hdr via the base rule */
+  #locate-btn { right:8px; width:32px; height:32px; }
   #locate-btn svg { width:16px; height:16px; }
 
   /* Search bar — leave room for locate button on the right */
-  #search-container { top:56px; left:12px; right:58px; width:auto; transform:none; }
+  #search-container { left:12px; right:48px; width:auto; transform:none; }
   #search-input { padding:8px 12px 8px 32px; font-size:0.6rem; border-radius:8px; }
   #search-icon { width:14px; height:14px; left:9px; }
   #search-results { border-radius:8px; max-height:180px; }
@@ -570,15 +583,16 @@ body { background:#020810; color:#c8f0ff; }
   .ww-temp { font-size:1.8rem; }
   .ww-icon { font-size:2rem; }
 
-  /* Panel — slides up from bottom, full width */
+  /* Panel — slides up from bottom, full width, safe-area bottom padding */
   #panel {
     top:auto; bottom:0; left:0; right:0; width:100%;
-    height:65dvh; max-height:calc(100dvh - 48px);
+    height:65dvh; max-height:calc(100dvh - var(--hdr) - var(--sat));
     border-left:none; border-top:1px solid rgba(0,120,200,0.2);
     border-radius:16px 16px 0 0;
     transform:translateY(100%);
     transition:transform 0.35s cubic-bezier(0.16,1,0.3,1);
     box-shadow:0 -8px 40px rgba(0,0,0,0.5);
+    padding-bottom: var(--sab);
   }
   #panel.open { transform:translateY(0); }
   #panel.open ~ #panel-backdrop { display:block; }
@@ -602,7 +616,7 @@ body { background:#020810; color:#c8f0ff; }
   #timeline {
     left:12px; right:12px; width:auto;
     transform:none;
-    bottom:12px;
+    bottom:calc(12px + var(--sab));
     padding:10px 14px 12px;
     border-radius:12px;
   }
@@ -613,7 +627,7 @@ body { background:#020810; color:#c8f0ff; }
 
   /* Legend — bottom left above timeline on mobile */
   #legend {
-    bottom:108px; left:12px; right:auto;
+    bottom:calc(108px + var(--sab)); left:12px; right:auto;
     padding:7px 12px; gap:8px; border-radius:8px;
   }
   .legend-title { font-size:0.52rem; }
@@ -623,14 +637,14 @@ body { background:#020810; color:#c8f0ff; }
   .legend-label { font-size:0.52rem; }
 
   /* Zoom controls above timeline */
-  .leaflet-control-zoom { margin-bottom:110px !important; margin-right:12px !important; }
+  .leaflet-control-zoom { margin-bottom:calc(110px + var(--sab)) !important; margin-right:12px !important; }
 
   /* Beta modal */
   #beta-modal { padding:24px 20px; border-radius:12px; }
   .beta-modal-title { font-size:0.85rem; }
 
-  /* Radar status toast nudge */
-  #radar-status { top:56px; }
+  /* Weather widget hidden when panel is open (prevent z-index overlap) */
+  #weather-widget.panel-hidden { display:none !important; }
 }
 
 /* ── VERY SMALL (≤380px) ─────────────────────────────────────────────────── */
@@ -640,6 +654,52 @@ body { background:#020810; color:#c8f0ff; }
   .tick-label { font-size:0.38rem; }
   .legend-title { display:none; }
   .legend-items { gap:6px; }
+}
+
+/* Panel close button (visible on mobile bottom-sheet) */
+.panel-close-btn {
+  width:28px; height:28px; border-radius:6px; cursor:pointer;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  display:none; align-items:center; justify-content:center;
+  color:rgba(200,240,255,0.4); font-size:0.78rem; line-height:1;
+  touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+  transition:all 0.15s; flex-shrink:0;
+}
+.panel-close-btn:hover { color:#c8f0ff; background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); }
+.panel-close-btn:focus-visible { outline:2px solid #40c8ff; outline-offset:1px; }
+@media (max-width: 640px) {
+  .panel-close-btn { display:flex; }
+}
+
+/* ── LANDSCAPE PHONE (short viewport in landscape) ───────────────────────── */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root { --hdr: 48px; }
+  /* Side-sliding panel (like desktop) instead of bottom sheet */
+  #panel {
+    top: calc(var(--hdr) + var(--sat));
+    height: calc(100dvh - var(--hdr) - var(--sat));
+    max-height: none; width: min(300px, 48vw);
+    border-radius: 0; border-top: none; padding-bottom: 0;
+    border-left: 1px solid rgba(0,120,200,0.2);
+    transform: translateX(100%);
+  }
+  #panel.open { transform: translateX(0); }
+  .panel-header::before { display: none; }
+  .panel-header { padding-top: 14px; }
+  #panel-toggle { display: flex !important; }
+  /* Weather widget — compact, top-right */
+  #weather-widget {
+    bottom: auto;
+    top: calc(var(--hdr) + 8px + var(--sat));
+    left: auto;
+    right: calc(8px + var(--sar));
+    max-width: 170px; min-width: 150px;
+  }
+  /* Compact controls */
+  #legend { bottom: calc(8px + var(--sab)); padding: 5px 10px; gap: 6px; }
+  .legend-title { display: none; }
+  #timeline { bottom: calc(8px + var(--sab)); padding: 8px 14px 10px; }
+  .leaflet-control-zoom { margin-bottom: 60px !important; }
 }
 
 /* iOS performance: disable backdrop-filter blur on mobile to prevent GPU crash */
@@ -770,7 +830,10 @@ body { background:#020810; color:#c8f0ff; }
 <div id="panel" role="complementary" aria-label="Weather alerts">
   <div class="panel-header">
     <span class="panel-header-title">Active Alerts</span>
-    <span class="panel-header-count" id="panel-count">0</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span class="panel-header-count" id="panel-count">0</span>
+      <button class="panel-close-btn" type="button" aria-label="Close alerts panel" onclick="togglePanel()">✕</button>
+    </div>
   </div>
   <div id="region-tabs">
     <button class="rtab active" data-region="ALL" onclick="filterRegion(this)">All</button>
@@ -940,7 +1003,10 @@ function floorMins(d, n) {
 
 // ── REGION DETECTION ────────────────────────────────────────────────────
 function detectRegion(lat, lng) {
-  if (lat >= 20 && lat <= 55 && lng >= -130 && lng <= -60) return 'US';
+  // Alaska and Aleutians (west of -130° — not covered by contiguous US check)
+  if (lat >= 51 && lat <= 72 && lng >= -180 && lng <= -130) return 'US';
+  // Contiguous US + Hawaii
+  if (lat >= 18 && lat <= 55 && lng >= -130 && lng <= -60) return 'US';
   if (lat >= 41 && lat <= 84 && lng >= -141 && lng <= -52) return 'CA';
   if (lat >= 45 && lat <= 55 && lng >= -11 && lng <= 2)   return 'UK';
   if (lat >= 47 && lat <= 55 && lng >= 5 && lng <= 15)    return 'DE';
@@ -948,7 +1014,8 @@ function detectRegion(lat, lng) {
   if (lat >= 50 && lat <= 54 && lng >= 3 && lng <= 8)     return 'NL';
   if (lat >= 57 && lat <= 71 && lng >= 4 && lng <= 31)    return 'NO';
   if (lat >= 35 && lat <= 72 && lng >= -11 && lng <= 40)  return 'EU';
-  if (lat >= -44 && lat <= -10 && lng >= 140 && lng <= 180) return 'AU';
+  // Australia — full extent including Western Australia (lng ≥ 112)
+  if (lat >= -44 && lat <= -10 && lng >= 112 && lng <= 180) return 'AU';
   if (lat >= -48 && lat <= -34 && lng >= 165 && lng <= 179) return 'NZ';
   if (lat >= 24 && lat <= 46 && lng >= 122 && lng <= 146) return 'JP';
   if (lat >= 6 && lat <= 36 && lng >= 68 && lng <= 97)    return 'IN';
@@ -1677,8 +1744,8 @@ async function loadAlerts() {
   alertLayers.forEach(l => { try { map.removeLayer(l); } catch(e){} });
   alertLayers = [];
 
-  // Fetch all regions in parallel
-  const [usAlerts, euAlerts, caAlerts, auAlerts, nzAlerts, saAlerts, jpAlerts, inAlerts] = await Promise.all([
+  // Fetch all regions and supplemental sources in one parallel batch
+  const [usAlerts, euAlerts, caAlerts, auAlerts, nzAlerts, saAlerts, jpAlerts, inAlerts, spcWatches, nhcAlerts] = await Promise.all([
     fetchNWSAlerts(),
     fetchEUAlerts(),
     fetchCanadaAlerts(),
@@ -1687,10 +1754,6 @@ async function loadAlerts() {
     fetchSouthAmericaAlerts(),
     fetchJapanAlerts(),
     fetchIndiaAlerts(),
-  ]);
-
-  // Also fetch SPC watches (severe thunderstorm/tornado watches) and NHC hurricanes
-  const [spcWatches, nhcAlerts] = await Promise.all([
     fetchSPCWatches(),
     fetchNHCAlerts(),
   ]);
@@ -1702,7 +1765,7 @@ async function loadAlerts() {
   const total = allAlerts.length;
   document.getElementById('alert-num').textContent   = total;
   document.getElementById('panel-count').textContent = total;
-  document.getElementById('alert-pill').className    = total ? 'alert-pill' : 'alert-pill none';
+  document.getElementById('alert-pill').classList.toggle('none', !total);
   document.getElementById('panel-toggle').classList.toggle('has-alerts', total > 0);
 
   // Update timestamp
@@ -1729,6 +1792,19 @@ function filterRegion(tab) {
 }
 window.filterRegion = filterRegion;
 
+function escHtml(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function safeUrl(u) {
+  if (!u) return '';
+  try {
+    const p = new URL(u);
+    return (p.protocol === 'http:' || p.protocol === 'https:') ? u : '';
+  } catch(e) { return ''; }
+}
+
 function makeAlertCard(a) {
   const item = document.createElement('div');
   item.className = `alert-item ${sevClass(a.severity)}`;
@@ -1739,12 +1815,19 @@ function makeAlertCard(a) {
 
   // Tag pill (e.g. TORNADO, SEVERE TSTM, FLOOD, etc.)
   const tagHtml = a.tag
-    ? `<span class="alert-tag-chip" style="border-color:${sevColor}44;color:${sevColor};background:${sevColor}11">${a.tag}</span>`
+    ? `<span class="alert-tag-chip" style="border-color:${sevColor}44;color:${sevColor};background:${sevColor}11">${escHtml(a.tag)}</span>`
     : '';
 
-  const govLinkHtml = a.url
-    ? `<a class="alert-gov-link" href="${a.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">&#8599; View alert</a>`
+  const cleanUrl = safeUrl(a.url);
+  const govLinkHtml = cleanUrl
+    ? `<a class="alert-gov-link" href="${escHtml(cleanUrl)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">&#8599; View alert</a>`
     : '';
+
+  const eSev   = escHtml(a.severity || 'Unknown');
+  const eEvent = escHtml(a.event);
+  const eArea  = escHtml(a.area);
+  const eSrc   = escHtml(a.source);
+  const eTime  = escHtml(timeStr);
 
   item.innerHTML =
     `<div class="alert-bar"></div>` +
@@ -1752,20 +1835,22 @@ function makeAlertCard(a) {
       `<div class="alert-top-row">` +
         `<div class="alert-sev-badge">` +
           `<span class="alert-sev-dot" style="background:${sevColor};box-shadow:0 0 5px ${sevColor}77"></span>` +
-          `<span class="alert-sev-text" style="color:${sevColor}">${a.severity || 'Unknown'}</span>` +
+          `<span class="alert-sev-text" style="color:${sevColor}">${eSev}</span>` +
         `</div>` +
-        (timeStr ? `<span class="alert-time-chip">${timeStr}</span>` : '') +
+        (eTime ? `<span class="alert-time-chip">${eTime}</span>` : '') +
       `</div>` +
       (tagHtml ? `<div class="alert-tag-row">${tagHtml}</div>` : '') +
-      `<div class="alert-event" title="${a.event}">${a.event}</div>` +
-      `<div class="alert-area" title="${a.area}">${a.area}</div>` +
+      `<div class="alert-event" title="${eEvent}">${eEvent}</div>` +
+      `<div class="alert-area" title="${eArea}">${eArea}</div>` +
       `<div class="alert-footer">` +
-        (a.source ? `<span class="alert-source-chip">${a.source}</span>` : '<span></span>') +
+        (eSrc ? `<span class="alert-source-chip">${eSrc}</span>` : '<span></span>') +
         govLinkHtml +
       `</div>` +
     `</div>`;
 
   if (a.geometry) {
+    item.dataset.clickable = 'true';
+    item.style.cursor = 'pointer';
     item.addEventListener('click', (e) => {
       if (e.target.closest('.alert-gov-link')) return;
       map.flyToBounds(L.geoJSON(a.geometry).getBounds(), {padding:[60,60], duration:1.2});
@@ -1923,7 +2008,31 @@ async function fetchEUAlerts() {
   } catch(e) {
     try {
       const r = await fetch('https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-europe');
-      return [];
+      if (!r.ok) return [];
+      const txt = await r.text();
+      const doc = new DOMParser().parseFromString(txt, 'text/xml');
+      return [...doc.querySelectorAll('entry')].map(entry => {
+        const title   = entry.querySelector('title')?.textContent   || 'Weather Alert';
+        const id      = entry.querySelector('id')?.textContent       || '';
+        const updated = entry.querySelector('updated')?.textContent  || null;
+        const summary = entry.querySelector('summary')?.textContent  || '';
+        const ccMatch = id.match(/\/([A-Z]{2})\//);
+        const cc = ccMatch ? ccMatch[1] : '';
+        const t = title.toLowerCase();
+        let sev = 'Minor';
+        if (/extreme|red/.test(t))         sev = 'Extreme';
+        else if (/severe|orange/.test(t))  sev = 'Severe';
+        else if (/moderate|yellow/.test(t)) sev = 'Moderate';
+        let tag = '';
+        if (/thunderstorm/.test(t))        tag = 'SEVERE TSTM';
+        else if (/tornado/.test(t))        tag = 'TORNADO';
+        else if (/wind/.test(t))           tag = 'HIGH WIND';
+        else if (/rain|flood/.test(t))     tag = 'FLOOD';
+        else if (/snow|ice/.test(t))       tag = 'WINTER STORM';
+        else if (/heat/.test(t))           tag = 'HEAT';
+        else if (/fog/.test(t))            tag = 'FOG';
+        return { severity: sev, event: title, tag, area: cc || 'Europe', sent: updated, geometry: null, region: 'EU', source: 'MeteoAlarm', url: 'https://www.meteoalarm.org/en/live/', instruction: null, headline: summary };
+      });
     } catch(e2) { return []; }
   }
 }
@@ -1935,6 +2044,10 @@ function togglePanel() {
   const isOpen  = panel.classList.toggle('open');
   toggle.setAttribute('aria-expanded', isOpen);
   pill.setAttribute('aria-expanded',   isOpen);
+  // On mobile the panel overlaps the weather widget — hide it while panel is open
+  if (window.matchMedia('(max-width: 640px)').matches) {
+    document.getElementById('weather-widget').classList.toggle('panel-hidden', isOpen);
+  }
 }
 window.togglePanel = togglePanel;
 
@@ -1956,14 +2069,17 @@ window.togglePanel = togglePanel;
 // ── LOCATE ME ─────────────────────────────────────────────────────────────
 window.locateMe = function() {
   if (!navigator.geolocation) {
-    alert('Geolocation is not supported by your browser.');
+    setStatus('Geolocation is not supported by your browser.', true);
+    setTimeout(() => setStatus('', false), 4000);
     return;
   }
   const btn = document.getElementById('locate-btn');
   btn.classList.add('locating');
+  setStatus('Getting location…', true);
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       btn.classList.remove('locating');
+      setStatus('', false);
       const { latitude, longitude } = pos.coords;
       map.flyTo([latitude, longitude], 10, { duration: 1.5 });
       setTimeout(() => {
@@ -1975,11 +2091,11 @@ window.locateMe = function() {
     (err) => {
       btn.classList.remove('locating');
       console.warn('Geolocation error:', err);
-      if (err.code === 1) {
-        alert('Location permission denied. Please allow location access in your browser settings.');
-      } else {
-        alert('Unable to get your location. Please try again or search manually.');
-      }
+      const msg = err.code === 1
+        ? 'Location denied — allow access in browser settings.'
+        : 'Unable to get location. Try searching instead.';
+      setStatus(msg, true);
+      setTimeout(() => setStatus('', false), 5000);
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
   );
