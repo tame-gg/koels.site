@@ -964,8 +964,8 @@ button {
   }
   .topbar {
     flex-direction: row;
-    align-items: center;
-    gap: 6px;
+    align-items: stretch;
+    gap: 8px;
     padding: calc(var(--safe-top) + 10px) 16px 0;
   }
   .brand {
@@ -992,7 +992,14 @@ button {
   .toolbar {
     width: auto;
     flex: 0 0 auto;
-    gap: 6px;
+    gap: 0;
+    min-height: 48px;
+    padding: 4px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(4, 8, 18, 0.76);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
   }
   .tool-btn, .chip {
     min-height: 34px;
@@ -1001,15 +1008,21 @@ button {
   }
   .tool-btn {
     flex: 0 0 auto;
-    width: 38px;
-    min-height: 38px;
+    width: 40px;
+    min-height: 40px;
     padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
     font-size: 0;
     letter-spacing: 0;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
   .tool-btn svg {
-    width: 15px;
-    height: 15px;
+    display: block;
+    width: 16px;
+    height: 16px;
   }
   .hud {
     top: calc(var(--safe-top) + 64px);
@@ -1150,8 +1163,70 @@ button {
     display: none;
   }
   .detail-grid { grid-template-columns: 1fr; }
-  .detail-head,
-  .detail-body { padding-left: 16px; padding-right: 16px; }
+  .detail-overlay {
+    align-items: end;
+    place-items: end stretch;
+    padding: 0;
+    background: rgba(2, 8, 16, 0.58);
+  }
+  .detail-modal {
+    width: 100%;
+    max-height: 82svh;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
+  }
+  .detail-head {
+    align-items: center;
+    padding: 14px 16px 12px;
+  }
+  .detail-title {
+    margin-top: 7px;
+    font-size: 0.94rem;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+  .detail-close {
+    min-width: 38px;
+    min-height: 38px;
+  }
+  .detail-body {
+    padding: 14px 16px calc(var(--safe-bottom) + 18px);
+  }
+  .detail-stat {
+    padding: 11px 12px;
+    border-radius: 14px;
+    min-width: 0;
+  }
+  .detail-stat-value {
+    font-size: 0.96rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+  .detail-text-block {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    min-width: 0;
+  }
+  .detail-copy {
+    font-size: 0.74rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+  .detail-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .detail-actions .selected-link {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   .status-toast {
     top: calc(var(--safe-top) + 92px);
     max-width: calc(100vw - 32px);
