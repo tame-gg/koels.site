@@ -959,16 +959,19 @@ button {
     overflow: hidden;
   }
   #globe-canvas {
-    transform: translateY(-5svh) scale(0.92);
+    transform: translateY(-3svh) scale(0.96);
     transform-origin: center center;
   }
   .topbar {
-    gap: 8px;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
     padding: calc(var(--safe-top) + 10px) 16px 0;
   }
   .brand {
-    width: 100%;
-    padding: 9px 12px;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 8px 10px;
     border-radius: 14px;
   }
   .brand-mark {
@@ -987,8 +990,9 @@ button {
     font-size: 0.42rem;
   }
   .toolbar {
-    width: 100%;
-    gap: 8px;
+    width: auto;
+    flex: 0 0 auto;
+    gap: 6px;
   }
   .tool-btn, .chip {
     min-height: 34px;
@@ -996,11 +1000,19 @@ button {
     font-size: 0.54rem;
   }
   .tool-btn {
-    flex: 1 1 0;
-    min-width: 0;
+    flex: 0 0 auto;
+    width: 38px;
+    min-height: 38px;
+    padding: 0;
+    font-size: 0;
+    letter-spacing: 0;
+  }
+  .tool-btn svg {
+    width: 15px;
+    height: 15px;
   }
   .hud {
-    top: calc(var(--safe-top) + 116px);
+    top: calc(var(--safe-top) + 64px);
     bottom: auto;
     left: 16px;
     right: 16px;
@@ -1009,8 +1021,12 @@ button {
   }
   .hud-card:first-child { display: none; }
   .hud-card {
-    padding: 10px;
-    border-radius: 16px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
   .hud-title {
     font-size: 1.2rem;
@@ -1019,68 +1035,80 @@ button {
   .hud-sub { font-size: 0.74rem; }
   .stats-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    gap: 6px;
   }
   .stat {
-    min-height: 78px;
-    padding: 10px 8px 9px;
-    border-radius: 13px;
+    min-height: 46px;
+    padding: 8px 9px;
+    border-radius: 999px;
+    background: rgba(4, 8, 18, 0.68);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
   }
   .stat-label {
-    font-size: 0.44rem;
-    letter-spacing: 0.12em;
+    display: none;
   }
   .stat-value {
-    margin-top: 7px;
-    font-size: 1.18rem;
+    margin-top: 0;
+    font-size: 0.98rem;
+    line-height: 1;
   }
   .stat-meta {
-    font-size: 0.58rem;
-    line-height: 1.25;
+    margin-top: 3px;
+    font-size: 0.48rem;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .panel {
     left: 0;
     right: 0;
     bottom: 0;
-    height: min(48svh, 390px);
+    height: min(40svh, 330px);
     border-left: 0;
     border-right: 0;
     border-bottom: 0;
     border-radius: 18px 18px 0 0;
   }
   .panel-head {
-    padding: 14px 16px 12px;
+    padding: 12px 16px 10px;
+  }
+  .panel-kicker {
+    display: none;
   }
   .panel-title-row {
-    margin-top: 8px;
+    margin-top: 0;
     align-items: center;
   }
   .panel-title {
-    font-size: 0.94rem;
+    font-size: 0.9rem;
   }
   .panel-updated {
     font-size: 0.48rem;
   }
   .filter-row {
-    margin-top: 12px;
-    gap: 7px;
+    margin-top: 10px;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar {
+    display: none;
   }
   .chip {
-    flex: 1 1 calc(50% - 7px);
-    min-width: 0;
+    flex: 0 0 auto;
     justify-content: center;
-    padding: 0 8px;
+    min-height: 30px;
+    padding: 0 11px;
+    font-size: 0.48rem;
   }
   .search-wrap {
-    margin-top: 10px;
-  }
-  .search-input {
-    min-height: 38px;
-    font-size: 0.56rem;
-    letter-spacing: 0.06em;
+    display: none;
   }
   .feed {
-    padding: 8px 12px 18px;
+    padding: 8px 12px 16px;
   }
   .selected {
     display: none;
@@ -1101,14 +1129,14 @@ button {
     letter-spacing: 0.08em;
   }
   .list-head {
-    padding: 2px 2px 8px;
+    display: none;
   }
   .event-list {
     gap: 7px;
   }
   .event-btn {
     border-radius: 14px;
-    padding: 11px 12px;
+    padding: 10px 12px;
   }
   .event-title {
     font-size: 0.78rem;
@@ -1117,6 +1145,9 @@ button {
   .event-sub {
     font-size: 0.62rem;
     line-height: 1.42;
+  }
+  .event-sub:last-child {
+    display: none;
   }
   .detail-grid { grid-template-columns: 1fr; }
   .detail-head,
