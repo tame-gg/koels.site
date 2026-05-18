@@ -627,9 +627,9 @@
   </a>
   <div class="nav-right">
     <ul class="nav-links">
-      <li><a href="#features">Features</a></li>
+      <li><a href="#status">Status</a></li>
+      <li><a href="#work">Work</a></li>
       <li><a href="#setup">Setup</a></li>
-      <li><a href="#compat">Compatibility</a></li>
     </ul>
     <a class="nav-gh" href="https://github.com/tame-gg/SilkMC" target="_blank" rel="noopener">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -640,25 +640,21 @@
 
 <main>
 
-  <!-- â”€â”€ HERO â”€â”€ -->
   <section class="hero">
-    <div class="hero-inner">
+    <div class="badge">
+      <span class="badge-dot"></span>
+      <span id="badge-text">v0.1.0-alpha - based on Folia 26.1.2</span>
+    </div>
 
-      <!-- left: text -->
-      <div class="hero-left">
-        <div class="badge">
-          <span class="badge-dot"></span>
-          <span id="badge-text">v0.1.0-alpha - based on Folia 26.1.2</span>
-        </div>
-
-        <h1>Threaded regions,<br /><span class="accent">less plugin breakage.</span></h1>
-
-        <p class="hero-sub">
-          SilkMC is a compatibility-focused fork of Folia built to keep the regional multithreaded architecture
-          while narrowing the gap for Paper, Bukkit, and Spigot plugins. It is still alpha software, so some
-          plugins will still fail, and some bugs may show up as security issues, memory leaks, or unsafe behavior.
+    <div class="bento">
+      <div class="card c3 reveal">
+        <span class="section-tag">SilkMC</span>
+        <h1>Threaded regions,<br /><span class="accent">fewer immediate plugin failures.</span></h1>
+        <p class="hero-sub" style="max-width:none;margin-bottom:1.4rem;">
+          SilkMC is a compatibility-focused fork of Folia. The goal is not to fake a single-threaded server again.
+          The goal is to keep regional multithreading, make more Paper, Bukkit, and Spigot plugins get further,
+          and fail cleanly when a plugin crosses into unsafe behavior.
         </p>
-
         <div class="hero-actions">
           <a class="btn-primary" id="download-btn" href="https://github.com/tame-gg/SilkMC/releases/latest" target="_blank" rel="noopener">
             Get SilkMC
@@ -667,16 +663,58 @@
             View source
           </a>
         </div>
-
         <p class="hero-version">
-          Requires Java 25+ &mdash;
-          <a href="https://github.com/tame-gg/SilkMC/releases" target="_blank" rel="noopener">releases</a>
+          Use the paperclip jar to run it. Requires Java 25+.
         </p>
       </div>
 
-      <!-- right: terminal card + metric chips -->
-      <div class="hero-right">
-        <div class="terminal-card">
+      <div class="card c3 reveal" style="transition-delay:.04s">
+        <span class="section-tag" id="status">Current state</span>
+        <div class="card-title">Alpha means alpha</div>
+        <p class="card-body">
+          There may still be security vulnerabilities, memory leaks, plugin edge cases, and unstable behavior.
+          Some plugins will work. Some will partly work. Some will flat-out not work yet.
+        </p>
+        <div class="hero-metrics" style="margin-top:auto;">
+          <div class="hero-metric">
+            <span class="metric-val c">Folia</span>
+            <span class="metric-label">upstream architecture preserved</span>
+          </div>
+          <div class="hero-metric">
+            <span class="metric-val g">WARN</span>
+            <span class="metric-label">default unsupported plugin mode</span>
+          </div>
+          <div class="hero-metric">
+            <span class="metric-val">Paper</span>
+            <span class="metric-label">primary compatibility target</span>
+          </div>
+          <div class="hero-metric">
+            <span class="metric-val">Java 25+</span>
+            <span class="metric-label">minimum runtime</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card c2 reveal" style="transition-delay:.08s">
+        <span class="card-icon">!</span>
+        <div class="card-title">What SilkMC does when a plugin goes unsafe</div>
+        <p class="card-body">
+          Prefer disabling the plugin and logging a direct compatibility warning instead of letting the server hard-crash.
+        </p>
+        <span class="card-chip">server stability first</span>
+      </div>
+
+      <div class="card c2 reveal" style="transition-delay:.12s">
+        <span class="card-icon">~</span>
+        <div class="card-title">What SilkMC is trying to narrow</div>
+        <p class="card-body">
+          Scheduler assumptions, lifecycle timing, legacy synchronous expectations, thread ownership mistakes, and async misuse.
+        </p>
+        <span class="card-chip blue">compatibility work</span>
+      </div>
+
+      <div class="card c2 reveal" style="transition-delay:.16s">
+        <div class="terminal-card" style="box-shadow:none;background:transparent;border:none;">
           <div class="terminal-bar">
             <div class="terminal-dots"><span></span><span></span><span></span></div>
             <span class="terminal-filename">silkmc-compatibility.yml</span>
@@ -686,47 +724,24 @@
             <span class="t-line t-comment"># compatibility guardrails, not blind unsafe shims</span>
             <span class="t-gap"></span>
             <span class="t-line t-section">plugins:</span>
-            <span class="t-line-del"><span class="t-key">unsupported-plugin-mode</span>: <span class="t-val">STRICT</span> <span class="t-ann">old behavior</span></span>
-            <span class="t-line-add"><span class="t-key">unsupported-plugin-mode</span>: <span class="t-val">WARN</span> <span class="t-ann">SilkMC default</span></span>
+            <span class="t-line-add"><span class="t-key">unsupported-plugin-mode</span>: <span class="t-val">WARN</span></span>
             <span class="t-line-add"><span class="t-key">disable-incompatible-plugins</span>: <span class="t-val">true</span></span>
-            <span class="t-gap"></span>
-            <span class="t-line t-comment"># try more plugins; fail closed when it turns unsafe.</span>
-          </div>
-        </div>
-
-        <div class="hero-metrics">
-          <div class="hero-metric">
-            <span class="metric-val c">Alpha</span>
-            <span class="metric-label">actively narrowing the gap</span>
-          </div>
-          <div class="hero-metric">
-            <span class="metric-val g">Paper</span>
-            <span class="metric-label">primary plugin target</span>
-          </div>
-          <div class="hero-metric">
-            <span class="metric-val">Bukkit</span>
-            <span class="metric-label">compatibility bridge</span>
-          </div>
-          <div class="hero-metric">
-            <span class="metric-val">Java 25+</span>
-            <span class="metric-label">minimum runtime</span>
+            <span class="t-line-add"><span class="t-key">log-compatibility-stacktraces</span>: <span class="t-val">true</span></span>
           </div>
         </div>
       </div>
-
     </div>
   </section>
 
-  <!-- â”€â”€ STATS STRIP â”€â”€ -->
   <div class="stats-strip">
     <div class="stat">
-      <span class="stat-value c">Folia</span>
-      <span class="stat-label">regional threading preserved</span>
-      <span class="stat-note">upstream architecture stays intact</span>
+      <span class="stat-value c">alpha</span>
+      <span class="stat-label">public testing phase</span>
+      <span class="stat-note">expect rough edges</span>
     </div>
     <div class="stat">
-      <span class="stat-value g">WARN</span>
-      <span class="stat-label">default unsupported plugin mode</span>
+      <span class="stat-value g">safe</span>
+      <span class="stat-label">plugin failures should degrade better</span>
     </div>
     <div class="stat">
       <span class="stat-value">GPL-3.0</span>
@@ -734,235 +749,141 @@
     </div>
     <div class="stat">
       <span class="stat-value c">v0.1.0</span>
-      <span class="stat-label">current public alpha</span>
+      <span class="stat-label">current public build line</span>
     </div>
   </div>
 
-  <section class="section" id="alpha">
-    <span class="section-tag">Alpha status</span>
-    <h2>Fast, promising,<br />and still rough around the edges.</h2>
+  <section class="section" id="work">
+    <span class="section-tag">Where the work is going</span>
+    <h2>Three realities at the same time.</h2>
 
     <div class="bento">
-      <div class="card c3 reveal">
-        <span class="card-icon">!</span>
-        <div class="card-title">Expect real alpha issues</div>
+      <div class="card c2 reveal">
+        <span class="card-icon">1</span>
+        <div class="card-title">More plugins can be nudged forward</div>
         <p class="card-body">
-          SilkMC is not pretending to be production-perfect yet. There may still be security vulnerabilities,
-          memory leaks, plugin edge cases, and rough failure modes while the compatibility layer matures.
+          Legacy scheduler calls and common Paper or Bukkit assumptions can sometimes be bridged into region-threaded behavior
+          without lying about ownership or safety.
         </p>
-        <span class="card-chip">be careful on public servers</span>
       </div>
 
-      <div class="card c3 reveal" style="transition-delay:.04s">
-        <span class="card-icon">+</span>
-        <div class="card-title">Some plugins will still flat-out not work</div>
+      <div class="card c2 reveal" style="transition-delay:.05s">
+        <span class="card-icon">2</span>
+        <div class="card-title">Some plugins need to be blocked</div>
         <p class="card-body">
-          The goal is to narrow the gap, especially for traditional Paper, Bukkit, and Spigot assumptions.
-          When SilkMC can safely bridge behavior, it does. When a plugin crosses unsafe thread boundaries,
-          SilkMC should disable it cleanly and tell you why instead of taking the server down with it.
+          If a plugin reads or mutates world state from the wrong execution context, the right answer is often a clean disable
+          with a readable log message, not pretending it is fine.
         </p>
-        <span class="card-chip blue">compatibility over guesswork</span>
+      </div>
+
+      <div class="card c2 reveal" style="transition-delay:.1s">
+        <span class="card-icon">3</span>
+        <div class="card-title">Vanilla behavior still matters</div>
+        <p class="card-body">
+          Redstone, combat, inventories, chunk loading, commands, networking, AI, scoreboards, and world generation are not
+          optional collateral damage for plugin compatibility experiments.
+        </p>
+      </div>
+
+      <div class="card c3 reveal" style="transition-delay:.14s">
+        <div class="card-title">What SilkMC is actively trying to improve</div>
+        <p class="card-body">
+          Scheduler compatibility, legacy synchronous task assumptions, event consistency, thread ownership handling,
+          async plugin behavior mitigation, and safer region-thread bridging.
+        </p>
+        <span class="card-chip">narrow the gap</span>
+      </div>
+
+      <div class="card c3 reveal" style="transition-delay:.18s">
+        <div class="card-title">What SilkMC is intentionally avoiding</div>
+        <p class="card-body">
+          Unsafe “just make it work” hacks that hide region violations, make upstream merges painful, or quietly trade plugin convenience
+          for corruption risk and impossible debugging later.
+        </p>
+        <span class="card-chip blue">correctness over illusions</span>
       </div>
     </div>
   </section>
 
-  <!-- FEATURES -->
-  <section class="section" id="features">
-    <span class="section-tag">What is changing</span>
-    <h2>Built to narrow the gap.<br />Not to pretend the gap is gone.</h2>
-
-    <div class="bento">
-      <div class="card c3 reveal">
-        <div class="card-feat-inner">
-          <div class="card-feat-left">
-            <span class="card-icon">S</span>
-            <div class="card-title">Scheduler compatibility bridges</div>
-            <p class="card-body">
-              SilkMC keeps Folia's regional multithreaded model, but bridges more legacy scheduler behavior where it
-              can be done safely. That helps older Paper and Bukkit plugins get further without immediately exploding.
-            </p>
-            <span class="card-chip">safer legacy task handling</span>
-          </div>
-          <div class="card-metric-box">
-            <span class="card-metric-num">Paper</span>
-            <span class="card-metric-sub">first-class compatibility target</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card c3 reveal" style="transition-delay:.04s">
-        <div class="card-feat-inner">
-          <div class="card-feat-left">
-            <span class="card-icon">F</span>
-            <div class="card-title">Fail closed when plugins go unsafe</div>
-            <p class="card-body">
-              If a plugin crosses known unsafe thread boundaries, SilkMC disables it cleanly and logs a direct
-              compatibility warning instead of letting the whole server crash or spiral into loader fallout.
-            </p>
-            <span class="card-chip blue">protect the server first</span>
-          </div>
-          <div class="card-metric-box g">
-            <span class="card-metric-num g">WARN</span>
-            <span class="card-metric-sub">default unsupported plugin mode</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="card c2 reveal" style="transition-delay:.08s">
-        <span class="card-icon">P</span>
-        <div class="card-title">Paper API behavior</div>
-        <p class="card-body">
-          Prioritizes practical Paper plugin support where behavior can be preserved without violating region ownership.
-        </p>
-      </div>
-
-      <div class="card c2 reveal" style="transition-delay:.12s">
-        <span class="card-icon">B</span>
-        <div class="card-title">Bukkit and Spigot shims</div>
-        <p class="card-body">
-          Adds compatibility layers for older assumptions around scheduling, lifecycle timing, and plugin task flow.
-        </p>
-      </div>
-
-      <div class="card c2 reveal" style="transition-delay:.16s">
-        <span class="card-icon">T</span>
-        <div class="card-title">Thread violation diagnostics</div>
-        <p class="card-body">
-          Surfaces clear logs for thread ownership failures so you can tell the difference between a SilkMC bug and a
-          plugin that still assumes a single-threaded world.
-        </p>
-      </div>
-
-      <div class="card c2 reveal" style="transition-delay:.08s">
-        <span class="card-icon">V</span>
-        <div class="card-title">Vanilla stability still matters</div>
-        <p class="card-body">
-          Redstone, chunk loading, inventories, combat, commands, networking, world generation, and scoreboards still matter.
-          Compatibility work should not come at the cost of breaking normal Minecraft.
-        </p>
-      </div>
-
-      <div class="card c2 reveal" style="transition-delay:.12s">
-        <span class="card-icon">U</span>
-        <div class="card-title">Upstream mergeability</div>
-        <p class="card-body">
-          The project is structured so upstream Folia changes can still be pulled forward instead of getting buried under brittle hacks.
-        </p>
-      </div>
-
-      <div class="card c2 reveal" style="transition-delay:.16s">
-        <span class="card-icon">D</span>
-        <div class="card-title">Debug and tuning knobs</div>
-        <p class="card-body">
-          Compatibility modes, warning controls, and diagnostics help operators test more plugins while still keeping a handle on risk.
-        </p>
-        <span class="card-chip blue">operator-focused</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- SETUP -->
   <section class="section" id="setup" style="border-top:1px solid var(--border)">
     <span class="section-tag">Getting started</span>
-    <h2>Clone, build, run.<br />Then test your plugin stack.</h2>
+    <h2>Build it, run the right jar,<br />then test your plugin stack.</h2>
 
-    <div class="steps">
-      <div class="step reveal">
-        <span class="step-num">01</span>
-        <div class="step-content">
-          <div class="step-title">Clone and build SilkMC</div>
-          <div class="step-desc">
-            SilkMC tracks Folia upstream and builds a runnable paperclip jar for local testing and dedicated deployments.
-          </div>
-          <code class="code-block">git clone https://github.com/tame-gg/SilkMC.git
+    <div class="bento">
+      <div class="card c3 reveal">
+        <div class="card-title">Build command</div>
+        <code class="code-block">git clone https://github.com/tame-gg/SilkMC.git
 cd SilkMC
 ./gradlew clean build :silkmc-server:createPaperclipJar</code>
-        </div>
+        <p class="card-body" style="margin-top:1rem;">
+          That produces multiple jars. Only one of them is the normal server jar you should double-click or run with `java -jar`.
+        </p>
       </div>
 
-      <div class="step reveal" style="transition-delay:.06s">
-        <span class="step-num">02</span>
-        <div class="step-content">
-          <div class="step-title">Run the paperclip jar</div>
-          <div class="step-desc">
-            Use the bundled runnable jar instead of the thin server artifact. Java 25 or newer is required for the current branch.
-          </div>
-        </div>
+      <div class="card c3 reveal" style="transition-delay:.04s">
+        <div class="card-title">Which jar to use</div>
+        <p class="card-body">
+          Use <code style="font-family:monospace;color:var(--cyan)">silkmc-paperclip-26.1.2.local-SNAPSHOT.jar</code>.
+          That is the runnable packaged server build.
+        </p>
+        <p class="card-body">
+          Do not use <code style="font-family:monospace;color:var(--cyan)">silkmc-server-26.1.2.local-SNAPSHOT.jar</code>;
+          that thin artifact is why you hit the missing dependency crash earlier.
+        </p>
+        <p class="card-body">
+          The <code style="font-family:monospace;color:var(--cyan)">silkmc-bundler-26.1.2.local-SNAPSHOT.jar</code> is not the one I'd hand you for normal server startup here.
+        </p>
+        <span class="card-chip">pick paperclip</span>
       </div>
 
-      <div class="step reveal" style="transition-delay:.12s">
-        <span class="step-num">03</span>
-        <div class="step-content">
-          <div class="step-title">Turn on compatibility logging</div>
-          <div class="step-desc">
-            SilkMC can warn, classify, and disable incompatible plugins instead of letting them crash the whole process.
-            That makes plugin triage a lot less painful when you are testing a mixed Paper or Bukkit stack.
-          </div>
-        </div>
+      <div class="card c2 reveal" style="transition-delay:.08s">
+        <span class="card-icon">01</span>
+        <div class="card-title">Run it</div>
+        <code class="code-block">java -Xms12G -Xmx16G -jar silkmc-paperclip-26.1.2.local-SNAPSHOT.jar nogui</code>
       </div>
 
-      <div class="step reveal" style="transition-delay:.18s">
-        <span class="step-num">04</span>
-        <div class="step-content">
-          <div class="step-title">Expect mixed results and iterate</div>
-          <div class="step-desc">
-            Some plugins already work. Some need targeted compatibility fixes. Others are fundamentally unsafe on a region-threaded
-            server and should be blocked cleanly rather than half-supported.
-          </div>
-        </div>
+      <div class="card c2 reveal" style="transition-delay:.12s">
+        <span class="card-icon">02</span>
+        <div class="card-title">Enable compatibility logging</div>
+        <p class="card-body">
+          Keep warnings and compatibility stacktraces on while you are testing plugins. It makes failures much easier to sort.
+        </p>
       </div>
-    </div>
 
-    <div class="config-preview reveal" style="transition-delay:.1s">
-      <div class="config-header">
-        <span class="config-filename">silkmc-compatibility.yml</span>
-        <button class="config-copy" onclick="copyConfig()">copy</button>
+      <div class="card c2 reveal" style="transition-delay:.16s">
+        <span class="card-icon">03</span>
+        <div class="card-title">Test in layers</div>
+        <p class="card-body">
+          Bring plugins in gradually. Start with a known-good one, then add the next problem plugin and inspect the logs before piling on more.
+        </p>
       </div>
-      <pre class="config-code" id="config-text"><span class="cfg-comment"># SilkMC compatibility policy - example defaults for alpha testing</span>
-
-<span class="cfg-section">plugins:</span>
-<span class="cfg-key">unsupported-plugin-mode</span>:       <span class="cfg-val">WARN</span>
-<span class="cfg-key">warn-on-load</span>:                  <span class="cfg-val">true</span>
-<span class="cfg-key">disable-incompatible-plugins</span>:  <span class="cfg-val">true</span>
-<span class="cfg-key">log-compatibility-stacktraces</span>: <span class="cfg-val">true</span>
-
-<span class="cfg-section">debug:</span>
-<span class="cfg-key">thread-violation-logging</span>:      <span class="cfg-val">true</span>
-<span class="cfg-key">scheduler-bridge-logging</span>:      <span class="cfg-val">true</span>
-<span class="cfg-key">compatibility-metrics</span>:        <span class="cfg-val">true</span>
-
-<span class="cfg-section">notes:</span>
-<span class="cfg-key">paper-plugin-target</span>:           <span class="cfg-val">"best effort"</span>
-<span class="cfg-key">bukkit-plugin-target</span>:          <span class="cfg-val">"best effort"</span>
-<span class="cfg-key">spigot-plugin-target</span>:          <span class="cfg-val">"best effort"</span></pre>
     </div>
   </section>
 
-  <!-- COMPATIBILITY -->
   <section class="section" id="compat" style="border-top:1px solid var(--border)">
-    <span class="section-tag">Compatibility</span>
-    <h2>Trying to run more plugins.<br />Still honest about the limits.</h2>
+    <span class="section-tag">Compatibility picture</span>
+    <h2>Not “everything works.”<br />More like “more things fail better.”</h2>
 
     <div class="compat-grid reveal">
       <div class="compat-card">
         <span class="compat-icon">P</span>
         <div class="compat-info">
           <div class="compat-name">Paper plugins</div>
-          <div class="compat-status improved">improved</div>
+          <div class="compat-status improved">best target</div>
         </div>
       </div>
       <div class="compat-card">
         <span class="compat-icon">B</span>
         <div class="compat-info">
           <div class="compat-name">Bukkit plugins</div>
-          <div class="compat-status improved">improved</div>
+          <div class="compat-status improved">bridged where feasible</div>
         </div>
       </div>
       <div class="compat-card">
         <span class="compat-icon">S</span>
         <div class="compat-info">
           <div class="compat-name">Spigot plugins</div>
-          <div class="compat-status improved">improved</div>
+          <div class="compat-status improved">mixed results</div>
         </div>
       </div>
       <div class="compat-card">
@@ -976,14 +897,14 @@ cd SilkMC
         <span class="compat-icon">R</span>
         <div class="compat-info">
           <div class="compat-name">Region-unsafe plugins</div>
-          <div class="compat-status improved">blocked cleanly</div>
+          <div class="compat-status improved">disable cleanly</div>
         </div>
       </div>
       <div class="compat-card">
         <span class="compat-icon">A</span>
         <div class="compat-info">
           <div class="compat-name">Alpha stability</div>
-          <div class="compat-status improved">work in progress</div>
+          <div class="compat-status improved">still moving</div>
         </div>
       </div>
     </div>
