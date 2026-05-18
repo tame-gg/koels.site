@@ -314,7 +314,10 @@ body { background:#020810; color:#c8f0ff; }
 }
 .legend-items { display:flex; align-items:center; gap:14px; }
 .legend-item { display:flex; align-items:center; gap:7px; }
-.legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.legend-dot {
+  width:18px; height:8px; border-radius:999px; flex-shrink:0;
+  box-shadow:0 0 10px rgba(255,255,255,0.08) inset;
+}
 .legend-label { font-size:0.68rem; color:rgba(200,240,255,0.55); white-space:nowrap; font-weight:500; }
 
 /* TIMELINE */
@@ -887,12 +890,12 @@ body { background:#020810; color:#c8f0ff; }
 <div id="panel-backdrop" onclick="togglePanel()"></div>
 
 <div id="legend">
-  <div class="legend-title">Severity</div>
+  <div class="legend-title">Intensity</div>
   <div class="legend-items">
-    <div class="legend-item"><div class="legend-dot" style="background:#ff00cc"></div><div class="legend-label">Extreme</div></div>
-    <div class="legend-item"><div class="legend-dot" style="background:#ff3737"></div><div class="legend-label">Severe</div></div>
-    <div class="legend-item"><div class="legend-dot" style="background:#ff9500"></div><div class="legend-label">Moderate</div></div>
-    <div class="legend-item"><div class="legend-dot" style="background:#ffd60a"></div><div class="legend-label">Minor</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(90deg,#35d04f,#73ec5d)"></div><div class="legend-label">Light</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(90deg,#ffd84a,#ff9d2f)"></div><div class="legend-label">Moderate</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(90deg,#ff4a3d,#9d39ff)"></div><div class="legend-label">Heavy</div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(90deg,#f7f6ff,#ffffff)"></div><div class="legend-label">Extreme</div></div>
   </div>
 </div>
 
@@ -935,12 +938,20 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
 }).addTo(map);
 
 // Force map to recalculate its size — fixes black map on mobile
-setTimeout(() => map.invalidateSize(), 100);
+let resizeRaf = 0;
+function requestMapResize() {
+  if (resizeRaf) return;
+  resizeRaf = requestAnimationFrame(() => {
+    resizeRaf = 0;
+    map.invalidateSize({ animate:false, pan:false });
+  });
+}
+setTimeout(requestMapResize, 100);
 // Use visualViewport on iOS to avoid resize firing on pinch zoom
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => map.invalidateSize());
+  window.visualViewport.addEventListener('resize', requestMapResize);
 } else {
-  window.addEventListener('resize', () => map.invalidateSize());
+  window.addEventListener('resize', requestMapResize);
 }
 
 // Custom pane for radar tiles so they are NOT affected by the base tile CSS filter
@@ -950,7 +961,7 @@ map.getPane('radarPane').classList.add('radar-pane');
 
 // ── RADAR SOURCES ────────────────────────────────────────────────────────
 //
-// 1. RainViewer  — GLOBAL base, animated XYZ tiles, ~180 countries, zoom 8
+// 1. RainViewer  — GLOBAL base, animated XYZ tiles, public API native zoom 7
 // 2. IEM NEXRAD  — US/CONUS overlay, animated XYZ, zoom 10, high detail
 // 3. MSC GeoMet  — Canada WMS overlay, free, no key
 // 4. DWD         — Germany/Europe WMS overlay, free, no key
@@ -961,7 +972,7 @@ map.getPane('radarPane').classList.add('radar-pane');
 // Regional WMS overlays are synced to the same timestamps.
 // Only ONE layer type is active per region at a time to avoid duplicates.
 
-const FADE_DURATION = 250;  // ms for smooth opacity crossfade between frames
+const FADE_DURATION = 160;  // snappier crossfade reduces perceived lag
 
 // ── TILE ERROR SUPPRESSION + SMOOTH LOADING ──────────────────────────
 function suppressTileErrors(layer) {
@@ -970,9 +981,9 @@ function suppressTileErrors(layer) {
     layer.createTile = function(coords, done) {
       const tile = origCreate(coords, done);
       tile.onerror = null;
-      // Each tile fades in individually as it loads (120ms) — prevents pop-in flicker
+      // Each tile fades in individually as it loads — prevents pop-in flicker.
       tile.style.opacity = '0';
-      tile.style.transition = 'opacity 120ms ease-out';
+      tile.style.transition = 'opacity 90ms linear';
       tile.onload = () => {
         // Clear inline opacity; container's CSS transition then controls full-frame fade
         tile.style.opacity = '';
@@ -995,8 +1006,9 @@ function suppressTileErrors(layer) {
 // Override Leaflet's internal tile error handling globally
 L.GridLayer.prototype._tileOnError = function() {};
 
-const FRAME_INTERVAL = 500;  // ms between frame advances
-const HOLD_INTERVAL  = 1500; // ms pause on last frame before looping
+const FRAME_INTERVAL = 360;  // ms between frame advances
+const HOLD_INTERVAL  = 700;  // shorter pause keeps loops feeling smoother
+const MAX_RADAR_FRAMES = 6;  // fewer mounted layers = less tile churn and jank
 
 // IEM time slots matching approx 10-min intervals to align with RainViewer
 const IEM_SLOTS = [
@@ -1012,8 +1024,8 @@ const IEM_SLOTS = [
 let frames     = [];
 let currentIdx = 0;
 let playing    = false;
-let playTimer  = null;
-let seqId      = 0;
+let playRaf    = 0;
+let lastPlayTs = 0;
 let activeRV   = null;
 let activeIEM  = null;
 let rvHost     = '';  // store RainViewer host for reloading
@@ -1082,7 +1094,7 @@ function buildRegionalOverlays(center) {
         wmsCanada = suppressTileErrors(L.tileLayer.wms('https://geo.weather.gc.ca/geomet?', {
           layers: 'RADAR_1KM_RRAI', version: '1.3.0',
           format: 'image/png', transparent: true,
-          opacity: 0.85, pane: 'radarPane', maxNativeZoom: 10, maxZoom: 19,
+          opacity: 0.92, pane: 'radarPane', maxNativeZoom: 10, maxZoom: 19,
           crossOrigin: '', attribution: 'MSC/ECCC'
         }));
         break;
@@ -1090,7 +1102,7 @@ function buildRegionalOverlays(center) {
         wmsDWD = suppressTileErrors(L.tileLayer.wms('https://maps.dwd.de/geoserver/dwd/wms?', {
           layers: 'dwd:RX-Produkt', version: '1.3.0',
           format: 'image/png', transparent: true,
-          opacity: 0.85, pane: 'radarPane', maxNativeZoom: 10, maxZoom: 19,
+          opacity: 0.92, pane: 'radarPane', maxNativeZoom: 10, maxZoom: 19,
           crossOrigin: '', attribution: 'DWD'
         }));
         break;
@@ -1098,14 +1110,14 @@ function buildRegionalOverlays(center) {
         wmsNorway = suppressTileErrors(L.tileLayer.wms('https://shyrd.met.no/radar?', {
           layers: 'composite,se', version: '1.1.1',
           format: 'image/png', transparent: true,
-          opacity: 0.8, pane: 'radarPane', maxNativeZoom: 10, maxZoom: 19,
+          opacity: 0.9, pane: 'radarPane', maxNativeZoom: 10, maxZoom: 19,
           attribution: 'MET Norway'
         }));
         break;
       case 'NL':
         wmsINMIND = suppressTileErrors(L.tileLayer(
           'https://api.buienradar.nl/image/1.0/{z}/{x}/{y}.png',
-          { opacity: 0.85, pane: 'radarPane', maxNativeZoom: 9, maxZoom: 19, attribution: 'Buienradar' }
+          { opacity: 0.92, pane: 'radarPane', maxNativeZoom: 9, maxZoom: 19, attribution: 'Buienradar' }
         ));
         break;
       case 'EU':
@@ -1113,7 +1125,7 @@ function buildRegionalOverlays(center) {
         wmsDWD = suppressTileErrors(L.tileLayer.wms('https://maps.dwd.de/geoserver/dwd/wms?', {
           layers: 'dwd:RX-Produkt', version: '1.3.0',
           format: 'image/png', transparent: true,
-          opacity: 0.85, pane: 'radarPane', maxNativeZoom: 10, maxZoom: 19,
+          opacity: 0.92, pane: 'radarPane', maxNativeZoom: 10, maxZoom: 19,
           crossOrigin: '', attribution: 'DWD'
         }));
         break;
@@ -1121,7 +1133,7 @@ function buildRegionalOverlays(center) {
         wmsUK = suppressTileErrors(L.tileLayer.wms('https://opendata-gw.metoffice.gov.uk/wms/layer/radar_composite?', {
           layers: 'composite_uk', version: '1.1.1',
           format: 'image/png', transparent: true,
-          opacity: 0.85, pane: 'radarPane', maxNativeZoom: 9, maxZoom: 19,
+          opacity: 0.92, pane: 'radarPane', maxNativeZoom: 9, maxZoom: 19,
           attribution: 'Met Office'
         }));
         break;
@@ -1129,7 +1141,7 @@ function buildRegionalOverlays(center) {
         wmsSpain = suppressTileErrors(L.tileLayer.wms('https://www.aemet.es/wms/mapas/precipitation?', {
           layers: 'radar', version: '1.3.0',
           format: 'image/png', transparent: true,
-          opacity: 0.85, pane: 'radarPane', maxNativeZoom: 9, maxZoom: 19,
+          opacity: 0.92, pane: 'radarPane', maxNativeZoom: 9, maxZoom: 19,
           attribution: 'AEMET'
         }));
         break;
@@ -1152,6 +1164,26 @@ function updateWMSTime(minsAgo) {
   });
 }
 
+function getActiveRadarRegion() {
+  const c = map.getCenter();
+  return detectRegion(c.lat, c.lng);
+}
+
+function hasRegionalRadar(region = getActiveRadarRegion()) {
+  return ['US', 'CA', 'DE', 'EU', 'UK', 'ES', 'NL', 'NO'].includes(region);
+}
+
+function syncUSFrameLayers(region = getActiveRadarRegion()) {
+  const shouldUseUSOverlay = region === 'US';
+  frames.forEach(f => {
+    if (!f.iemLayer) return;
+    const onMap = map.hasLayer(f.iemLayer);
+    if (shouldUseUSOverlay && !onMap) f.iemLayer.addTo(map);
+    if (!shouldUseUSOverlay && onMap) map.removeLayer(f.iemLayer);
+  });
+  if (!shouldUseUSOverlay) activeIEM = null;
+}
+
 async function loadRadar() {
   try {
     setStatus('Loading radar\u2026', true);
@@ -1169,7 +1201,7 @@ async function loadRadar() {
       setStatus('Radar unavailable', true);
       return;
     }
-    const rvPast = (rv.radar && rv.radar.past) || [];
+    const rvPast = ((rv.radar && rv.radar.past) || []).slice(-MAX_RADAR_FRAMES);
     if (!rvPast.length) { setStatus('No radar data', true); return; }
 
     stopPlay();
@@ -1184,30 +1216,42 @@ async function loadRadar() {
     const nowSec = Math.floor(Date.now() / 1000);
     const sz = 256;
 
-    // Build frames with RainViewer global + IEM US overlay
-    frames = IEM_SLOTS.map((slot, i) => {
-      const frameTime = nowSec - slot.minsAgo * 60;
-      const closest   = rvPast.reduce((b, r) =>
-        Math.abs(r.time - frameTime) < Math.abs(b.time - frameTime) ? r : b
+    // Build a smaller frame set from actual RainViewer timestamps.
+    frames = rvPast.map((rvFrame) => {
+      const minsAgo = Math.max(0, Math.round((nowSec - rvFrame.time) / 60));
+      const closestUS = IEM_SLOTS.reduce((best, slot) =>
+        Math.abs(slot.minsAgo - minsAgo) < Math.abs(best.minsAgo - minsAgo) ? slot : best
       );
-      const rvPath = rv.host + closest.path + '/' + sz;
+      const rvPath = rv.host + rvFrame.path + '/' + sz;
       return {
-        minsAgo:  slot.minsAgo,
-        time:     frameTime,
+        minsAgo,
+        time:     rvFrame.time,
         rvPath:   rvPath,
-        // RainViewer — global base, color map 1 = classic radar
-        // keepBuffer:2 pre-renders tiles outside the viewport for smooth panning
-        // updateWhenZooming:false prevents tile-request storm during pinch-zoom
+        // RainViewer public API now supports only color scheme 2 and max native zoom 7.
         rvLayer:  suppressTileErrors(L.tileLayer(
-          rvPath + '/{z}/{x}/{y}/1/1_1.png',
-          { opacity: 0, pane: 'radarPane', maxNativeZoom: 8, maxZoom: 19,
-            keepBuffer: 2, updateWhenZooming: false, updateWhenIdle: false }
+          rvPath + '/{z}/{x}/{y}/2/0_0.png',
+          {
+            opacity: 0,
+            pane: 'radarPane',
+            maxNativeZoom: 7,
+            maxZoom: 19,
+            keepBuffer: 1,
+            updateWhenZooming: false,
+            updateWhenIdle: true,
+          }
         )),
-        // IEM NEXRAD — US only, returns transparent outside CONUS
+        // IEM NEXRAD — only mounted while the map is centered over the US.
         iemLayer: suppressTileErrors(L.tileLayer(
-          `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-${slot.ts}/{z}/{x}/{y}.png`,
-          { opacity: 0, pane: 'radarPane', maxNativeZoom: 10, maxZoom: 19,
-            keepBuffer: 2, updateWhenZooming: false, updateWhenIdle: false }
+          `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-${closestUS.ts}/{z}/{x}/{y}.png`,
+          {
+            opacity: 0,
+            pane: 'radarPane',
+            maxNativeZoom: 10,
+            maxZoom: 19,
+            keepBuffer: 1,
+            updateWhenZooming: false,
+            updateWhenIdle: true,
+          }
         ))
       };
     });
@@ -1219,10 +1263,8 @@ async function loadRadar() {
     buildTicks();
 
     // Add all frames to the map (all hidden — opacity:0)
-    frames.forEach(f => {
-      f.rvLayer.addTo(map);
-      f.iemLayer.addTo(map);
-    });
+    frames.forEach(f => f.rvLayer.addTo(map));
+    syncUSFrameLayers();
 
     // Show the most recent frame immediately so something appears right away.
     // Tiles may still be loading — they fade in individually as they arrive.
@@ -1237,7 +1279,7 @@ async function loadRadar() {
       startPlay();
     };
     frames[frames.length - 1].rvLayer.once('load', onReady);
-    setTimeout(onReady, 3000);
+    setTimeout(onReady, 1800);
 
   } catch(e) {
     console.error('Radar load error:', e);
@@ -1249,36 +1291,49 @@ function showFrame(idx) {
   if (!frames.length) return;
   currentIdx = Math.max(0, Math.min(idx, frames.length - 1));
   const f = frames[currentIdx];
-  const targetOpacity = getRadarOpacity();
+  const region = getActiveRadarRegion();
+  const targetOpacity = getRadarOpacity(region);
   const prevRV = activeRV;
   const prevIEM = activeIEM;
+  const useUSOverlay = region === 'US';
 
   // Crossfade
   if (prevRV && prevRV !== f.rvLayer) prevRV.setOpacity(0);
   if (prevIEM && prevIEM !== f.iemLayer) prevIEM.setOpacity(0);
   f.rvLayer.setOpacity(targetOpacity);
-  f.iemLayer.setOpacity(0.85);
+  if (f.iemLayer && map.hasLayer(f.iemLayer)) {
+    f.iemLayer.setOpacity(useUSOverlay ? 0.95 : 0);
+  }
 
   activeRV  = f.rvLayer;
-  activeIEM = f.iemLayer;
+  activeIEM = useUSOverlay ? f.iemLayer : null;
   updateWMSTime(frames[currentIdx].minsAgo);
   updateUI();
 }
 
 // Radar opacity: clear and visible at all zooms
-function getRadarOpacity() {
+function getRadarOpacity(region = getActiveRadarRegion()) {
   const z = map.getZoom();
-  if (z <= 3) return 0.35;
-  if (z <= 5) return 0.55;
-  if (z <= 7) return 0.7;
-  return 0.85;
+  if (hasRegionalRadar(region)) {
+    if (z <= 4) return 0.08;
+    if (z <= 6) return 0.05;
+    return 0.03;
+  }
+  if (z <= 3) return 0.42;
+  if (z <= 5) return 0.58;
+  if (z <= 7) return 0.74;
+  return 0.86;
 }
 
 // Rebuild radar when search/locate moves the map to a new region
 function refreshRadarForRegion() {
+  syncUSFrameLayers();
   buildRegionalOverlays(map.getCenter());
   // Update WMS time for regional overlays
-  if (frames.length) updateWMSTime(frames[currentIdx].minsAgo);
+  if (frames.length) {
+    updateWMSTime(frames[currentIdx].minsAgo);
+    showFrame(currentIdx);
+  }
 }
 
 function updateUI() {
@@ -1312,9 +1367,7 @@ function buildTicks() {
 }
 
 // ── PLAY / PAUSE ──────────────────────────────────────────────────────────
-// seqId is incremented on every start/stop. Each scheduled timeout captures
-// the seqId at the time it was scheduled — if seqId changed before it fires,
-// it's stale and bails immediately. Guarantees zero ghost callbacks.
+// requestAnimationFrame keeps playback aligned with browser paints.
 
 function setPlayIcon(on) {
   document.getElementById('play-icon').style.display  = on ? 'none' : '';
@@ -1323,35 +1376,31 @@ function setPlayIcon(on) {
   document.getElementById('play-btn').setAttribute('aria-label',   on ? 'Pause timeline animation' : 'Play timeline animation');
 }
 
-function _next(id, idx, delay) {
-  clearTimeout(playTimer);
-  playTimer = setTimeout(() => {
-    if (id !== seqId) return;
-    if (idx >= frames.length) {
-      showFrame(frames.length - 1);
-      _next(id, 0, HOLD_INTERVAL);
-    } else {
-      showFrame(idx);
-      _next(id, idx + 1, FRAME_INTERVAL);
-    }
-  }, delay);
+function tickPlayback(ts) {
+  if (!playing || !frames.length) return;
+  if (!lastPlayTs) lastPlayTs = ts;
+  const isLastFrame = currentIdx >= frames.length - 1;
+  const interval = isLastFrame ? HOLD_INTERVAL : FRAME_INTERVAL;
+  if (ts - lastPlayTs >= interval) {
+    showFrame(isLastFrame ? 0 : currentIdx + 1);
+    lastPlayTs = ts;
+  }
+  playRaf = requestAnimationFrame(tickPlayback);
 }
 
 function startPlay() {
   if (playing || !frames.length) return;
   playing = true;
-  seqId++;
+  lastPlayTs = 0;
   setPlayIcon(true);
-  const next = currentIdx >= frames.length - 1 ? 0 : currentIdx + 1;
-  if (next === 0) showFrame(0);
-  _next(seqId, next, FRAME_INTERVAL);
+  playRaf = requestAnimationFrame(tickPlayback);
 }
 
 function stopPlay() {
   playing = false;
-  seqId++;
-  clearTimeout(playTimer);
-  playTimer = null;
+  lastPlayTs = 0;
+  if (playRaf) cancelAnimationFrame(playRaf);
+  playRaf = 0;
   setPlayIcon(false);
 }
 
@@ -2054,9 +2103,6 @@ map.on('zoomend moveend', () => {
       syncAlertRegionFilter();
       renderAlertList();
     }
-    // Force tiles to redraw at new zoom
-    if (activeRV && map.hasLayer(activeRV)) activeRV.redraw();
-    if (activeIEM && map.hasLayer(activeIEM)) activeIEM.redraw();
   }, 200);
 });
 
@@ -2193,7 +2239,7 @@ window.locateMe = function() {
       const { latitude, longitude } = pos.coords;
       map.flyTo([latitude, longitude], 10, { duration: 1.5 });
       setTimeout(() => {
-        map.invalidateSize();
+        requestMapResize();
         refreshRadarForRegion();
       }, 1600);
       fetchWeather(latitude, longitude, 'My Location');
@@ -2260,7 +2306,7 @@ async function doSearch(query) {
         map.flyTo([r.latitude, r.longitude], 10, { duration: 1.5 });
         // invalidateSize after flyTo completes to prevent blank map
         setTimeout(() => {
-          map.invalidateSize();
+          requestMapResize();
           refreshRadarForRegion();
         }, 1600);
         fetchWeather(r.latitude, r.longitude, r.name);
@@ -2463,10 +2509,7 @@ document.addEventListener('keydown', e => {
 const handleOrientationChange = () => {
   // Short delay lets the browser settle the new viewport dimensions
   setTimeout(() => {
-    map.invalidateSize({ animate: false });
-    if (frames.length) {
-      if (activeRV && map.hasLayer(activeRV)) activeRV.redraw();
-    }
+    requestMapResize();
   }, 300);
 };
 
