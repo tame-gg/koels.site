@@ -1,5 +1,4 @@
 let container = document.querySelector('#youare-container');
-
 let audio = document.querySelector('#youare-audio');
 let ovlap = document.querySelector('#youare-overlap');
 let micon = document.querySelector('#youare-micon');
@@ -85,9 +84,9 @@ container.addEventListener('click', () => {
 micon.addEventListener('click', audioSwitch);
 
 // ==========================================================================
-// SAFE PAYLOAD: Real bouncing popup windows (performance-optimized)
+// SAFE PAYLOAD: Real bouncing popup windows
 // Only the MAIN window spawns and moves popups.
-// Popups run their own audio but are otherwise passive (no spawn/move loops).
+// Popups run their own audio but are otherwise passive.
 // Press ESC in ANY window to kill everything instantly and mute all audio.
 // ==========================================================================
 (function() {
@@ -102,7 +101,7 @@ micon.addEventListener('click', audioSwitch);
 		: (urlSession || 'orphan');
 
 	// -------------------------------------------------------------------------
-	// POPUP MODE: run audio, listen for kill, ESC
+	// POPUP MODE: run audio immediately, listen for kill, ESC
 	// -------------------------------------------------------------------------
 	if (isPopup) {
 		const killKey = 'ik_' + sessionId;
@@ -110,7 +109,6 @@ micon.addEventListener('click', audioSwitch);
 
 		function killPopup() {
 			if (pollId) { clearInterval(pollId); pollId = null; }
-			// Stop audio before closing
 			try {
 				const a = document.getElementById('youare-audio');
 				const o = document.getElementById('youare-overlap');
@@ -120,10 +118,13 @@ micon.addEventListener('click', audioSwitch);
 			try { window.close(); } catch (e) {}
 		}
 
+		// Try to play audio NOW and also retry a few times.
+		// Popups opened from a user gesture usually retain transient activation
+		// long enough for the script at the bottom of <body> to run.
 		function startPopupAudio() {
 			const popupAudio = document.getElementById('youare-audio');
 			const popupOvlap = document.getElementById('youare-overlap');
-			if (!popupAudio) return;
+			if (!popupAudio) return false;
 
 			let popupOverlap = false;
 
@@ -144,12 +145,16 @@ micon.addEventListener('click', audioSwitch);
 			popupAudio.play().catch(() => {});
 			popupAudio.addEventListener('timeupdate', popupAudioOverlap);
 			popupOvlap.addEventListener('timeupdate', popupAudioOverlap);
+			return true;
 		}
 
-		if (document.readyState === 'loading') {
-			document.addEventListener('DOMContentLoaded', startPopupAudio);
-		} else {
-			startPopupAudio();
+		// Immediate attempt
+		if (!startPopupAudio()) {
+			// Retry shortly in case DOM isn't ready
+			let tries = 0;
+			const retry = setInterval(() => {
+				if (startPopupAudio() || ++tries > 15) clearInterval(retry);
+			}, 50);
 		}
 
 		// Poll for global kill signal
@@ -216,10 +221,31 @@ micon.addEventListener('click', audioSwitch);
 		hideKillSwitch();
 	}
 
+	// Detect virtual desktop bounds for multi-monitor setups
+	function getDesktopBounds() {
+		let minX = 0, minY = 0;
+		let maxX = screen.availWidth || screen.width || 1920;
+		let maxY = screen.availHeight || screen.height || 1080;
+
+		// Multi-monitor hints in modern browsers
+		if (typeof screen.left === 'number')   minX = Math.min(minX, screen.left);
+		if (typeof screen.top === 'number')    minY = Math.min(minY, screen.top);
+		if (typeof screen.availLeft === 'number') minX = Math.min(minX, screen.availLeft);
+		if (typeof screen.availTop === 'number')  minY = Math.min(minY, screen.availTop);
+
+		if (typeof screen.width === 'number')       maxX = Math.max(maxX, (screen.left || 0) + screen.width);
+		if (typeof screen.height === 'number')    maxY = Math.max(maxY, (screen.top  || 0) + screen.height);
+		if (typeof screen.availWidth === 'number')  maxX = Math.max(maxX, (screen.availLeft || 0) + screen.availWidth);
+		if (typeof screen.availHeight === 'number') maxY = Math.max(maxY, (screen.availTop  || 0) + screen.availHeight);
+
+		return { minX, minY, maxX, maxY };
+	}
+
 	function createPopup() {
 		try {
-			const x = Math.floor(Math.random() * Math.max(1, screen.availWidth - WIN_W));
-			const y = Math.floor(Math.random() * Math.max(1, screen.availHeight - WIN_H));
+			const b = getDesktopBounds();
+			const x = b.minX + Math.floor(Math.random() * Math.max(1, b.maxX - b.minX - WIN_W));
+			const y = b.minY + Math.floor(Math.random() * Math.max(1, b.maxY - b.minY - WIN_H));
 			const url = '/moron?session=' + encodeURIComponent(sessionId);
 
 			const win = window.open(
@@ -231,8 +257,9 @@ micon.addEventListener('click', audioSwitch);
 			if (win) {
 				windows.push({
 					win: win,
-					vx: (Math.random() > 0.5 ? 1 : -1) * (3 + Math.random() * 3),
-					vy: (Math.random() > 0.5 ? 1 : -1) * (3 + Math.random() * 3)
+					vx: (Math.random() > 0.5 ? 1 : -1) * (8 + Math.random() * 8),
+					vy: (Math.random() > 0.5 ? 1 : -1) * (8 + Math.random() * 8),
+					changeDirTimer: 0
 				});
 			}
 		} catch (e) {}
@@ -241,13 +268,14 @@ micon.addEventListener('click', audioSwitch);
 	function moveWindows() {
 		if (!payloadActive) return;
 
-		// Throttle to ~60fps
 		const now = performance.now();
 		if (now - lastMoveTime < 16) {
 			moveRequestId = requestAnimationFrame(moveWindows);
 			return;
 		}
 		lastMoveTime = now;
+
+		const b = getDesktopBounds();
 
 		windows.forEach(state => {
 			try {
@@ -261,10 +289,19 @@ micon.addEventListener('click', audioSwitch);
 				sx += state.vx;
 				sy += state.vy;
 
-				if (sx <= 0) { sx = 0; state.vx = Math.abs(state.vx); }
-				if (sy <= 0) { sy = 0; state.vy = Math.abs(state.vy); }
-				if (sx + ww >= screen.availWidth)  { sx = screen.availWidth  - ww; state.vx = -Math.abs(state.vx); }
-				if (sy + wh >= screen.availHeight) { sy = screen.availHeight - wh; state.vy = -Math.abs(state.vy); }
+				// Occasional random direction / speed change for extra chaos
+				state.changeDirTimer++;
+				if (state.changeDirTimer > 180) { // ~3 seconds at 60fps
+					state.changeDirTimer = 0;
+					state.vx = (Math.random() > 0.5 ? 1 : -1) * (6 + Math.random() * 10);
+					state.vy = (Math.random() > 0.5 ? 1 : -1) * (6 + Math.random() * 10);
+				}
+
+				// Bounce off virtual desktop edges (multi-monitor aware)
+				if (sx <= b.minX) { sx = b.minX; state.vx = Math.abs(state.vx); }
+				if (sy <= b.minY) { sy = b.minY; state.vy = Math.abs(state.vy); }
+				if (sx + ww >= b.maxX)  { sx = b.maxX - ww;  state.vx = -Math.abs(state.vx); }
+				if (sy + wh >= b.maxY) { sy = b.maxY - wh; state.vy = -Math.abs(state.vy); }
 
 				state.win.moveTo(Math.floor(sx), Math.floor(sy));
 			} catch (e) {}
