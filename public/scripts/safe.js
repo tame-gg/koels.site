@@ -233,29 +233,44 @@ micon.addEventListener('click', audioSwitch);
 	}
 
 	// Build a generous virtual-desktop bounds estimate.
-	// Browsers don't expose all monitors, so we multiply generously.
 	function getDesktopBounds() {
 		const sw = screen.width  || 1920;
 		const sh = screen.height || 1080;
-		// Allow spawning/moving well beyond the primary screen so windows
-		// can land on secondary monitors in either direction.
-		let minX = -sw * 2;
-		let minY = -sh * 2;
-		let maxX = sw * 3;
-		let maxY = sh * 3;
 
-		// Some browsers expose screen offsets; incorporate them if present
-		if (typeof screen.left === 'number')       minX = Math.min(minX, screen.left - sw);
-		if (typeof screen.top === 'number')        minY = Math.min(minY, screen.top - sh);
-		if (typeof screen.availLeft === 'number')  minX = Math.min(minX, screen.availLeft - sw);
-		if (typeof screen.availTop === 'number')   minY = Math.min(minY, screen.availTop - sh);
+		let minX = -sw * 3;
+		let minY = -sh * 3;
+		let maxX = sw * 4;
+		let maxY = sh * 4;
 
-		if (typeof screen.width === 'number')       maxX = Math.max(maxX, (screen.left || 0) + screen.width + sw);
-		if (typeof screen.height === 'number')    maxY = Math.max(maxY, (screen.top  || 0) + screen.height + sh);
-		if (typeof screen.availWidth === 'number')  maxX = Math.max(maxX, (screen.availLeft || 0) + screen.availWidth + sw);
-		if (typeof screen.availHeight === 'number') maxY = Math.max(maxY, (screen.availTop  || 0) + screen.availHeight + sh);
+		if (typeof screen.left === 'number')       minX = Math.min(minX, screen.left - sw * 2);
+		if (typeof screen.top === 'number')        minY = Math.min(minY, screen.top  - sh * 2);
+		if (typeof screen.availLeft === 'number')  minX = Math.min(minX, screen.availLeft - sw * 2);
+		if (typeof screen.availTop === 'number')   minY = Math.min(minY, screen.availTop  - sh * 2);
+
+		if (typeof screen.width === 'number')       maxX = Math.max(maxX, (screen.left || 0) + screen.width  + sw * 2);
+		if (typeof screen.height === 'number')    maxY = Math.max(maxY, (screen.top  || 0) + screen.height + sh * 2);
+		if (typeof screen.availWidth === 'number')  maxX = Math.max(maxX, (screen.availLeft || 0) + screen.availWidth  + sw * 2);
+		if (typeof screen.availHeight === 'number') maxY = Math.max(maxY, (screen.availTop  || 0) + screen.availHeight + sh * 2);
 
 		return { minX, minY, maxX, maxY };
+	}
+
+	function randomAngle() {
+		return Math.random() * Math.PI * 2;
+	}
+
+	function randomSpeed() {
+		return 8 + Math.random() * 22; // 8-30 px/frame
+	}
+
+	function pickNewTrajectory(state) {
+		state.angle = randomAngle();
+		state.speed = randomSpeed();
+	}
+
+	function applyVelocity(state) {
+		state.vx = Math.cos(state.angle) * state.speed;
+		state.vy = Math.sin(state.angle) * state.speed;
 	}
 
 	function createPopup() {
@@ -272,13 +287,16 @@ micon.addEventListener('click', audioSwitch);
 			);
 
 			if (win) {
-				windows.push({
+				const state = {
 					win: win,
-					// Much faster initial velocity: 15-30 px/frame
-					vx: (Math.random() > 0.5 ? 1 : -1) * (15 + Math.random() * 15),
-					vy: (Math.random() > 0.5 ? 1 : -1) * (15 + Math.random() * 15),
-					changeDirTimer: 0
-				});
+					angle: randomAngle(),
+					speed: randomSpeed(),
+					vx: 0,
+					vy: 0,
+					chaosTimer: 0
+				};
+				applyVelocity(state);
+				windows.push(state);
 
 				// Trigger audio in the popup using main window's user activation
 				triggerPopupAudio(win);
@@ -309,22 +327,38 @@ micon.addEventListener('click', audioSwitch);
 				let ww = state.win.outerWidth || WIN_W;
 				let wh = state.win.outerHeight || WIN_H;
 
+				// Chaos timer
+				state.chaosTimer++;
+
+				// Constant jitter every frame: wiggle angle slightly for erratic paths
+				state.angle += (Math.random() - 0.5) * 0.35;
+
+				// Every ~1 second pick a totally new trajectory (chaotic zig-zag)
+				if (state.chaosTimer > 60) {
+					state.chaosTimer = 0;
+					pickNewTrajectory(state);
+				}
+
+				// Recompute velocity from current angle + speed
+				applyVelocity(state);
+
 				sx += state.vx;
 				sy += state.vy;
 
-				// Random chaotic direction / speed change every ~1.5 seconds
-				state.changeDirTimer++;
-				if (state.changeDirTimer > 90) { // ~1.5s at 60fps
-					state.changeDirTimer = 0;
-					state.vx = (Math.random() > 0.5 ? 1 : -1) * (12 + Math.random() * 20);
-					state.vy = (Math.random() > 0.5 ? 1 : -1) * (12 + Math.random() * 20);
-				}
+				// On boundary hit: bounce at a completely random angle (not axis mirror)
+				// This prevents the 4-corner ping-pong pattern.
+				let bounced = false;
+				if (sx <= b.minX) { sx = b.minX; bounced = true; }
+				if (sy <= b.minY) { sy = b.minY; bounced = true; }
+				if (sx + ww >= b.maxX)  { sx = b.maxX - ww;  bounced = true; }
+				if (sy + wh >= b.maxY) { sy = b.maxY - wh; bounced = true; }
 
-				// Bounce off generous virtual-desktop edges
-				if (sx <= b.minX) { sx = b.minX; state.vx = Math.abs(state.vx); }
-				if (sy <= b.minY) { sy = b.minY; state.vy = Math.abs(state.vy); }
-				if (sx + ww >= b.maxX)  { sx = b.maxX - ww;  state.vx = -Math.abs(state.vx); }
-				if (sy + wh >= b.maxY) { sy = b.maxY - wh; state.vy = -Math.abs(state.vy); }
+				if (bounced) {
+					pickNewTrajectory(state);
+					// Nudge away from wall so it doesn't get stuck
+					sx += Math.cos(state.angle) * 10;
+					sy += Math.sin(state.angle) * 10;
+				}
 
 				state.win.moveTo(Math.floor(sx), Math.floor(sy));
 			} catch (e) {}
