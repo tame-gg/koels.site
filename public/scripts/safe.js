@@ -84,123 +84,198 @@ container.addEventListener('click', () => {
 
 micon.addEventListener('click', audioSwitch);
 
-// --- SAFE PAYLOAD: youareanidiot.cc style bouncing windows ---
-// This is a harmless prank that creates bouncing mini-windows on click.
-// No malicious behavior, no infinite loops, no data collection.
-
+// --- SAFE PAYLOAD: Real bouncing popup windows (safer than the original) ---
+// Spawns actual popup windows that bounce around the screen.
+// Press ESC at any time to close all windows and stop the payload.
 (function() {
-    let payloadStarted = false;
-    let windows = [];
-    const MAX_WINDOWS = 6;
-    const WINDOW_SIZE = 240;
+	let payloadActive = false;
+	let windows = [];
+	const MAX_WINDOWS = 8;
+	let spawnInterval = null;
+	let moveRequestId = null;
+	let lastMoveTime = 0;
+	let blockedWarningShown = false;
 
-    function createIdiotWindow(x, y) {
-        const win = document.createElement('div');
-        win.className = 'idiot-window';
-        win.style.position = 'fixed';
-        win.style.width = WINDOW_SIZE + 'px';
-        win.style.height = (WINDOW_SIZE * 0.75) + 'px';
-        win.style.left = x + 'px';
-        win.style.top = y + 'px';
-        win.style.zIndex = '9999';
-        win.style.border = '2px solid #000';
-        win.style.background = '#fff';
-        win.style.boxShadow = '4px 4px 0 #000';
-        win.style.overflow = 'hidden';
-        win.style.cursor = 'move';
-        win.style.userSelect = 'none';
+	function createPopup() {
+		try {
+			const w = 300;
+			const h = 200;
+			const x = Math.floor(Math.random() * Math.max(1, screen.availWidth - w));
+			const y = Math.floor(Math.random() * Math.max(1, screen.availHeight - h));
 
-        // Header
-        const header = document.createElement('div');
-        header.style.background = '#000';
-        header.style.color = '#fff';
-        header.style.padding = '4px 8px';
-        header.style.fontSize = '13px';
-        header.style.fontFamily = "'Times New Roman', serif";
-        header.style.display = 'flex';
-        header.style.justifyContent = 'space-between';
-        header.style.alignItems = 'center';
-        header.innerHTML = '<span>youareanidiot.cc</span><span style="cursor:pointer;font-weight:bold;">×</span>';
-        win.appendChild(header);
+			const win = window.open(
+				'/popup.html',
+				'_blank',
+				`width=${w},height=${h},left=${x},top=${y},toolbar=no,menubar=no,location=no,status=no,resizable=yes,scrollbars=no`
+			);
 
-        // Body
-        const body = document.createElement('div');
-        body.style.padding = '16px';
-        body.style.display = 'flex';
-        body.style.flexDirection = 'column';
-        body.style.alignItems = 'center';
-        body.style.justifyContent = 'center';
-        body.style.height = 'calc(100% - 28px)';
-        body.innerHTML = `
-            <div style="font-size:28px;font-weight:bold;text-align:center;margin-bottom:8px;">You are an idiot!</div>
-            <div style="font-size:14px;color:#333;text-align:center;">☺ ☺ ☺</div>
-        `;
-        win.appendChild(body);
+			if (win) {
+				windows.push({
+					win: win,
+					vx: (Math.random() > 0.5 ? 1 : -1) * (3 + Math.random() * 4),
+					vy: (Math.random() > 0.5 ? 1 : -1) * (3 + Math.random() * 4)
+				});
+			} else if (!blockedWarningShown) {
+				showBlockedWarning();
+			}
+		} catch (e) {}
+	}
 
-        // Close handler
-        header.querySelector('span:last-child').addEventListener('click', (e) => {
-            e.stopPropagation();
-            win.remove();
-            windows = windows.filter(w => w.el !== win);
-        });
+	function moveWindows() {
+		if (!payloadActive) return;
 
-        document.body.appendChild(win);
+		const now = performance.now();
+		if (now - lastMoveTime < 16) {
+			moveRequestId = requestAnimationFrame(moveWindows);
+			return;
+		}
+		lastMoveTime = now;
 
-        // Physics state
-        const state = {
-            el: win,
-            x: x,
-            y: y,
-            vx: (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 2),
-            vy: (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 2)
-        };
-        windows.push(state);
-        return state;
-    }
+		windows.forEach(state => {
+			try {
+				if (state.win.closed) return;
 
-    function updateWindows() {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        windows.forEach(state => {
-            state.x += state.vx;
-            state.y += state.vy;
+				let sx = state.win.screenX !== undefined ? state.win.screenX : (state.win.screenLeft || 0);
+				let sy = state.win.screenY !== undefined ? state.win.screenY : (state.win.screenTop || 0);
+				let ww = state.win.outerWidth || 300;
+				let wh = state.win.outerHeight || 200;
 
-            if (state.x <= 0) { state.x = 0; state.vx = Math.abs(state.vx); }
-            if (state.y <= 0) { state.y = 0; state.vy = Math.abs(state.vy); }
-            if (state.x + WINDOW_SIZE >= w) { state.x = w - WINDOW_SIZE; state.vx = -Math.abs(state.vx); }
-            if (state.y + WINDOW_SIZE * 0.75 >= h) { state.y = h - WINDOW_SIZE * 0.75; state.vy = -Math.abs(state.vy); }
+				sx += state.vx;
+				sy += state.vy;
 
-            state.el.style.left = state.x + 'px';
-            state.el.style.top = state.y + 'px';
-        });
-        requestAnimationFrame(updateWindows);
-    }
+				if (sx <= 0) { sx = 0; state.vx = Math.abs(state.vx); }
+				if (sy <= 0) { sy = 0; state.vy = Math.abs(state.vy); }
+				if (sx + ww >= screen.availWidth) { sx = screen.availWidth - ww; state.vx = -Math.abs(state.vx); }
+				if (sy + wh >= screen.availHeight) { sy = screen.availHeight - wh; state.vy = -Math.abs(state.vy); }
 
-    function startPayload() {
-        if (payloadStarted) return;
-        payloadStarted = true;
+				state.win.moveTo(Math.floor(sx), Math.floor(sy));
+			} catch (e) {}
+		});
 
-        // Create a few initial windows
-        for (let i = 0; i < 3; i++) {
-            createIdiotWindow(
-                Math.random() * (window.innerWidth - WINDOW_SIZE),
-                Math.random() * (window.innerHeight - WINDOW_SIZE * 0.75)
-            );
-        }
+		// Clean up closed windows
+		windows = windows.filter(w => {
+			try { return !w.win.closed; } catch (e) { return false; }
+		});
 
-        // Spawn more on interval, up to MAX_WINDOWS
-        setInterval(() => {
-            if (windows.length < MAX_WINDOWS) {
-                createIdiotWindow(
-                    Math.random() * (window.innerWidth - WINDOW_SIZE),
-                    Math.random() * (window.innerHeight - WINDOW_SIZE * 0.75)
-                );
-            }
-        }, 4000);
+		moveRequestId = requestAnimationFrame(moveWindows);
+	}
 
-        updateWindows();
-    }
+	function startPayload() {
+		if (payloadActive) return;
+		payloadActive = true;
 
-    // Attach to first click on the main container
-    container.addEventListener('click', startPayload, { once: true });
+		// Show kill switch hint
+		showKillSwitch();
+
+		// Initial burst of windows
+		for (let i = 0; i < 3; i++) {
+			setTimeout(() => createPopup(), i * 500);
+		}
+
+		moveWindows();
+
+		// Spawn more periodically
+		spawnInterval = setInterval(() => {
+			if (windows.length < MAX_WINDOWS) {
+				createPopup();
+			}
+		}, 3500);
+	}
+
+	function stopPayload() {
+		if (!payloadActive) return;
+		payloadActive = false;
+
+		if (spawnInterval) {
+			clearInterval(spawnInterval);
+			spawnInterval = null;
+		}
+
+		if (moveRequestId) {
+			cancelAnimationFrame(moveRequestId);
+			moveRequestId = null;
+		}
+
+		windows.forEach(state => {
+			try {
+				if (!state.win.closed) {
+					state.win.close();
+				}
+			} catch (e) {}
+		});
+		windows = [];
+
+		hideKillSwitch();
+	}
+
+	// UI: Kill switch hint
+	let killSwitchEl = null;
+	function showKillSwitch() {
+		if (killSwitchEl) return;
+		killSwitchEl = document.createElement('div');
+		killSwitchEl.id = 'idiot-killswitch';
+		killSwitchEl.style.position = 'fixed';
+		killSwitchEl.style.bottom = '14px';
+		killSwitchEl.style.left = '50%';
+		killSwitchEl.style.transform = 'translateX(-50%)';
+		killSwitchEl.style.background = 'rgba(0, 0, 0, 0.9)';
+		killSwitchEl.style.color = '#fff';
+		killSwitchEl.style.padding = '10px 20px';
+		killSwitchEl.style.borderRadius = '8px';
+		killSwitchEl.style.fontFamily = "'Times New Roman', serif";
+		killSwitchEl.style.fontSize = '15px';
+		killSwitchEl.style.zIndex = '99999';
+		killSwitchEl.style.pointerEvents = 'none';
+		killSwitchEl.style.userSelect = 'none';
+		killSwitchEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+		killSwitchEl.textContent = 'Press ESC to stop';
+		document.body.appendChild(killSwitchEl);
+	}
+
+	function hideKillSwitch() {
+		if (killSwitchEl) {
+			killSwitchEl.remove();
+			killSwitchEl = null;
+		}
+	}
+
+	// UI: Popup blocked warning
+	let blockedWarningEl = null;
+	function showBlockedWarning() {
+		if (blockedWarningEl || blockedWarningShown) return;
+		blockedWarningShown = true;
+		blockedWarningEl = document.createElement('div');
+		blockedWarningEl.style.position = 'fixed';
+		blockedWarningEl.style.top = '14px';
+		blockedWarningEl.style.left = '50%';
+		blockedWarningEl.style.transform = 'translateX(-50%)';
+		blockedWarningEl.style.background = '#ff4444';
+		blockedWarningEl.style.color = '#fff';
+		blockedWarningEl.style.padding = '10px 18px';
+		blockedWarningEl.style.borderRadius = '8px';
+		blockedWarningEl.style.fontFamily = "'Times New Roman', serif";
+		blockedWarningEl.style.fontSize = '14px';
+		blockedWarningEl.style.zIndex = '99999';
+		blockedWarningEl.style.textAlign = 'center';
+		blockedWarningEl.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+		blockedWarningEl.innerHTML = 'Pop-up windows blocked.<br>Allow pop-ups for the full experience.';
+		document.body.appendChild(blockedWarningEl);
+
+		setTimeout(() => {
+			if (blockedWarningEl) {
+				blockedWarningEl.remove();
+				blockedWarningEl = null;
+			}
+		}, 6000);
+	}
+
+	// Global ESC handler
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') {
+			stopPayload();
+		}
+	});
+
+	// Start payload on first click of the main idiot container
+	container.addEventListener('click', startPayload, { once: true });
 })();
