@@ -86,7 +86,7 @@ micon.addEventListener('click', audioSwitch);
 // ==========================================================================
 // SAFE PAYLOAD: Real bouncing popup windows
 // Only the MAIN window spawns and moves popups.
-// Popups run their own audio but are otherwise passive.
+// Popups are passive display windows.
 // Press ESC in ANY window to kill everything instantly and mute all audio.
 // ==========================================================================
 (function() {
@@ -101,7 +101,7 @@ micon.addEventListener('click', audioSwitch);
 		: (urlSession || 'orphan');
 
 	// -------------------------------------------------------------------------
-	// POPUP MODE: run audio immediately, listen for kill, ESC
+	// POPUP MODE: play audio immediately, listen for kill, ESC
 	// -------------------------------------------------------------------------
 	if (isPopup) {
 		const killKey = 'ik_' + sessionId;
@@ -118,9 +118,6 @@ micon.addEventListener('click', audioSwitch);
 			try { window.close(); } catch (e) {}
 		}
 
-		// Try to play audio NOW and also retry a few times.
-		// Popups opened from a user gesture usually retain transient activation
-		// long enough for the script at the bottom of <body> to run.
 		function startPopupAudio() {
 			const popupAudio = document.getElementById('youare-audio');
 			const popupOvlap = document.getElementById('youare-overlap');
@@ -148,12 +145,11 @@ micon.addEventListener('click', audioSwitch);
 			return true;
 		}
 
-		// Immediate attempt
+		// Immediate attempt + fallback retry
 		if (!startPopupAudio()) {
-			// Retry shortly in case DOM isn't ready
 			let tries = 0;
 			const retry = setInterval(() => {
-				if (startPopupAudio() || ++tries > 15) clearInterval(retry);
+				if (startPopupAudio() || ++tries > 20) clearInterval(retry);
 			}, 50);
 		}
 
@@ -181,7 +177,7 @@ micon.addEventListener('click', audioSwitch);
 	// MAIN WINDOW MODE: single controller for all popups
 	// -------------------------------------------------------------------------
 	let payloadActive = false;
-	let windows = [];         // { win, vx, vy }
+	let windows = [];         // { win, vx, vy, changeDirTimer }
 	let spawnTimer = null;
 	let moveRequestId = null;
 	let lastMoveTime = 0;
@@ -221,22 +217,43 @@ micon.addEventListener('click', audioSwitch);
 		hideKillSwitch();
 	}
 
-	// Detect virtual desktop bounds for multi-monitor setups
+	// Trigger audio inside a popup from the main window (same-origin access)
+	function triggerPopupAudio(win) {
+		if (!win || win.closed) return;
+		try {
+			const popupAudio = win.document.getElementById('youare-audio');
+			if (popupAudio) {
+				popupAudio.currentTime = 0;
+				popupAudio.play().catch(() => {});
+			}
+		} catch (e) {
+			// If DOM not ready yet, retry shortly
+			setTimeout(() => triggerPopupAudio(win), 100);
+		}
+	}
+
+	// Build a generous virtual-desktop bounds estimate.
+	// Browsers don't expose all monitors, so we multiply generously.
 	function getDesktopBounds() {
-		let minX = 0, minY = 0;
-		let maxX = screen.availWidth || screen.width || 1920;
-		let maxY = screen.availHeight || screen.height || 1080;
+		const sw = screen.width  || 1920;
+		const sh = screen.height || 1080;
+		// Allow spawning/moving well beyond the primary screen so windows
+		// can land on secondary monitors in either direction.
+		let minX = -sw * 2;
+		let minY = -sh * 2;
+		let maxX = sw * 3;
+		let maxY = sh * 3;
 
-		// Multi-monitor hints in modern browsers
-		if (typeof screen.left === 'number')   minX = Math.min(minX, screen.left);
-		if (typeof screen.top === 'number')    minY = Math.min(minY, screen.top);
-		if (typeof screen.availLeft === 'number') minX = Math.min(minX, screen.availLeft);
-		if (typeof screen.availTop === 'number')  minY = Math.min(minY, screen.availTop);
+		// Some browsers expose screen offsets; incorporate them if present
+		if (typeof screen.left === 'number')       minX = Math.min(minX, screen.left - sw);
+		if (typeof screen.top === 'number')        minY = Math.min(minY, screen.top - sh);
+		if (typeof screen.availLeft === 'number')  minX = Math.min(minX, screen.availLeft - sw);
+		if (typeof screen.availTop === 'number')   minY = Math.min(minY, screen.availTop - sh);
 
-		if (typeof screen.width === 'number')       maxX = Math.max(maxX, (screen.left || 0) + screen.width);
-		if (typeof screen.height === 'number')    maxY = Math.max(maxY, (screen.top  || 0) + screen.height);
-		if (typeof screen.availWidth === 'number')  maxX = Math.max(maxX, (screen.availLeft || 0) + screen.availWidth);
-		if (typeof screen.availHeight === 'number') maxY = Math.max(maxY, (screen.availTop  || 0) + screen.availHeight);
+		if (typeof screen.width === 'number')       maxX = Math.max(maxX, (screen.left || 0) + screen.width + sw);
+		if (typeof screen.height === 'number')    maxY = Math.max(maxY, (screen.top  || 0) + screen.height + sh);
+		if (typeof screen.availWidth === 'number')  maxX = Math.max(maxX, (screen.availLeft || 0) + screen.availWidth + sw);
+		if (typeof screen.availHeight === 'number') maxY = Math.max(maxY, (screen.availTop  || 0) + screen.availHeight + sh);
 
 		return { minX, minY, maxX, maxY };
 	}
@@ -257,10 +274,16 @@ micon.addEventListener('click', audioSwitch);
 			if (win) {
 				windows.push({
 					win: win,
-					vx: (Math.random() > 0.5 ? 1 : -1) * (8 + Math.random() * 8),
-					vy: (Math.random() > 0.5 ? 1 : -1) * (8 + Math.random() * 8),
+					// Much faster initial velocity: 15-30 px/frame
+					vx: (Math.random() > 0.5 ? 1 : -1) * (15 + Math.random() * 15),
+					vy: (Math.random() > 0.5 ? 1 : -1) * (15 + Math.random() * 15),
 					changeDirTimer: 0
 				});
+
+				// Trigger audio in the popup using main window's user activation
+				triggerPopupAudio(win);
+				// Also retry after load in case DOM wasn't ready
+				win.addEventListener('load', () => triggerPopupAudio(win));
 			}
 		} catch (e) {}
 	}
@@ -289,15 +312,15 @@ micon.addEventListener('click', audioSwitch);
 				sx += state.vx;
 				sy += state.vy;
 
-				// Occasional random direction / speed change for extra chaos
+				// Random chaotic direction / speed change every ~1.5 seconds
 				state.changeDirTimer++;
-				if (state.changeDirTimer > 180) { // ~3 seconds at 60fps
+				if (state.changeDirTimer > 90) { // ~1.5s at 60fps
 					state.changeDirTimer = 0;
-					state.vx = (Math.random() > 0.5 ? 1 : -1) * (6 + Math.random() * 10);
-					state.vy = (Math.random() > 0.5 ? 1 : -1) * (6 + Math.random() * 10);
+					state.vx = (Math.random() > 0.5 ? 1 : -1) * (12 + Math.random() * 20);
+					state.vy = (Math.random() > 0.5 ? 1 : -1) * (12 + Math.random() * 20);
 				}
 
-				// Bounce off virtual desktop edges (multi-monitor aware)
+				// Bounce off generous virtual-desktop edges
 				if (sx <= b.minX) { sx = b.minX; state.vx = Math.abs(state.vx); }
 				if (sy <= b.minY) { sy = b.minY; state.vy = Math.abs(state.vy); }
 				if (sx + ww >= b.maxX)  { sx = b.maxX - ww;  state.vx = -Math.abs(state.vx); }
