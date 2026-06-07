@@ -33,7 +33,7 @@ export function StaticHtmlPage({ document }: StaticHtmlPageProps) {
     <>
       <Head>
         {parse(safeHead) as ReactNode}
-        <style>{'#__next{display:contents}@view-transition{navigation:none}'}</style>
+        <style>{'#__next{display:contents}'}</style>
       </Head>
       <div
         suppressHydrationWarning
