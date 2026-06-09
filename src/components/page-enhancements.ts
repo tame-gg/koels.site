@@ -160,6 +160,280 @@ html.koels-route-leaving body {
   display: block;
 }
 
+.mini-radar,
+.mini-globe {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.mini-radar {
+  background:
+    radial-gradient(circle at 49% 50%, rgba(64, 200, 255, 0.16), transparent 32%),
+    linear-gradient(145deg, rgba(2, 16, 31, 0.92), rgba(2, 8, 16, 0.68));
+}
+
+.mini-radar::before,
+.mini-globe::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(64, 200, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(64, 200, 255, 0.045) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mask-image: linear-gradient(to bottom, black, transparent 90%);
+  pointer-events: none;
+}
+
+.mini-radar-map {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(80px 54px at 52% 54%, rgba(64, 200, 255, 0.1), transparent 68%),
+    radial-gradient(120px 62px at 92% 58%, rgba(0, 255, 204, 0.06), transparent 72%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(2, 8, 16, 0.36));
+}
+
+.mini-radar-map::before,
+.mini-radar-map::after {
+  content: "";
+  position: absolute;
+  left: -18px;
+  right: -18px;
+  height: 58px;
+  border-top: 1px solid rgba(88, 226, 211, 0.22);
+  background:
+    linear-gradient(110deg, rgba(13, 95, 101, 0.62), rgba(15, 105, 121, 0.2)),
+    radial-gradient(90px 30px at 55% 20%, rgba(64, 200, 255, 0.18), transparent 72%);
+  transform: skewY(-8deg);
+}
+
+.mini-radar-map::before {
+  top: 55px;
+  animation: koels-map-drift 8s ease-in-out infinite;
+}
+
+.mini-radar-map::after {
+  top: 84px;
+  opacity: 0.55;
+  transform: skewY(-6deg) translateX(-22px);
+  animation: koels-map-drift 9.5s ease-in-out infinite reverse;
+}
+
+.radar-rings {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 168px;
+  height: 168px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background:
+    repeating-radial-gradient(circle, transparent 0 22px, rgba(64, 200, 255, 0.18) 23px 24px, transparent 25px 44px),
+    linear-gradient(rgba(64, 200, 255, 0.22), rgba(64, 200, 255, 0.22)) 50% 0 / 1px 100% no-repeat,
+    linear-gradient(90deg, rgba(64, 200, 255, 0.22), rgba(64, 200, 255, 0.22)) 0 50% / 100% 1px no-repeat;
+  mask-image: radial-gradient(circle, black 0 55%, transparent 78%);
+}
+
+.radar-sweep-panel {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 184px;
+  height: 184px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(from 292deg, rgba(0, 255, 204, 0.5), rgba(64, 200, 255, 0.16) 18deg, transparent 46deg);
+  mask-image: radial-gradient(circle, transparent 0 7px, black 8px 62%, transparent 74%);
+  animation: koels-radar-sweep-panel 3.2s linear infinite;
+}
+
+.radar-cell {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(1px);
+  mix-blend-mode: screen;
+  opacity: 0.86;
+  animation: koels-radar-cell 4.6s ease-in-out infinite;
+}
+
+.radar-cell.c1 {
+  left: 70px;
+  top: 40px;
+  width: 60px;
+  height: 18px;
+  background: linear-gradient(90deg, #30fff0, #28c8ff);
+  transform: rotate(16deg);
+}
+
+.radar-cell.c2 {
+  right: 44px;
+  top: 68px;
+  width: 66px;
+  height: 18px;
+  background: linear-gradient(90deg, #40c8ff, #ffd75e);
+  transform: rotate(23deg);
+  animation-delay: -1.7s;
+}
+
+.radar-cell.c3 {
+  left: 162px;
+  top: 48px;
+  width: 72px;
+  height: 13px;
+  background: linear-gradient(90deg, rgba(0, 255, 204, 0), rgba(0, 255, 204, 0.72), rgba(64, 200, 255, 0));
+  animation-delay: -0.8s;
+}
+
+.radar-core {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(232, 248, 255, 0.84);
+  background: #00ffcc;
+  box-shadow: 0 0 18px rgba(0, 255, 204, 0.72);
+  animation: koels-radar-pulse 1.8s ease-in-out infinite;
+}
+
+.radar-timeline {
+  position: absolute;
+  left: 15px;
+  right: 15px;
+  bottom: 11px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(200, 240, 255, 0.1);
+  overflow: hidden;
+}
+
+.radar-timeline::after {
+  content: "";
+  display: block;
+  width: 46%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #40c8ff, #00ffcc);
+  animation: koels-timeline 3.6s ease-in-out infinite;
+}
+
+.mini-globe {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(64, 200, 255, 0.16), transparent 38%),
+    radial-gradient(circle at 82% 18%, rgba(0, 255, 204, 0.08), transparent 34%),
+    linear-gradient(145deg, rgba(2, 16, 31, 0.94), rgba(2, 8, 16, 0.72));
+}
+
+.globe-scene-line {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 64px;
+  height: 40px;
+  border-top: 1px solid rgba(64, 200, 255, 0.16);
+  border-radius: 50%;
+  transform: rotate(-9deg);
+}
+
+.globe-body {
+  position: absolute;
+  left: 50%;
+  top: 53%;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(232, 248, 255, 0.64), transparent 10%),
+    radial-gradient(circle at 34% 28%, #59e4ff, #0d79ad 42%, #052c55 78%, #020810 100%);
+  box-shadow:
+    inset -18px -10px 28px rgba(2, 8, 16, 0.72),
+    inset 12px 8px 24px rgba(145, 243, 255, 0.2),
+    0 0 28px rgba(64, 200, 255, 0.44);
+  animation: koels-globe-float 3.8s ease-in-out infinite;
+}
+
+.globe-body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(18px 11px at 16% 31%, #7df0b8 0 68%, transparent 72%),
+    radial-gradient(24px 14px at 43% 24%, #58df9d 0 65%, transparent 69%),
+    radial-gradient(18px 28px at 61% 50%, #7cf0bf 0 52%, transparent 56%),
+    radial-gradient(23px 14px at 39% 72%, #28c783 0 64%, transparent 68%),
+    radial-gradient(18px 12px at 83% 38%, #51d998 0 62%, transparent 66%);
+  background-size: 160px 82px;
+  animation: koels-globe-land 7.5s linear infinite;
+}
+
+.globe-body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, transparent, rgba(232, 248, 255, 0.15), transparent) 50% 0 / 1px 100% no-repeat,
+    repeating-linear-gradient(0deg, transparent 0 17px, rgba(232, 248, 255, 0.11) 18px 19px, transparent 20px 34px),
+    radial-gradient(circle at 72% 50%, rgba(2, 8, 16, 0.2), rgba(2, 8, 16, 0.74) 76%);
+}
+
+.globe-atmosphere {
+  position: absolute;
+  left: 50%;
+  top: 53%;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(145, 243, 255, 0.28);
+  box-shadow: 0 0 30px rgba(64, 200, 255, 0.3);
+  animation: koels-globe-float 3.8s ease-in-out infinite;
+}
+
+.globe-orbit-ring {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 190px;
+  height: 52px;
+  border: 2px solid rgba(64, 200, 255, 0.24);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  animation: koels-orbit-drift 5s linear infinite;
+}
+
+.globe-orbit-ring::after {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  right: 26px;
+  top: 6px;
+  background: #ffd75e;
+  box-shadow: 0 0 14px rgba(255, 215, 94, 0.8);
+}
+
+.globe-event {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00ffcc;
+  box-shadow: 0 0 14px currentColor;
+  animation: koels-event-pulse 2.2s ease-in-out infinite;
+}
+
+.globe-event.e1 { left: 86px; top: 67px; color: #00ffcc; }
+.globe-event.e2 { right: 74px; top: 68px; color: #40c8ff; animation-delay: -0.8s; }
+.globe-event.e3 { right: 108px; top: 39px; color: #ffd75e; animation-delay: -1.4s; }
+
 .radar-sweep {
   transform-origin: 156px 60px;
   animation: koels-radar-sweep 4s linear infinite;
@@ -174,8 +448,27 @@ html.koels-route-leaving body {
 }
 
 @keyframes koels-radar-pulse {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 0.72; }
+  0%, 100% { opacity: 0.45; transform: translate(-50%, -50%) scale(0.82); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes koels-radar-sweep-panel {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes koels-radar-cell {
+  0%, 100% { opacity: 0.62; filter: blur(1px); }
+  50% { opacity: 1; filter: blur(0); }
+}
+
+@keyframes koels-map-drift {
+  0%, 100% { translate: 0 0; }
+  50% { translate: -14px 3px; }
+}
+
+@keyframes koels-timeline {
+  0%, 100% { transform: translateX(-12%); }
+  50% { transform: translateX(132%); }
 }
 
 .globe-earth {
@@ -195,6 +488,24 @@ html.koels-route-leaving body {
 
 @keyframes koels-orbit {
   to { transform: rotate(360deg); }
+}
+
+@keyframes koels-globe-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -5px; }
+}
+
+@keyframes koels-globe-land {
+  to { background-position: -160px 0; }
+}
+
+@keyframes koels-orbit-drift {
+  to { transform: translate(-50%, -50%) rotate(352deg); }
+}
+
+@keyframes koels-event-pulse {
+  0%, 100% { opacity: 0.46; transform: scale(0.78); }
+  50% { opacity: 1; transform: scale(1.18); }
 }
 
 .preview-calc .calc-display {
@@ -321,7 +632,18 @@ html.koels-route-leaving body {
   .radar-sweep,
   .radar-pulse,
   .globe-earth,
-  .globe-orbit {
+  .globe-orbit,
+  .radar-sweep-panel,
+  .radar-cell,
+  .radar-core,
+  .radar-timeline::after,
+  .mini-radar-map::before,
+  .mini-radar-map::after,
+  .globe-body,
+  .globe-body::before,
+  .globe-atmosphere,
+  .globe-orbit-ring,
+  .globe-event {
     animation: none !important;
     transition: none !important;
   }
@@ -463,10 +785,10 @@ export const pageEnhancementScript = `
   function previewMarkup(projectName) {
     const name = projectName.toLowerCase();
     if (name.includes('radar')) {
-      return '<div class="project-preview preview-radar"><svg class="preview-svg" viewBox="0 0 312 112" aria-hidden="true"><defs><radialGradient id="radarBackdrop" cx="50%" cy="42%" r="72%"><stop stop-color="#0b3657"/><stop offset=".58" stop-color="#041828"/><stop offset="1" stop-color="#020810"/></radialGradient><linearGradient id="radarBeam" x1="0" x2="1"><stop stop-color="#00ffcc" stop-opacity=".5"/><stop offset=".58" stop-color="#40c8ff" stop-opacity=".22"/><stop offset="1" stop-color="#40c8ff" stop-opacity="0"/></linearGradient><filter id="radarGlow"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="312" height="112" rx="10" fill="url(#radarBackdrop)"/><path d="M-8 86 C22 70 45 76 70 60 C91 47 100 29 126 31 C149 33 158 51 181 50 C209 49 221 27 247 35 C268 41 282 62 320 50 L320 112 L-8 112Z" fill="#0d5f65" opacity=".34"/><path d="M0 93 C35 76 62 82 91 63 C119 45 128 30 153 36 C181 42 188 63 219 57 C246 52 266 31 312 42" fill="none" stroke="#79ffe6" stroke-opacity=".18" stroke-width="2"/><g fill="none" stroke-linecap="round"><path d="M26 82 H64 M226 24 H274 M235 92 H290" stroke="#40c8ff" stroke-opacity=".2"/><path d="M39 71 H80 M205 34 H245" stroke="#00ffcc" stroke-opacity=".14"/></g><g fill="none" stroke="#40c8ff" stroke-opacity=".2"><circle cx="156" cy="60" r="18"/><circle cx="156" cy="60" r="40"/><circle cx="156" cy="60" r="62"/><circle cx="156" cy="60" r="84"/><path d="M72 60 H240 M156 16 V104"/></g><path class="radar-sweep" d="M156 60 L246 27 A94 94 0 0 1 233 94 Z" fill="url(#radarBeam)"/><g filter="url(#radarGlow)"><circle cx="156" cy="60" r="4" fill="#e8f8ff"/><circle class="radar-pulse" cx="156" cy="60" r="8" fill="none" stroke="#00ffcc" stroke-width="2"/><path d="M83 40 C101 30 122 36 130 52 C111 58 94 55 83 40Z" fill="#41dfff" opacity=".78"/><path d="M99 33 C116 31 132 42 136 58 C121 57 108 49 99 33Z" fill="#00ffcc" opacity=".62"/><path d="M217 72 C232 61 257 65 268 82 C247 91 228 87 217 72Z" fill="#5bd9ff" opacity=".72"/><path d="M236 67 C254 67 270 78 277 95 C260 96 245 88 236 67Z" fill="#ffd166" opacity=".72"/></g></svg><div class="project-preview-inner"><div class="project-preview-kicker">Live radar</div></div></div>';
+      return '<div class="project-preview preview-radar"><div class="mini-radar" aria-hidden="true"><div class="mini-radar-map"></div><div class="radar-rings"></div><div class="radar-sweep-panel"></div><span class="radar-cell c1"></span><span class="radar-cell c2"></span><span class="radar-cell c3"></span><span class="radar-core"></span><span class="radar-timeline"></span></div><div class="project-preview-inner"><div class="project-preview-kicker">Live radar</div></div></div>';
     }
     if (name.includes('globe')) {
-      return '<div class="project-preview preview-globe"><svg class="preview-svg" viewBox="0 0 312 112" aria-hidden="true"><defs><radialGradient id="earthOcean" cx="34%" cy="26%" r="74%"><stop stop-color="#91f3ff"/><stop offset=".28" stop-color="#2aa8df"/><stop offset=".72" stop-color="#075283"/><stop offset="1" stop-color="#02172d"/></radialGradient><linearGradient id="earthTerminator" x1="0" x2="1"><stop stop-color="#020810" stop-opacity="0"/><stop offset=".7" stop-color="#020810" stop-opacity=".16"/><stop offset="1" stop-color="#020810" stop-opacity=".62"/></linearGradient><filter id="earthGlow"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="312" height="112" rx="10" fill="rgba(2,16,32,.65)"/><path d="M16 82 C51 62 82 74 115 57 C148 40 168 31 207 42 C239 51 263 71 296 54" fill="none" stroke="#40c8ff" stroke-opacity=".12" stroke-width="2"/><g class="globe-orbit" fill="none" stroke-linecap="round"><ellipse cx="156" cy="61" rx="102" ry="29" stroke="#40c8ff" stroke-opacity=".24" stroke-width="2"/><ellipse cx="156" cy="61" rx="72" ry="20" stroke="#00ffcc" stroke-opacity=".13"/><path d="M58 61 A98 28 0 0 0 254 61" stroke="#e8f8ff" stroke-opacity=".12"/></g><g class="globe-earth" filter="url(#earthGlow)"><circle cx="156" cy="55" r="42" fill="url(#earthOcean)"/><path d="M121 50 C125 36 139 28 154 31 C151 39 139 42 139 51 C139 59 128 61 121 50Z" fill="#60e6ad" opacity=".88"/><path d="M151 34 C165 27 184 33 194 47 C185 48 178 45 171 51 C164 57 153 50 151 34Z" fill="#39d899" opacity=".86"/><path d="M176 58 C190 58 201 68 198 80 C185 82 176 75 176 58Z" fill="#7cf0bf" opacity=".78"/><path d="M137 71 C149 66 164 70 171 82 C156 90 141 84 137 71Z" fill="#22bd85" opacity=".76"/><path d="M113 59 C121 56 129 59 130 68 C120 71 113 67 113 59Z" fill="#8affce" opacity=".82"/><path d="M114 43 C129 19 169 10 195 29" fill="none" stroke="#e8f8ff" stroke-opacity=".3" stroke-width="3" stroke-linecap="round"/><circle cx="156" cy="55" r="42" fill="url(#earthTerminator)"/><path d="M156 13 C145 29 145 74 156 97 M156 13 C171 29 171 74 156 97 M114 55 H198 M122 35 C144 42 174 42 190 35 M122 75 C144 68 174 68 190 75" fill="none" stroke="#e8f8ff" stroke-opacity=".16" stroke-width="1.2"/></g><g filter="url(#earthGlow)"><circle cx="94" cy="68" r="3.5" fill="#00ffcc"/><circle cx="223" cy="72" r="3.5" fill="#40c8ff"/><circle cx="203" cy="35" r="3" fill="#ffd166"/></g></svg><div class="project-preview-inner"><div class="project-preview-kicker">Earth feed</div></div></div>';
+      return '<div class="project-preview preview-globe"><div class="mini-globe" aria-hidden="true"><span class="globe-scene-line"></span><span class="globe-orbit-ring"></span><span class="globe-atmosphere"></span><span class="globe-body"></span><span class="globe-event e1"></span><span class="globe-event e2"></span><span class="globe-event e3"></span></div><div class="project-preview-inner"><div class="project-preview-kicker">Earth feed</div></div></div>';
     }
     if (name.includes('calculator')) {
       return '<div class="project-preview preview-calc"><div class="project-preview-inner"><div class="project-preview-kicker">Premium math</div><div class="calc-display">128 / 4 = ?</div><div class="calc-grid"><span class="calc-key">7</span><span class="calc-key">8</span><span class="calc-key">9</span><span class="calc-key hot">÷</span><span class="calc-key">4</span><span class="calc-key">5</span><span class="calc-key">6</span><span class="calc-key hot">×</span><span class="calc-key">1</span><span class="calc-key">2</span><span class="calc-key">3</span><span class="calc-key hot">=</span></div></div></div>';
