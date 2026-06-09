@@ -161,7 +161,7 @@ html.koels-route-leaving body {
 }
 
 .radar-sweep {
-  transform-origin: 156px 64px;
+  transform-origin: 156px 60px;
   animation: koels-radar-sweep 4s linear infinite;
 }
 
@@ -169,14 +169,32 @@ html.koels-route-leaving body {
   to { transform: rotate(360deg); }
 }
 
+.radar-pulse {
+  animation: koels-radar-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes koels-radar-pulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.72; }
+}
+
 .globe-earth {
-  transform-origin: 156px 63px;
+  transform-origin: 156px 57px;
   animation: koels-float 3.8s ease-in-out infinite;
 }
 
 @keyframes koels-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
+}
+
+.globe-orbit {
+  transform-origin: 156px 61px;
+  animation: koels-orbit 5.6s linear infinite;
+}
+
+@keyframes koels-orbit {
+  to { transform: rotate(360deg); }
 }
 
 .preview-calc .calc-display {
@@ -300,8 +318,10 @@ html.koels-route-leaving body {
   ::view-transition-new(root),
   html.koels-route-leaving body,
   .koels-live-card::after,
-  .preview-radar .sweep,
-  .preview-globe .mini-earth {
+  .radar-sweep,
+  .radar-pulse,
+  .globe-earth,
+  .globe-orbit {
     animation: none !important;
     transition: none !important;
   }
@@ -443,10 +463,10 @@ export const pageEnhancementScript = `
   function previewMarkup(projectName) {
     const name = projectName.toLowerCase();
     if (name.includes('radar')) {
-      return '<div class="project-preview preview-radar"><svg class="preview-svg" viewBox="0 0 312 112" aria-hidden="true"><defs><linearGradient id="radarBeam" x1="0" x2="1"><stop stop-color="#00ffcc" stop-opacity="0.42"/><stop offset="1" stop-color="#40c8ff" stop-opacity="0"/></linearGradient><filter id="radarGlow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="312" height="112" rx="10" fill="rgba(2,16,32,.65)"/><path d="M0 88 C48 56 72 72 104 42 C138 10 192 24 220 48 C250 74 280 67 312 36 L312 112 L0 112Z" fill="#123f52" opacity=".55"/><path d="M0 96 C46 64 86 76 118 48 C154 18 198 30 230 54 C260 76 286 72 312 48" fill="none" stroke="#1ecfc0" stroke-opacity=".22" stroke-width="2"/><g fill="none" stroke="#40c8ff" stroke-opacity=".22"><circle cx="156" cy="64" r="18"/><circle cx="156" cy="64" r="42"/><circle cx="156" cy="64" r="66"/><circle cx="156" cy="64" r="90"/></g><path class="radar-sweep" d="M156 64 L238 32 A88 88 0 0 1 228 102 Z" fill="url(#radarBeam)"/><circle cx="156" cy="64" r="6" fill="#00ffcc" opacity=".5"/><g filter="url(#radarGlow)"><path d="M74 39 C88 24 114 28 122 42 C111 52 86 58 74 39Z" fill="#52ddff"/><path d="M92 33 C111 27 128 35 132 48 C116 55 101 51 92 33Z" fill="#7cffb2"/><path d="M236 68 C250 57 270 62 276 76 C262 84 244 82 236 68Z" fill="#52ddff"/><path d="M252 64 C266 61 281 69 286 80 C272 86 260 80 252 64Z" fill="#ffd166"/></g></svg><div class="project-preview-inner"><div class="project-preview-kicker">Live radar</div></div></div>';
+      return '<div class="project-preview preview-radar"><svg class="preview-svg" viewBox="0 0 312 112" aria-hidden="true"><defs><radialGradient id="radarBackdrop" cx="50%" cy="42%" r="72%"><stop stop-color="#0b3657"/><stop offset=".58" stop-color="#041828"/><stop offset="1" stop-color="#020810"/></radialGradient><linearGradient id="radarBeam" x1="0" x2="1"><stop stop-color="#00ffcc" stop-opacity=".5"/><stop offset=".58" stop-color="#40c8ff" stop-opacity=".22"/><stop offset="1" stop-color="#40c8ff" stop-opacity="0"/></linearGradient><filter id="radarGlow"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="312" height="112" rx="10" fill="url(#radarBackdrop)"/><path d="M-8 86 C22 70 45 76 70 60 C91 47 100 29 126 31 C149 33 158 51 181 50 C209 49 221 27 247 35 C268 41 282 62 320 50 L320 112 L-8 112Z" fill="#0d5f65" opacity=".34"/><path d="M0 93 C35 76 62 82 91 63 C119 45 128 30 153 36 C181 42 188 63 219 57 C246 52 266 31 312 42" fill="none" stroke="#79ffe6" stroke-opacity=".18" stroke-width="2"/><g fill="none" stroke-linecap="round"><path d="M26 82 H64 M226 24 H274 M235 92 H290" stroke="#40c8ff" stroke-opacity=".2"/><path d="M39 71 H80 M205 34 H245" stroke="#00ffcc" stroke-opacity=".14"/></g><g fill="none" stroke="#40c8ff" stroke-opacity=".2"><circle cx="156" cy="60" r="18"/><circle cx="156" cy="60" r="40"/><circle cx="156" cy="60" r="62"/><circle cx="156" cy="60" r="84"/><path d="M72 60 H240 M156 16 V104"/></g><path class="radar-sweep" d="M156 60 L246 27 A94 94 0 0 1 233 94 Z" fill="url(#radarBeam)"/><g filter="url(#radarGlow)"><circle cx="156" cy="60" r="4" fill="#e8f8ff"/><circle class="radar-pulse" cx="156" cy="60" r="8" fill="none" stroke="#00ffcc" stroke-width="2"/><path d="M83 40 C101 30 122 36 130 52 C111 58 94 55 83 40Z" fill="#41dfff" opacity=".78"/><path d="M99 33 C116 31 132 42 136 58 C121 57 108 49 99 33Z" fill="#00ffcc" opacity=".62"/><path d="M217 72 C232 61 257 65 268 82 C247 91 228 87 217 72Z" fill="#5bd9ff" opacity=".72"/><path d="M236 67 C254 67 270 78 277 95 C260 96 245 88 236 67Z" fill="#ffd166" opacity=".72"/></g></svg><div class="project-preview-inner"><div class="project-preview-kicker">Live radar</div></div></div>';
     }
     if (name.includes('globe')) {
-      return '<div class="project-preview preview-globe"><svg class="preview-svg" viewBox="0 0 312 112" aria-hidden="true"><defs><radialGradient id="earthOcean" cx="35%" cy="28%"><stop stop-color="#4fd6ff"/><stop offset=".55" stop-color="#0b5f91"/><stop offset="1" stop-color="#04213d"/></radialGradient><filter id="earthGlow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="312" height="112" rx="10" fill="rgba(2,16,32,.65)"/><ellipse cx="156" cy="68" rx="98" ry="28" fill="none" stroke="#40c8ff" stroke-opacity=".22" stroke-width="2"/><ellipse cx="156" cy="68" rx="72" ry="20" fill="none" stroke="#00ffcc" stroke-opacity=".12"/><g class="globe-earth" filter="url(#earthGlow)"><circle cx="156" cy="52" r="42" fill="url(#earthOcean)"/><path d="M128 44 C137 31 153 30 163 40 C154 44 155 55 141 58 C130 60 124 53 128 44Z" fill="#35d69f"/><path d="M168 35 C187 36 199 50 193 65 C182 60 174 64 168 55 C163 49 160 40 168 35Z" fill="#50e0ad"/><path d="M143 69 C154 65 165 69 169 80 C158 86 144 81 143 69Z" fill="#25be87"/><path d="M114 56 C124 51 132 56 131 66 C120 68 114 64 114 56Z" fill="#7af0c2"/><path d="M116 32 C129 14 162 7 187 22" fill="none" stroke="#e8f8ff" stroke-opacity=".28" stroke-width="3" stroke-linecap="round"/><path d="M187 83 C169 98 136 96 115 75" fill="none" stroke="#020810" stroke-opacity=".3" stroke-width="8" stroke-linecap="round"/></g><g filter="url(#earthGlow)"><circle cx="106" cy="65" r="4" fill="#00ffcc"/><circle cx="224" cy="75" r="4" fill="#40c8ff"/><circle cx="196" cy="41" r="3" fill="#ffd166"/></g></svg><div class="project-preview-inner"><div class="project-preview-kicker">Earth feed</div></div></div>';
+      return '<div class="project-preview preview-globe"><svg class="preview-svg" viewBox="0 0 312 112" aria-hidden="true"><defs><radialGradient id="earthOcean" cx="34%" cy="26%" r="74%"><stop stop-color="#91f3ff"/><stop offset=".28" stop-color="#2aa8df"/><stop offset=".72" stop-color="#075283"/><stop offset="1" stop-color="#02172d"/></radialGradient><linearGradient id="earthTerminator" x1="0" x2="1"><stop stop-color="#020810" stop-opacity="0"/><stop offset=".7" stop-color="#020810" stop-opacity=".16"/><stop offset="1" stop-color="#020810" stop-opacity=".62"/></linearGradient><filter id="earthGlow"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="312" height="112" rx="10" fill="rgba(2,16,32,.65)"/><path d="M16 82 C51 62 82 74 115 57 C148 40 168 31 207 42 C239 51 263 71 296 54" fill="none" stroke="#40c8ff" stroke-opacity=".12" stroke-width="2"/><g class="globe-orbit" fill="none" stroke-linecap="round"><ellipse cx="156" cy="61" rx="102" ry="29" stroke="#40c8ff" stroke-opacity=".24" stroke-width="2"/><ellipse cx="156" cy="61" rx="72" ry="20" stroke="#00ffcc" stroke-opacity=".13"/><path d="M58 61 A98 28 0 0 0 254 61" stroke="#e8f8ff" stroke-opacity=".12"/></g><g class="globe-earth" filter="url(#earthGlow)"><circle cx="156" cy="55" r="42" fill="url(#earthOcean)"/><path d="M121 50 C125 36 139 28 154 31 C151 39 139 42 139 51 C139 59 128 61 121 50Z" fill="#60e6ad" opacity=".88"/><path d="M151 34 C165 27 184 33 194 47 C185 48 178 45 171 51 C164 57 153 50 151 34Z" fill="#39d899" opacity=".86"/><path d="M176 58 C190 58 201 68 198 80 C185 82 176 75 176 58Z" fill="#7cf0bf" opacity=".78"/><path d="M137 71 C149 66 164 70 171 82 C156 90 141 84 137 71Z" fill="#22bd85" opacity=".76"/><path d="M113 59 C121 56 129 59 130 68 C120 71 113 67 113 59Z" fill="#8affce" opacity=".82"/><path d="M114 43 C129 19 169 10 195 29" fill="none" stroke="#e8f8ff" stroke-opacity=".3" stroke-width="3" stroke-linecap="round"/><circle cx="156" cy="55" r="42" fill="url(#earthTerminator)"/><path d="M156 13 C145 29 145 74 156 97 M156 13 C171 29 171 74 156 97 M114 55 H198 M122 35 C144 42 174 42 190 35 M122 75 C144 68 174 68 190 75" fill="none" stroke="#e8f8ff" stroke-opacity=".16" stroke-width="1.2"/></g><g filter="url(#earthGlow)"><circle cx="94" cy="68" r="3.5" fill="#00ffcc"/><circle cx="223" cy="72" r="3.5" fill="#40c8ff"/><circle cx="203" cy="35" r="3" fill="#ffd166"/></g></svg><div class="project-preview-inner"><div class="project-preview-kicker">Earth feed</div></div></div>';
     }
     if (name.includes('calculator')) {
       return '<div class="project-preview preview-calc"><div class="project-preview-inner"><div class="project-preview-kicker">Premium math</div><div class="calc-display">128 / 4 = ?</div><div class="calc-grid"><span class="calc-key">7</span><span class="calc-key">8</span><span class="calc-key">9</span><span class="calc-key hot">÷</span><span class="calc-key">4</span><span class="calc-key">5</span><span class="calc-key">6</span><span class="calc-key hot">×</span><span class="calc-key">1</span><span class="calc-key">2</span><span class="calc-key">3</span><span class="calc-key hot">=</span></div></div></div>';
