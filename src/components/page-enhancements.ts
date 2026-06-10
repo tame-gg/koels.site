@@ -44,9 +44,9 @@ html.koels-route-leaving body {
 }
 
 .koels-live-strip {
-  width: min(100%, 760px);
+  width: min(100%, 580px);
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-top: 26px;
   opacity: 0;
@@ -339,8 +339,40 @@ html.koels-route-leaving body {
 export const pageEnhancementScript = `
 (function () {
   const LANYARD_USER_ID = '1135328814394785903';
-  const MC_SERVER = 'koels.online';
-  const DISCORD_WIDGET = '1494858459785465896';
+  // Coordinates for the local weather card (Omaha, NE) — no place name is shown.
+  const WEATHER_LAT = 41.2565;
+  const WEATHER_LON = -95.9345;
+
+  const WEATHER_CODES = {
+    0: { label: 'Clear', icon: '☀️' },
+    1: { label: 'Mostly clear', icon: '🌤️' },
+    2: { label: 'Partly cloudy', icon: '⛅' },
+    3: { label: 'Cloudy', icon: '☁️' },
+    45: { label: 'Foggy', icon: '🌫️' },
+    48: { label: 'Foggy', icon: '🌫️' },
+    51: { label: 'Drizzle', icon: '🌦️' },
+    53: { label: 'Drizzle', icon: '🌦️' },
+    55: { label: 'Drizzle', icon: '🌦️' },
+    56: { label: 'Freezing drizzle', icon: '🌧️' },
+    57: { label: 'Freezing drizzle', icon: '🌧️' },
+    61: { label: 'Rainy', icon: '🌧️' },
+    63: { label: 'Rainy', icon: '🌧️' },
+    65: { label: 'Heavy rain', icon: '🌧️' },
+    66: { label: 'Freezing rain', icon: '🌧️' },
+    67: { label: 'Freezing rain', icon: '🌧️' },
+    71: { label: 'Snow', icon: '🌨️' },
+    73: { label: 'Snow', icon: '🌨️' },
+    75: { label: 'Heavy snow', icon: '🌨️' },
+    77: { label: 'Snow grains', icon: '🌨️' },
+    80: { label: 'Showers', icon: '🌦️' },
+    81: { label: 'Showers', icon: '🌦️' },
+    82: { label: 'Heavy showers', icon: '⛈️' },
+    85: { label: 'Snow showers', icon: '🌨️' },
+    86: { label: 'Snow showers', icon: '🌨️' },
+    95: { label: 'Thunderstorm', icon: '⛈️' },
+    96: { label: 'Thunderstorm', icon: '⛈️' },
+    99: { label: 'Thunderstorm', icon: '⛈️' }
+  };
 
   function onReady(callback) {
     if (document.readyState === 'loading') {
@@ -391,8 +423,7 @@ export const pageEnhancementScript = `
     strip.setAttribute('aria-label', 'Live site status');
     strip.innerHTML =
       '<div class="koels-live-card"><div class="koels-live-kicker">Local time</div><div class="koels-live-value" data-live-value="time">--:--</div><div class="koels-live-sub" data-live-sub="time">America/Chicago</div></div>' +
-      '<div class="koels-live-card"><div class="koels-live-kicker">Minecraft</div><div class="koels-live-value" data-live-value="mc">Checking...</div><div class="koels-live-sub" data-live-sub="mc">koels.online</div></div>' +
-      '<div class="koels-live-card"><div class="koels-live-kicker">Discord</div><div class="koels-live-value" data-live-value="discord">Checking...</div><div class="koels-live-sub" data-live-sub="discord">server widget</div></div>' +
+      '<div class="koels-live-card"><div class="koels-live-kicker">Weather</div><div class="koels-live-value" data-live-value="weather">Checking...</div><div class="koels-live-sub" data-live-sub="weather">local conditions</div></div>' +
       '<div class="koels-live-card"><div class="koels-live-kicker">Now</div><div class="koels-live-value" data-live-value="now">Syncing...</div><div class="koels-live-sub" data-live-sub="now">live presence</div></div>';
 
     const actions = hero.querySelector('.hero-actions');
@@ -404,37 +435,32 @@ export const pageEnhancementScript = `
       setLiveCard('time', now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }));
     }
 
-    async function updateMc() {
+    async function updateWeather() {
       try {
-        const response = await fetch('https://api.mcsrvstat.us/3/' + MC_SERVER, { cache: 'no-store' });
+        const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + WEATHER_LAT + '&longitude=' + WEATHER_LON +
+          '&current=temperature_2m,weather_code&temperature_unit=fahrenheit';
+        const response = await fetch(url, { cache: 'no-store' });
         const data = await response.json();
-        if (!data || !data.online) {
-          setLiveCard('mc', 'Offline', '0 players online');
+        const current = data && data.current;
+        if (!current || !Number.isFinite(current.temperature_2m)) {
+          setLiveCard('weather', 'Unavailable', 'weather check failed');
           return;
         }
-        const online = data.players && Number.isFinite(data.players.online) ? data.players.online : 0;
-        const max = data.players && Number.isFinite(data.players.max) ? data.players.max : 0;
-        setLiveCard('mc', String(online) + ' online', max ? online + ' / ' + max + ' capacity' : 'server is up');
+        const temp = Math.round(current.temperature_2m);
+        const condition = WEATHER_CODES[current.weather_code] || { label: 'Unknown', icon: '' };
+        setLiveCard('weather', temp + '°F', (condition.icon ? condition.icon + ' ' : '') + condition.label);
       } catch (error) {
-        setLiveCard('mc', 'Unavailable', 'status check failed');
-      }
-    }
-
-    async function updateDiscord() {
-      try {
-        const response = await fetch('https://discord.com/api/guilds/' + DISCORD_WIDGET + '/widget.json', { cache: 'no-store' });
-        const data = await response.json();
-        if (!data || !data.name) {
-          setLiveCard('discord', 'Unavailable', 'widget is private');
-          return;
-        }
-        setLiveCard('discord', String(data.presence_count || 0) + ' online', data.name);
-      } catch (error) {
-        setLiveCard('discord', 'Unavailable', 'Discord check failed');
+        setLiveCard('weather', 'Unavailable', 'weather check failed');
       }
     }
 
     async function updatePresence() {
+      const STATUS_META = {
+        online: { label: 'Online', icon: '🟢' },
+        idle: { label: 'Idle', icon: '🌙' },
+        dnd: { label: 'Do Not Disturb', icon: '⛔' },
+        offline: { label: 'Offline', icon: '⚫' }
+      };
       try {
         const response = await fetch('https://api.lanyard.rest/v1/users/' + LANYARD_USER_ID, { cache: 'no-store' });
         const payload = await response.json();
@@ -443,28 +469,46 @@ export const pageEnhancementScript = `
           setLiveCard('now', 'Offline', 'presence unavailable');
           return;
         }
+        const status = STATUS_META[data.discord_status] || STATUS_META.offline;
+        const activities = Array.isArray(data.activities) ? data.activities : [];
+        const byType = function (type) { return activities.find(function (a) { return a && a.type === type && a.name; }); };
+
         if (data.listening_to_spotify && data.spotify) {
-          setLiveCard('now', data.spotify.song || 'Spotify', data.spotify.artist || 'listening now');
+          setLiveCard('now', '🎧 ' + (data.spotify.song || 'Spotify'), data.spotify.artist ? 'by ' + data.spotify.artist : 'on Spotify');
           return;
         }
-        const game = Array.isArray(data.activities) && data.activities.find(function (activity) { return activity && activity.type === 0 && activity.name; });
+        const game = byType(0);
         if (game) {
-          setLiveCard('now', game.name, data.discord_status || 'active');
+          setLiveCard('now', '🎮 ' + game.name, game.details || game.state || ('Playing · ' + status.label));
           return;
         }
-        setLiveCard('now', data.discord_status || 'offline', 'Discord presence');
+        const streaming = byType(1);
+        if (streaming) {
+          setLiveCard('now', '🔴 ' + streaming.name, streaming.details || streaming.state || 'Streaming');
+          return;
+        }
+        const watching = byType(3);
+        if (watching) {
+          setLiveCard('now', '📺 ' + watching.name, watching.details || watching.state || 'Watching');
+          return;
+        }
+        const custom = activities.find(function (a) { return a && a.type === 4 && a.state; });
+        if (custom) {
+          const emoji = custom.emoji && custom.emoji.name && !custom.emoji.id ? custom.emoji.name + ' ' : '';
+          setLiveCard('now', emoji + custom.state, status.label);
+          return;
+        }
+        setLiveCard('now', status.icon + ' ' + status.label, 'Discord presence');
       } catch (error) {
         setLiveCard('now', 'Unavailable', 'presence check failed');
       }
     }
 
     updateTime();
-    updateMc();
-    updateDiscord();
+    updateWeather();
     updatePresence();
     window.setInterval(updateTime, 30000);
-    window.setInterval(updateMc, 180000);
-    window.setInterval(updateDiscord, 60000);
+    window.setInterval(updateWeather, 600000);
     window.setInterval(updatePresence, 15000);
   }
 
