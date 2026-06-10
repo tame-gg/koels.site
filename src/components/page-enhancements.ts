@@ -335,10 +335,6 @@ html.koels-route-leaving body {
 .kp-stat { position:absolute; left:9px; bottom:9px; z-index:6; display:flex; align-items:baseline; gap:6px; padding:5px 10px; border-radius:9px; background:rgba(3,8,18,0.72); border:1px solid rgba(64,200,255,0.18); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
 .kp-stat b { font-size:0.95rem; font-weight:800; color:#e8f8ff; letter-spacing:-0.02em; }
 .kp-stat span { font-family:var(--mono,monospace); font-size:0.46rem; letter-spacing:0.12em; text-transform:uppercase; color:rgba(200,240,255,0.5); }
-
-@media (prefers-reduced-motion: reduce) {
-  .kp-chip .d, .kp-cell, .kp-sweep::before, .kp-ping, .kp-track::after, .kp-gmark::after, .kp-earth { animation:none !important; }
-}
 `;
 
 export const pageEnhancementScript = `
